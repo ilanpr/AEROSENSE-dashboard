@@ -11,20 +11,21 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
       send(res, 200, {
         supabase_url: env.SUPABASE_URL,
         supabase_publishable_key: env.SUPABASE_ANON_KEY,
-        environment_area_id: "surabaya",
         robot_id: env.WEB_ROBOT_ID || null,
       });
       return true;
     }
     if (path === "/v1/environment") {
-      const requested = url.searchParams.get("area_id");
-      if (requested && requested !== "surabaya") {
-        send(res, /^[a-zA-Z0-9_-]{1,40}$/.test(requested) ? 404 : 400, {error:"Area belum tersedia"});
+      const nodeId = url.searchParams.get("node_id");
+      if (!nodeId || !/^[a-zA-Z0-9_-]{1,40}$/.test(nodeId)) {
+        send(res, 400, {error:"Pilih titik robot terlebih dahulu"});
         return true;
       }
-      send(res, 200, await readEnvironment({db, one}));
+      const account = await user(req);
+      const node = await member(account, nodeId);
+      send(res, 200, await readEnvironment({db, one, node}));
       return true;
-      }
+    }
     if (
       ![
         "/v1/dashboard",
@@ -128,14 +129,16 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
   };
 }
 
-// Public reference is Surabaya. Sensor coordinates are never taken from this area.
-export async function readEnvironment({db, one}, now = Date.now()) {
-  const area = await one("ae_environment_areas", "id=eq.surabaya&enabled=eq.true");
-  if (!area || !Number.isFinite(area.latitude) || !Number.isFinite(area.longitude) || Math.abs(area.latitude - (-7.24917)) > 0.00001 || Math.abs(area.longitude - 112.75083) > 0.00001)
-    throw Object.assign(new Error("Lokasi acuan Surabaya belum sesuai"), {status:503});
+// Public environmental context follows the authorized robot node point.
+export async function readEnvironment({db, one, node}, now = Date.now()) {
+  if (!node?.enabled || !Number.isFinite(node.latitude) || !Number.isFinite(node.longitude))
+    throw Object.assign(new Error("Titik node belum memiliki koordinat valid"), {status:503});
+  const area = await one("ae_environment_areas", "source_node_id=eq." + encodeURIComponent(node.id) + "&enabled=eq.true");
+  if (!area || area.latitude !== node.latitude || area.longitude !== node.longitude)
+    throw Object.assign(new Error("Cache lokasi node belum siap; tunggu pembaruan hub berikutnya"), {status:503});
   const providersAllowed = new Set(["openmeteo_weather","openmeteo_air","openmeteo_flood","soilgrids","firms","bmkg_quake","bmkg_weather","iqair"]);
   const categoriesAllowed = new Set(["weather","air_quality","soil","soil_profile","fire","earthquake","flood"]);
-  const rows = await db("ae_environment_area_cache", "area_id=eq.surabaya");
+  const rows = await db("ae_environment_area_cache", "area_id=eq." + encodeURIComponent(area.id));
   const providers = rows.filter(c => providersAllowed.has(c.provider)).map(c => ({
     provider:c.provider, last_attempt_at:c.last_attempt_at, refresh_after:c.refresh_after,
     last_error:c.last_error ? "Pembaruan sumber belum berhasil" : null,
@@ -144,5 +147,5 @@ export async function readEnvironment({db, one}, now = Date.now()) {
       ? (Array.isArray(c.payload?.facts) ? c.payload.facts : []).filter(f => categoriesAllowed.has(f.category) && f.area_id === area.id && f.reference?.latitude === area.latitude && f.reference?.longitude === area.longitude).map(f => ({...f,stale:!Number.isFinite(Date.parse(f.fresh_until)) || Date.parse(f.fresh_until) < now})) : [],now),
   }));
   const facts = orderEnvironmentFacts(providers.flatMap(p=>p.facts),now);
-  return {area,providers,facts,insights:summarizeEnvironment(facts,now),summary_method:"rules-v1",fetched_at:new Date(now).toISOString()};
+  return {area,node:{id:node.id,name:node.name},providers,facts,insights:summarizeEnvironment(facts,now),summary_method:"rules-v1",fetched_at:new Date(now).toISOString()};
 }

@@ -17,6 +17,7 @@ const array = x => Array.isArray(x) ? x : x ? [x] : [];
 const text = x => String(typeof x === "object" ? x?.["#text"] || "" : x || "")
   .replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim().slice(0, 240);
 const recent = (t, now) => Number.isFinite(Date.parse(t)) && Date.parse(t) <= now + 30 * MINUTE && Date.parse(t) >= now - 7 * DAY;
+const retainRecent = (items, now) => array(items).filter(item => recent(item?.published_at, now)).slice(0, 40);
 function safeLink(value, provider) {
   try {
     const u = new URL(text(value));
@@ -98,7 +99,7 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
       await Promise.all(NEWS_SOURCES.map(async source => {
         const old = previous.find(x => x.provider === source.id);
         if (Date.parse(old?.refresh_after) > clock()) return;
-        let items = old?.items || [], error = null, success = old?.last_success_at || null;
+        let items = retainRecent(old?.items, clock()), error = null, success = old?.last_success_at || null;
         try {
           items = parseDisasterFeed(await download(source, fetcher), source, clock());
           success = new Date(clock()).toISOString();

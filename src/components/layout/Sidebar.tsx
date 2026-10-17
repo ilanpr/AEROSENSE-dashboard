@@ -78,8 +78,8 @@ export function Sidebar({ onClose }: SidebarProps) {
         </div>
       </div>
 
-      {/* Middle Scrollable Section (Navigation + Help Card) */}
-      <div className="flex-1 overflow-y-auto px-3.5 py-1.5 sidebar-scroll min-h-0 space-y-3.5">
+      {/* Main navigation */}
+      <div className="flex-1 overflow-y-auto px-3.5 py-1.5 sidebar-scroll min-h-0">
         <div>
           {/* Navigation Caption */}
           <p className="text-[9.5px] tracking-[1.6px] font-extrabold text-[#a4b1c5] mb-2 ml-2">
@@ -125,28 +125,6 @@ export function Sidebar({ onClose }: SidebarProps) {
           </nav>
         </div>
 
-        {/* Help card */}
-        <div className="p-3.5 bg-gradient-to-br from-[#eaf6ff] to-[#dceeff] border border-[#d8ecff] rounded-2xl relative overflow-hidden shadow-2xs">
-          {/* Decorative Circle (Ring) at top-right */}
-          <div
-            className="absolute -top-[33px] -right-[40px] w-[130px] h-[130px] rounded-full border-[15px] border-[#cbe6ff] opacity-70 pointer-events-none"
-            aria-hidden="true"
-          />
-
-          <div className="relative z-1">
-            <button
-              type="button"
-              onClick={() => {
-                navigate(ROUTES.AEROBOT);
-                onClose?.();
-              }}
-              className="text-xs font-semibold text-[#086cfb] hover:underline flex items-center gap-1 cursor-pointer"
-            >
-              Tanya AERO-BOT
-              <ChevronRight className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* User profile (Pinned at bottom, never cut off) */}

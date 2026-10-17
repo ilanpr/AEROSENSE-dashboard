@@ -1,5 +1,5 @@
 function planRequests(input, settings, now = Date.now()) {
-  const nodes = (input.areas || []).filter(n => n.id === 'surabaya' && Math.abs(n.latitude - (-7.24917)) < 0.00001 && Math.abs(n.longitude - 112.75083) < 0.00001 && Number.isFinite(n.latitude) && Number.isFinite(n.longitude) && Math.abs(n.latitude) <= 90 && Math.abs(n.longitude) <= 180);
+  const nodes = (input.areas || []).filter(n => n.enabled === true && n.coordinate_source === 'robot_node' && typeof n.source_node_id === 'string' && n.id === `node_${n.source_node_id}` && Number.isFinite(n.latitude) && Number.isFinite(n.longitude) && Math.abs(n.latitude) <= 90 && Math.abs(n.longitude) <= 180);
   const cache = input.cache || [];
   const planned = [];
   const due = (provider, n) => !cache.some(c => c.provider === provider && c.area_id === n.id && Date.parse(c.refresh_after) > now && c.request_latitude === n.latitude && c.request_longitude === n.longitude);

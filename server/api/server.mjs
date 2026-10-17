@@ -622,7 +622,7 @@ async function nativeRefresh(j, p) {
         label: "Kabar bencana Indonesia · " + i.type, value: i.title, unit: "",
         valid_at: i.published_at, source: i.source, source_url: i.url,
         kind: i.kind === "monitoring" ? "monitoring_notification" : "news",
-        spatial_context: "Indonesia, bukan pembacaan atau kejadian terkonfirmasi di Surabaya.",
+        spatial_context: "Indonesia, bukan pembacaan node atau kejadian terkonfirmasi pada titik robot.",
         data_origin: "external_api", role: "supplementary",
       }));
     } catch { /* Missing news cache must not stop sensor questions. */ }
@@ -631,6 +631,7 @@ async function nativeRefresh(j, p) {
     id: j.id,
     lease_token: j.lease_token,
     text: j.stage.text,
+    node_ids: j.body.node_ids || [],
     context: rows,
     disaster_news,
   };

@@ -5,7 +5,7 @@ Diperiksa 18 Oktober 2026. Kode web/backend dan draft di instance `flow.aerosens
 ## Yang sudah diubah
 
 - Hayati dihapus dari halaman, ringkasan, normalisasi, perencana pengambilan dan node GBIF di Hub n8n. Cache GBIF lama tidak dihapus, tetapi tidak dibaca sebagai konteks.
-- API publik lingkungan dibatasi ke acuan Surabaya, `-7.24917, 112.75083`. Koordinat sensor tetap memakai node asli.
+- API publik lingkungan mengikuti node yang dipilih. Endpoint memeriksa akses akun; trigger Supabase menyelaraskan area dan cache dengan koordinat terkini node.
 - SoilGrids tidak dijadwalkan kecuali diaktifkan. Data kelembapan tanah Open-Meteo tetap dikumpulkan.
 - Node IQAir dinonaktifkan karena credential belum diisi. Untuk memakainya: pasang credential, aktifkan node dan set `iqair_enabled=true`. Setelah dinonaktifkan, tombol Publish Hub tersedia.
 - Kabar bencana Indonesia memakai ANTARA dan GDACS dengan cache Supabase. Migrasi 005 sudah dijalankan; RLS aktif, tidak ada akses SELECT langsung untuk anon.
@@ -23,7 +23,7 @@ Diperiksa 18 Oktober 2026. Kode web/backend dan draft di instance `flow.aerosens
 | Jawaban website | Sub-workflow web_chat | Pertanyaan dan akses node | Jawaban di `ae_jobs.result`, lalu dibaca web |
 | AERO-BOT | Sub-workflow robot_chat | Teks, audio atau presence | STT bila diperlukan, jawaban, TTS, `ae_commands` |
 | WhatsApp | Pesan masuk / job | Pesan, menu, langganan, peringatan | Balasan atau template melalui Meta |
-| Hub lingkungan | Jadwal per jam | Area Surabaya dan masa cache | `ae_environment_area_cache` |
+| Hub lingkungan | Jadwal per jam | Semua node aktif dan masa cache per penyedia | `ae_environment_area_cache` |
 | Berita bencana | Backend mulai + 15 menit | Feed ANTARA/GDACS | `ae_disaster_news_cache` |
 | Snapshot training | Jadwal mingguan | Pembacaan aktual tujuh hari | `ae_training_sets` dan `ae_training_examples` |
 | Perawatan | Jadwal per jam | Job, command, audio, kode kedaluwarsa | Pembersihan sesuai retensi |
@@ -52,12 +52,13 @@ Empat node WhatsApp belum memiliki credential: `WhatsApp pesan masuk`, `WhatsApp
 ## Yang belum otomatis hanya dengan Publish web
 
 1. **Backend Ubuntu perlu diperbarui.** Source lokal bukan source container yang sedang berjalan. SSH ke server dapat dijangkau, tetapi login otomatis ditolak. Deployment belum dilakukan pada pemeriksaan ini.
-2. **Control Center, Hub dan jadwal perawatan perlu dipublikasikan.** Control Center menunjukkan Unpublish tidak tersedia. Pengeditan di n8n disimpan sebagai draft. Periksa versi yang dipakai oleh pemanggilan sub-workflow pada versi n8n terpasang.
-3. **Postgres Trigger perlu koneksi direct/session yang mendukung LISTEN.** Transaction pooler tidak boleh diasumsikan mendukung listener yang menetap.
-4. **WhatsApp belum lengkap.** Jangan mengaktifkan pengiriman sampai credential, template dan opt-in siap.
-5. **BMKG cuaca memerlukan ADM4. IQAir memerlukan key.** Keduanya opsional; Open-Meteo tetap menyediakan sumber cuaca/udara utama.
-6. **Sensor dan perangkat robot perlu uji fisik.** Node belum mengirim pembacaan nyata. INMP441/MAX98357A memerlukan penghubung perangkat yang sesuai; browser mini PC tidak menerima sambungan I2S secara langsung.
-7. **Snapshot training bukan pelatihan otomatis.** Validasi, pelatihan dan persetujuan model tetap proses terpisah. Berita/API publik tidak otomatis dijadikan target aktual sensor.
+2. **Terapkan migrasi 006 dan publish Hub yang sudah memakai semua area node.** Ini mengaktifkan peralihan otomatis saat koordinat node diubah. Sebelum dua langkah ini, data publik masih mengikuti konfigurasi lama.
+3. **Control Center, Hub dan jadwal perawatan perlu dipublikasikan.** Control Center menunjukkan Unpublish tidak tersedia. Pengeditan di n8n disimpan sebagai draft. Periksa versi yang dipakai oleh pemanggilan sub-workflow pada versi n8n terpasang.
+4. **Postgres Trigger perlu koneksi direct/session yang mendukung LISTEN.** Transaction pooler tidak boleh diasumsikan mendukung listener yang menetap.
+5. **WhatsApp belum lengkap.** Jangan mengaktifkan pengiriman sampai credential, template dan opt-in siap.
+6. **BMKG cuaca memerlukan ADM4. IQAir memerlukan key.** Keduanya opsional; Open-Meteo tetap menyediakan sumber cuaca/udara utama.
+7. **Sensor dan perangkat robot perlu uji fisik.** Node belum mengirim pembacaan nyata. INMP441/MAX98357A memerlukan penghubung perangkat yang sesuai; browser mini PC tidak menerima sambungan I2S secara langsung.
+8. **Snapshot training bukan pelatihan otomatis.** Validasi, pelatihan dan persetujuan model tetap proses terpisah. Berita/API publik tidak otomatis dijadikan target aktual sensor.
 
 `/health` memeriksa proses API. `check-db.mjs` memeriksa akses tabel. Keduanya belum membuktikan chat, audio, jadwal atau WhatsApp bekerja sampai tujuan akhir.
 

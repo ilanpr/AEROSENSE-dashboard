@@ -4,7 +4,6 @@ import { API_CONFIG } from "@/lib/constants";
 export interface PublicConfig {
   supabase_url: string;
   supabase_publishable_key: string;
-  environment_area_id: string;
   robot_id: string | null;
 }
 let configPromise: Promise<PublicConfig> | undefined;

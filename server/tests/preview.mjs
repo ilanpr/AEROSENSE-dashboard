@@ -25,11 +25,12 @@ const token =
   ).toString("base64url") +
   ".fixture";
 const area = {
-  id: "surabaya",
-  name: "Surabaya · Pratinjau data contoh",
-  latitude: -7.24917,
-  longitude: 112.75083,
-  coordinate_source: "city_reference",
+  id: "node_node-preview",
+  source_node_id: "node-preview",
+  name: "Node pengujian lokal",
+  latitude: -7.28,
+  longitude: 112.78,
+  coordinate_source: "robot_node",
   enabled: true,
 };
 const node = {

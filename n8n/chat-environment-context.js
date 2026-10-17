@@ -1,6 +1,7 @@
 function prepareHubContext(base, cacheResult, now=Date.now()) {
  const area=cacheResult.environment_area;
- const validArea=area&&area.id==="surabaya"&&Math.abs(area.latitude-(-7.24917))<0.00001&&Math.abs(area.longitude-112.75083)<0.00001&&typeof area.id==="string"&&Number.isFinite(area.latitude)&&Math.abs(area.latitude)<=90&&Number.isFinite(area.longitude)&&Math.abs(area.longitude)<=180;
+ const permittedNodes=new Set(Array.isArray(base.node_ids)?base.node_ids:[]);
+ const validArea=area&&area.coordinate_source==="robot_node"&&typeof area.source_node_id==="string"&&permittedNodes.has(area.source_node_id)&&area.id===`node_${area.source_node_id}`&&Number.isFinite(area.latitude)&&Math.abs(area.latitude)<=90&&Number.isFinite(area.longitude)&&Math.abs(area.longitude)<=180;
  const q=String(base.text||"").toLowerCase(),wanted=[];
  if(/cuaca|hujan|angin|panas|suhu|lembap|uv|weather|rain|besok/.test(q))wanted.push("weather");
  if(/tanah|soil|ph\b|lempung|subur/.test(q))wanted.push("soil","soil_profile");
@@ -22,6 +23,6 @@ function prepareHubContext(base, cacheResult, now=Date.now()) {
   }
   for(const f of selected.slice(0,wanted.length?8:4))if(!seen.has(f.id)){seen.add(f.id);available.push(f);}
  }
- return {json:{...base,environment_area:validArea?{id:area.id,name:area.name,latitude:area.latitude,longitude:area.longitude,coordinate_source:area.coordinate_source,timezone:area.timezone}:null,environment:[...available.slice(0,21),...(base.disaster_news||[])].slice(0,24),environment_status:statuses,environment_scope:"Kabar bencana berlabel Indonesia mencakup nasional dan tidak membuktikan kejadian di Surabaya. Data lingkungan lainnya memakai acuan Surabaya. Terpisah dari sensor AEROSENSE dan izin node. Acuan kota Surabaya bukan GPS pengguna atau robot; lokasi stasiun eksternal hanya diketahui bila penyedia menyertakannya. Grid model bukan lokasi sensor. Jangan gabungkan nilainya dengan pembacaan lokal atau menganggap kota lain sama.",hub_at:new Date(now).toISOString()}};
+ return {json:{...base,environment_area:validArea?{id:area.id,source_node_id:area.source_node_id,name:area.name,latitude:area.latitude,longitude:area.longitude,coordinate_source:area.coordinate_source,timezone:area.timezone}:null,environment:[...available.slice(0,21),...(base.disaster_news||[])].slice(0,24),environment_status:statuses,environment_scope:"Kabar bencana berlabel Indonesia mencakup nasional dan tidak membuktikan kejadian pada titik robot. Data lingkungan lainnya mengikuti koordinat node yang diizinkan dan terpisah dari pembacaan sensor AEROSENSE. Lokasi stasiun eksternal hanya diketahui bila penyedia menyertakannya; grid model bukan lokasi sensor.",hub_at:new Date(now).toISOString()}};
 }
 return prepareHubContext($("Muat konteks terbaru Web").first().json,$json);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowUpRight,
   ChevronDown,
@@ -23,9 +23,10 @@ export function SensorOverview() {
   const dashboard = useLiveData<{ nodes: LiveNode[] }>(
     user ? `/v1/dashboard?account=${encodeURIComponent(user.id)}` : null,
   );
+  const [params, setParams] = useSearchParams();
   const [selected, setSelected] = useState("");
   const nodes = dashboard.data?.nodes || [];
-  const node = nodes.find((n) => n.id === selected) || nodes[0];
+  const node = nodes.find((n) => n.id === params.get("node_id")) || nodes.find((n) => n.id === selected) || nodes[0];
   const rules = useLiveData<{ rules: SensorRule[] }>(
     node ? `/v1/rules?node_id=${encodeURIComponent(node.id)}` : null,
     60000,
@@ -87,7 +88,12 @@ export function SensorOverview() {
                   <select
                     aria-label="Pilih node AEROSENSE"
                     value={node?.id || ""}
-                    onChange={(e) => setSelected(e.target.value)}
+                    onChange={(e) => {
+                      setSelected(e.target.value);
+                      const next = new URLSearchParams(params);
+                      next.set("node_id", e.target.value);
+                      setParams(next);
+                    }}
                   >
                     {nodes.map((n) => (
                       <option key={n.id} value={n.id}>

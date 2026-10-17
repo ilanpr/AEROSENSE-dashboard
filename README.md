@@ -4,7 +4,7 @@ AEROSENSE menggabungkan pemantauan sensor, hasil model GRU, dan informasi lingku
 
 ## Fitur
 
-- Hub lingkungan Surabaya: cuaca, udara, tanah, titik panas, sungai, dan gempa.
+- Hub lingkungan mengikuti titik node AEROSENSE yang dipilih; berita bencana tetap mencakup Indonesia.
 - Kabar bencana Indonesia dari ANTARA dan GDACS, dengan sumber dan tautan bantuan resmi.
 - Ringkasan kondisi dan saran singkat tanpa panggilan AI tambahan. Angka serta sumber tersedia pada panel rincian.
 - Peta mengikuti koordinat asli setiap node.

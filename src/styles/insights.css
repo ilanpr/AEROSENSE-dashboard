@@ -472,23 +472,22 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-column: 1/-1;
-  background: var(--panel-glass);
-  border-radius: 16px;
-  padding: 20px 0;
-  margin: 4px 0 0;
+  gap: 12px;
+  padding: 0;
+  margin: 16px 0 0;
 }
 .panel-metrics > div {
   min-width: 0;
-  padding: 0 24px;
+  padding: 16px 20px;
+  border: 1px solid var(--panel-rule);
+  border-radius: 15px;
+  background: var(--panel-glass);
 }
 .insight-lead > .panel-metrics {
   margin-bottom: 24px;
 }
 .panel-metrics:not(:has(> div:nth-child(3))) {
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-}
-.panel-metrics > div + div {
-  border-left: 1px solid var(--panel-rule);
 }
 .panel-metrics dt {
   font-size: 11px;
@@ -754,6 +753,13 @@
   color: var(--insight-ink);
   background: var(--insight-paper);
 }
+.sensor-select--light {
+  color: var(--insight-muted);
+}
+.sensor-select--light select {
+  color: var(--insight-ink);
+  border-bottom-color: var(--line);
+}
 .panel-link {
   display: inline-flex;
   align-items: center;
@@ -1003,11 +1009,12 @@
   .panel-metrics,
   .insights-compact .panel-metrics {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    padding: 15px 0;
-    margin-top: 8px;
+    gap: 8px;
+    padding: 0;
+    margin-top: 12px;
   }
   .panel-metrics > div {
-    padding: 0 10px;
+    padding: 13px 10px;
   }
   .panel-metrics dt {
     font-size: 11px;

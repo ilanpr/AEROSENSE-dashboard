@@ -12,7 +12,7 @@ interface Message {
   text: string;
 }
 const suggestions = [
-  "Cuaca Surabaya hari ini?",
+  "Cuaca di titik robot hari ini?",
   "Cara mengurangi polusi?",
   "Kabar karhutla di Indonesia?",
 ];

@@ -6,10 +6,11 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
   const uid = "00000000-0000-4000-8000-000000000001",
     other = "00000000-0000-4000-8000-000000000002";
   const area = {
-    id: "surabaya",
-    name: "Wilayah Kota Surabaya",
-    latitude: -7.24917,
-    longitude: 112.75083,
+    id: "node_n1",
+    source_node_id: "n1",
+    name: "Node asli",
+    latitude: -7.1,
+    longitude: 112.1,
     enabled: true,
   };
   const fact = {
@@ -93,8 +94,9 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
       ];
     }
     if (url.pathname === "/rest/v1/ae_environment_areas")
-      output = url.searchParams.get("id") === "eq.surabaya" ? [area] : [];
-    if (url.pathname === "/rest/v1/ae_environment_area_cache") output = cache;
+      output = url.searchParams.get("source_node_id") === "eq.n1" ? [area] : [];
+    if (url.pathname === "/rest/v1/ae_environment_area_cache")
+      output = url.searchParams.get("area_id") === "eq.node_n1" ? cache : [];
     if (url.pathname === "/rest/v1/ae_disaster_news_cache") output = [{
       provider:"gdacs", last_success_at:new Date().toISOString(), last_error:null,
       items:[{id:"idn",country_code:"IDN",url:"https://www.gdacs.org/report.aspx?eventid=1",published_at:new Date().toISOString(),title:"Indonesia",metrics:[]}],
@@ -132,10 +134,12 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     assert.equal(config.supabase_publishable_key, "public-test");
     assert(!JSON.stringify(config).includes("private-test"));
     assert(!JSON.stringify(config).includes("internal-test"));
-    const publicResponse = await fetch(base + "/v1/environment");
+    const publicResponse = await fetch(base + "/v1/environment?node_id=n1", auth);
     assert.equal(publicResponse.status, 200);
     assert.equal(publicResponse.headers.get("cache-control"), "no-store");
     const hub = await publicResponse.json();
+    assert.equal(hub.node.id, "n1");
+    assert.equal(hub.area.id, "node_n1");
     assert.equal(hub.providers[0].facts.length, 1);
     assert.equal(hub.providers[0].facts[0].stale, true);
     assert.deepEqual(hub.providers[1].facts, []);
@@ -145,13 +149,14 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     assert.equal(news.items[0].country_code,"IDN");
     assert(!JSON.stringify(news).includes("private-test"));
     assert.equal(
-      (await fetch(base + "/v1/environment?area_id=disabled")).status,
-      404,
+      (await fetch(base + "/v1/environment?node_id=n2", auth)).status,
+      403,
     );
     assert.equal(
-      (await fetch(base + "/v1/environment?area_id=bad%26filter")).status,
+      (await fetch(base + "/v1/environment?node_id=bad%26filter", auth)).status,
       400,
     );
+    assert.equal((await fetch(base + "/v1/environment?node_id=n1")).status, 401);
     assert.equal((await fetch(base + "/v1/dashboard")).status, 401);
     const dash = await (await fetch(base + "/v1/dashboard", auth)).json();
     assert.equal(dash.nodes[0].latitude, -7.1);

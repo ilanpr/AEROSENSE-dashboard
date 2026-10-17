@@ -2,7 +2,7 @@ import { Radio, CloudSun, Newspaper } from "lucide-react";
 
 const sources = [
   {icon: Radio, title: "Sensor AEROSENSE", detail: "Pembacaan node yang Anda pilih."},
-  {icon: CloudSun, title: "Lingkungan Surabaya", detail: "Cuaca, udara, tanah, dan sungai."},
+  {icon: CloudSun, title: "Data lingkungan", detail: "Cuaca, udara, tanah, dan sungai di titik robot."},
   {icon: Newspaper, title: "Bencana Indonesia", detail: "Berita dan pantauan dari sumber publik."},
 ];
 

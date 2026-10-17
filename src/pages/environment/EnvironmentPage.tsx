@@ -15,9 +15,10 @@ import {
   Clock3,
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
+import { useAuth } from "@/hooks/useAuth";
 import { DataState } from "@/components/shared/DataState";
 import { DisasterNews } from "@/components/environment/DisasterNews";
-import { dateLabel, type EnvironmentResponse } from "@/types/live.types";
+import { dateLabel, type EnvironmentResponse, type LiveNode } from "@/types/live.types";
 import "@/styles/insights.css";
 import {
   Atmosphere,
@@ -45,12 +46,19 @@ const periodLabel: Record<string, string> = {
 
 export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
   const Heading = compact ? "h2" : "h1";
-  const { data, error, loading, refresh } = useLiveData<EnvironmentResponse>(
-    "/v1/environment",
+  const { user, isLoading: authLoading } = useAuth();
+  const dashboard = useLiveData<{ nodes: LiveNode[] }>(
+    user ? "/v1/dashboard" : null,
     60000,
-    false,
   );
+  const nodes = dashboard.data?.nodes || [];
   const [params, setParams] = useSearchParams();
+  const node = nodes.find((n) => n.id === params.get("node_id")) || nodes[0];
+  const { data, error, loading, refresh } = useLiveData<EnvironmentResponse>(
+    node ? `/v1/environment?node_id=${encodeURIComponent(node.id)}` : null,
+    60000,
+  );
+  const pageLoading = authLoading || dashboard.loading || (!!node && loading);
   const category = categories.some((c) => c.id === params.get("topic"))
     ? params.get("topic")!
     : "weather";
@@ -92,17 +100,35 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
       <header className="insights-heading">
         <div>
           <Heading>
-            {compact
-              ? "Lingkungan Surabaya"
-              : "Lingkungan Surabaya"}
+            {node ? `Lingkungan · ${node.name}` : "Lingkungan robot"}
           </Heading>
           <p>
             <MapPin size={15} aria-hidden="true" />
-            {data?.area.name || "Surabaya"}
-
+            {node
+              ? `${node.latitude.toFixed(4)}, ${node.longitude.toFixed(4)} · mengikuti titik node`
+              : "Pilih titik robot"}
           </p>
         </div>
         <div className="live-actions">
+          {!compact && nodes.length > 0 && (
+            <label className="sensor-select sensor-select--light">
+              <MapPin size={15} aria-hidden="true" />
+              <span className="sr-only">Pilih titik robot</span>
+              <select
+                aria-label="Pilih titik robot"
+                value={node?.id || ""}
+                onChange={(event) => {
+                  const next = new URLSearchParams(params);
+                  next.set("node_id", event.target.value);
+                  setParams(next);
+                }}
+              >
+                {nodes.map((item) => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
           {compact && (
             <Link className="insight-text-link" to="/environment">
               Jelajahi hub <ArrowUpRight size={16} />
@@ -136,10 +162,12 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           ))}
         </div>
       )}
-      {loading && !data ? (
+      {pageLoading && !data ? (
         <DataState loading />
-      ) : error && !data ? (
-        <DataState error={error} retry={refresh} />
+      ) : (dashboard.error || error) && !data ? (
+        <DataState error={dashboard.error || error} retry={() => { dashboard.refresh(); refresh(); }} />
+      ) : !nodes.length ? (
+        <DataState empty="Belum ada titik robot yang bisa dipantau." />
       ) : !selected ? (
         <DataState empty="Ringkasan belum siap. Coba perbarui beberapa saat lagi." />
       ) : (
@@ -240,7 +268,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             <div className="insight-secondary">
               <Link
                 className="live-button"
-                to={`/aerobot?question=${encodeURIComponent(`Jelaskan kondisi ${activeCategory?.label.toLowerCase()} di sekitar Surabaya dari informasi publik terbaru.`)}`}
+                to={`/aerobot?question=${encodeURIComponent(`Jelaskan kondisi ${activeCategory?.label.toLowerCase()} di sekitar titik ${node?.name || "robot"} dari informasi publik terbaru.`)}`}
               >
                 Tanya AERO-BOT <ArrowUpRight size={16} />
               </Link>
@@ -329,7 +357,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
               <ChevronDown size={18} />
             </summary>
             <div className="insight-detail-body">
-              <p>Data publik memakai acuan Surabaya. Sensor AEROSENSE tetap mengikuti lokasi asli node. Kategori udara memakai US AQI, bukan ISPU.</p>
+              <p>Data publik mengikuti koordinat node yang dipilih. Sumber dan waktu pembaruan tercantum di tiap data. Kategori udara memakai US AQI, bukan ISPU.</p>
               <ul className="insight-source-list">
                 {data?.providers.map((p) => {
                   const f = p.facts[0];
@@ -363,7 +391,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 })}
               </ul>
               <p>
-                Titik panas belum memastikan kebakaran. Debit sungai bukan peringatan banjir. Cakupan pantauan: titik panas 50 km dan gempa 300 km dari acuan Surabaya.
+                Titik panas belum memastikan kebakaran. Debit sungai bukan peringatan banjir. Cakupan titik panas 50 km dan gempa 300 km dari titik node.
               </p>
               <p>
                 Lokasi acuan: {data?.area.latitude}, {data?.area.longitude}.

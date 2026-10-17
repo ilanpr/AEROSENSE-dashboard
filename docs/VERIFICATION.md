@@ -30,6 +30,6 @@ Perangkat infrared, mikrofon, speaker, agent mini PC, dan pengiriman WhatsApp me
 - Tampilan hub diperiksa pada lebar 1280 dan 390 piksel tanpa overflow halaman. Jarak kotak angka ke bawah panel 24 piksel. Filter karhutla hanya menampilkan kartu bertipe karhutla.
 - Kartu promosi AERO-BOT dihapus; halaman chat memakai label dan sumber yang singkat.
 - Feed ANTARA/GDACS diambil langsung untuk berita Indonesia; sensor dan cuaca pratinjau tetap sintetis.
-- Migrasi 005 dibuat di Supabase. Pemeriksaan database menunjukkan trigger job, fungsi pemulihan, acuan Surabaya, bucket audio privat dan RLS cache berita tersedia.
+- Migrasi 005 dibuat di Supabase. Migrasi 006 perlu diterapkan agar cache publik mengikuti koordinat node; sampai migrasi dan jadwal Hub dipublikasikan, pembaruan dinamis belum aktif di produksi.
 - Draft Hub, Web, Robot dan WhatsApp di n8n diperbarui melalui UI lalu diekspor kembali untuk memeriksa hasil simpan.
 - Backend Ubuntu belum diperbarui karena login SSH otomatis ditolak. Pengiriman WhatsApp, perangkat fisik dan jalur produksi dari domain belum diuji sampai akhir.

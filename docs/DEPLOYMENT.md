@@ -16,9 +16,9 @@ Jangan menimpa file .env server yang sudah berisi credential. Salin contoh hanya
 
 ## 2. Database
 
-Instalasi baru: jalankan SQL di server/supabase sesuai urutan 001 sampai 005 melalui SQL Editor Supabase. 001 dan 002 berasal dari paket otomasi sebelumnya.
+Instalasi baru: jalankan SQL di server/supabase sesuai urutan 001 sampai 006 melalui SQL Editor Supabase. 001 dan 002 berasal dari paket otomasi sebelumnya.
 
-Instalasi yang sudah memiliki tabel ae_: periksa struktur terlebih dahulu. Jangan menjalankan ulang 001 karena tabel dan fungsi dasar sudah ada. 003 menyiapkan cache publik serta acuan Surabaya; tidak mengubah koordinat ae_nodes. 004 memasang event job. Fungsi ae_ready_kinds sudah disertakan pada 002. Migrasi 005 menyiapkan cache berita bencana nasional.
+Instalasi yang sudah memiliki tabel ae_: periksa struktur terlebih dahulu. Jangan menjalankan ulang 001 karena tabel dan fungsi dasar sudah ada. 003 menyiapkan cache API publik, 004 memasang event job, 005 menyiapkan cache berita bencana, dan 006 mengikat cache lingkungan ke koordinat tiap node serta menonaktifkan acuan kota lama dan membuang cache-nya. Fungsi ae_ready_kinds sudah disertakan pada 002.
 
 Berikan akses lokasi secara sengaja melalui ae_members. Ambil user_id dari Supabase Auth dan location_id dari ae_nodes yang sebenarnya. Pendaftaran akun tidak memberikan peran admin.
 
@@ -29,7 +29,6 @@ Backend sebelumnya berada di ~/aerosense-api. Cadangkan source dan .env sebelum 
 Salin isi direktori server dari checkout ini ke direktori backend tersebut, dengan mempertahankan .env lama. Tambahkan:
 
 ```env
-ENVIRONMENT_AREA_ID=surabaya
 DISASTER_NEWS_ENABLED=true
 WEB_ORIGINS=https://aerosense.me
 ```
@@ -52,10 +51,10 @@ Dari root checkout:
 ```bash
 docker compose up -d --build
 curl --fail http://127.0.0.1:8082/api/v1/config
-curl --fail http://127.0.0.1:8082/api/v1/environment
+curl --fail -H 'Authorization: Bearer USER_ACCESS_TOKEN' 'http://127.0.0.1:8082/api/v1/environment?node_id=node-01'
 ```
 
-Config harus hanya menampilkan URL Supabase, publishable key, area dan robot default. Endpoint environment memerlukan cache yang sudah diisi oleh Hub lingkungan. Jika belum ada, jalankan hub secara manual dahulu.
+Config hanya menampilkan URL Supabase, publishable key, dan robot default. Endpoint environment memerlukan login, akses node, serta cache yang sudah diisi Hub. ID node di query harus sesuai dengan ID pada `ae_nodes`.
 
 Container web baru menggunakan port host 127.0.0.1:8082. Dashboard lama di port 80 tidak perlu dihentikan untuk pengujian ini.
 
@@ -67,7 +66,7 @@ Jika Cloudflare Tunnel berjalan sebagai service host, setelah pengujian berhasil
 - Worker Jawaban website menerima kind web_chat.
 - Worker robot menerima robot_chat.
 - Worker Data udara menerima telemetry.
-- Hub lingkungan menggunakan environment_area_id surabaya dan dijalankan terjadwal.
+- Hub lingkungan mengambil koordinat semua node aktif dari `ae_nodes` melalui `ae_environment_areas` dan dijalankan terjadwal.
 - Maintenance dan pemulihan job tetap aktif.
 - Execute Sub-workflow mengarah ke workflow ID pada instance saat ini, bukan ID instance lama.
 
@@ -75,9 +74,9 @@ Pengujian manual worker tidak membuktikan trigger produksi aktif. Pastikan Contr
 
 ## 6. Uji dari web
 
-1. Buka /environment tanpa login. Periksa sumber dan waktu data.
+1. Buka /environment. Berita Indonesia tampil untuk pengunjung; masuk untuk melihat data lingkungan di node yang Anda boleh akses.
 2. Login dengan akun Supabase yang sudah dikonfirmasi.
-3. Buka /nodes. Node yang tampil harus sesuai ae_members, dengan koordinat asli.
+3. Pilih node pada hub. Nama dan koordinat harus mengikuti pilihan dan sesuai `ae_nodes`.
 4. Jika sensor belum mengirim, nilai tetap kosong. Jangan menambahkan nilai contoh ke tabel produksi.
 5. Buka /aerobot dan kirim pertanyaan umum lingkungan tanpa memilih node.
 6. Periksa satu job web_chat pada ae_jobs. Status bergerak dari pending ke running lalu done. Jawaban ada di result.text.

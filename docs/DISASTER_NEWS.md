@@ -4,7 +4,7 @@
 
 Judul, lokasi, tanggal, sumber dan angka yang memang tersedia. Berita ANTARA didahulukan; notifikasi model GDACS tampil sebagai pelengkap. Pengunjung dapat memfilter karhutla, banjir dan gempa. Tautan bantuan menuju PMI dan BNPB.
 
-Data lingkungan tetap memakai acuan Surabaya. Berita bencana mencakup Indonesia dan tidak dimasukkan ke pembacaan sensor, GRU, atau dataset pelatihan.
+Data lingkungan mengikuti koordinat node yang dipilih. Berita bencana mencakup Indonesia dan tidak dimasukkan ke pembacaan sensor, GRU, atau dataset pelatihan.
 
 ## Sumber tanpa API key
 
@@ -33,7 +33,11 @@ Backend mulai + setiap 15 menit
 
 Tidak ada workflow n8n baru untuk polling berita. Satu timer backend memperbarui cache bersama sehingga trafik pengguna tidak menggandakan panggilan feed atau memakai token Gemini. Panggilan bersamaan dalam proses yang sama digabungkan.
 
-Cache menyimpan satu baris per feed: provider, items, last_attempt_at, last_success_at, refresh_after dan last_error. Akses langsung hanya untuk service-role backend; browser memakai endpoint publik yang sudah disaring. Daftar dibatasi 24 item dari pembaruan tujuh hari terakhir. Cache bukan arsip berita yang terus membesar.
+Cache menyimpan satu baris per feed: provider, items, last_attempt_at, last_success_at, refresh_after dan last_error. Setiap pengambilan memangkas item lebih lama dari tujuh hari, termasuk saat feed gagal. Akses langsung hanya untuk service-role backend; browser memakai endpoint publik yang sudah disaring. Daftar dibatasi 24 item. Cache bukan arsip berita yang terus membesar.
+
+## Cache lokasi node
+
+Migrasi `006_robot_environment_locations.sql` membuat satu area lingkungan per node dari koordinat `ae_nodes`. Saat lokasi berubah, cache lama untuk node itu dihapus dan pengambilan berikutnya memakai koordinat baru. Saat node dimatikan, cache titik tersebut dihapus. Tabel cache memakai kunci gabungan area dan penyedia, jadi pembaruan menimpa baris lama. Penghapusan node menghapus area beserta cache lewat foreign key.
 
 Jika sumber gagal, hasil terakhir dipertahankan dan diberi status tertunda setelah satu jam. Item melewati tujuh hari tidak tampil. Respons dibatasi 1,5 MB, timeout 12 detik per feed, URL sumber tetap, dan XML DTD/entity ditolak.
 

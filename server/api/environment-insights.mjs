@@ -77,7 +77,7 @@ export function summarizeEnvironment(facts, now = Date.now()) {
   )
     add(
       "weather",
-      "Hujan di sekitar Surabaya",
+      "Hujan di sekitar titik robot",
       "Model wilayah menunjukkan hujan pada interval terbaru.",
       "Siapkan payung sebelum keluar.",
       [
@@ -265,8 +265,8 @@ export function summarizeEnvironment(facts, now = Date.now()) {
   if (quakes.length)
     add(
       "earthquake",
-      "Gempa sekitar Surabaya",
-      "Daftar ini memuat catatan M5+ yang tercakup di sekitar area.",
+      "Gempa sekitar titik robot",
+      "Daftar ini memuat catatan M5+ yang tercakup di sekitar koordinat node.",
       "Buka rincian untuk waktu kejadian dan informasi resminya.",
       quakes.slice(0, 2),
       "neutral",
