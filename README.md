@@ -67,6 +67,8 @@ Panduan lengkap: [DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 Penjelasan ringkasan n8n, urutan data, dan pembatasan audit: [ENVIRONMENT_INSIGHTS.md](docs/ENVIRONMENT_INSIGHTS.md).
 
+Panel bergambar, pemilihan kondisi, dan sumber animasi: [ENVIRONMENT_VISUALS.md](docs/ENVIRONMENT_VISUALS.md).
+
 - Backend memakai `server/compose.yaml`, hostname Docker `aerosense-api:8080`.
 - Web memakai `compose.yaml` di root dan proxy nginx dalam `deploy/nginx.conf`.
 - Keduanya berada pada network `n8n_default`.

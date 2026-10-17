@@ -15,10 +15,15 @@ const output =
   "// Ringkasan singkat dari fakta yang masih berlaku. Tidak memakai Gemini.\n/* oxlint-disable no-control-regex */\n" +
   summarizeEnvironment.toString() +
   "\n" +
-  original.replace(
-    marker,
-    "facts:ok?facts:[],insights:summarizeEnvironment(ok?facts:[],now).filter(i=>i.available),summary_method:'rules-v1',status:",
-  );
+  original
+    .replace(
+      "const labels={temperature_2m:",
+      "const labels={weather_code:['Kode kondisi cuaca (WMO)',''],temperature_2m:",
+    )
+    .replace(
+      marker,
+      "facts:ok?facts:[],insights:summarizeEnvironment(ok?facts:[],now).filter(i=>i.available),summary_method:'rules-v1',status:",
+    );
 new Function("$json", "$", output);
 await mkdir(new URL("../../n8n/", import.meta.url), { recursive: true });
 await writeFile(target, output);

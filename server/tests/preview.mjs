@@ -26,7 +26,7 @@ const token =
   ".fixture";
 const area = {
   id: "surabaya",
-  name: "Wilayah Kota Surabaya",
+  name: "Surabaya · Pratinjau data contoh",
   latitude: -7.24917,
   longitude: 112.75083,
   coordinate_source: "city_reference",
@@ -47,6 +47,7 @@ const facts = [
   ["weather", "Suhu udara", 30, "°C"],
   ["weather", "Kelembapan udara", 72, "%"],
   ["weather", "Kecepatan angin", 12, "km/jam"],
+  ["weather", "Kode kondisi cuaca (WMO)", 0, ""],
   ["soil", "Estimasi kadar air tanah 0–1 cm", 0.34, "m³/m³"],
   ["air_quality", "Estimasi PM2.5 wilayah", 16, "µg/m³"],
   ["air_quality", "Estimasi AQI US wilayah, bukan ISPU", 54, "indeks US AQI"],

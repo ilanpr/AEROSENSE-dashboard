@@ -1,10 +1,10 @@
-import { SensorWorkspace } from "@/components/live/SensorWorkspace";
+import { SensorOverview } from "@/components/live/SensorOverview";
 import { EnvironmentPage } from "@/pages/environment/EnvironmentPage";
 export function DashboardPage() {
   return (
     <div className="space-y-8">
+      <SensorOverview />
       <EnvironmentPage compact />
-      <SensorWorkspace />
     </div>
   );
 }

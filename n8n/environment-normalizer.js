@@ -53,19 +53,39 @@ function summarizeEnvironment(facts, now = Date.now()) {
   }
   const temp = match(current, "weather", /^Suhu udara$/i);
   const rain = match(current, "weather", /Presipitasi interval/i);
+  const weatherCode = match(current, "weather", /Kode kondisi cuaca \(WMO\)/i);
   const today = fresh
     .filter(
       (f) => f.kind === "forecast" && f.valid_at && day(time(f)) === day(now),
     )
     .sort((a, b) => time(a) - time(b));
   const chance = match(today, "weather", /peluang presipitasi/i);
-  if (rain && rain.value > 0)
+  if (weatherCode && [95, 96, 99].includes(weatherCode.value))
+    add(
+      "weather",
+      "Ada potensi hujan petir",
+      "Model cuaca wilayah menunjukkan kondisi hujan disertai petir.",
+      "Tunda aktivitas di area terbuka saat petir terdengar.",
+      [weatherCode, ...(temp ? [temp] : [])],
+      "warning",
+    );
+  else if (
+    (rain && rain.value > 0) ||
+    (weatherCode &&
+      [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(
+        weatherCode.value,
+      ))
+  )
     add(
       "weather",
       "Ada hujan dalam estimasi cuaca",
       "Model wilayah menunjukkan hujan pada interval terbaru.",
       "Siapkan payung sebelum keluar.",
-      [rain, ...(temp ? [temp] : [])],
+      [
+        ...(rain ? [rain] : []),
+        ...(weatherCode ? [weatherCode] : []),
+        ...(temp ? [temp] : []),
+      ],
       "notice",
     );
   else if (temp)
@@ -328,7 +348,7 @@ function normalizeResponse(response, request, now = Date.now()) {
     if(!error)try{
       if(request.provider==='openmeteo_weather'){
         if(!d.current||!d.hourly)throw Error('Data cuaca kosong');
-        const labels={temperature_2m:['Suhu udara','°C'],relative_humidity_2m:['Kelembapan udara','%'],precipitation:['Presipitasi interval saat ini','mm'],wind_speed_10m:['Kecepatan angin','km/jam']};
+        const labels={weather_code:['Kode kondisi cuaca (WMO)',''],temperature_2m:['Suhu udara','°C'],relative_humidity_2m:['Kelembapan udara','%'],precipitation:['Presipitasi interval saat ini','mm'],wind_speed_10m:['Kecepatan angin','km/jam']};
         for(const [k,[label,unit]] of Object.entries(labels))add(k,'weather',label,d.current[k],unit,d.current.time,'model');
         const hi=d.hourly.time.findLastIndex(t=>Date.parse(iso(t))<=now);
         if(hi>=0){add('soil_t','soil','Estimasi suhu tanah permukaan',d.hourly.soil_temperature_0cm?.[hi],'°C',d.hourly.time[hi],'model');add('soil_m','soil','Estimasi kadar air tanah 0–1 cm',d.hourly.soil_moisture_0_to_1cm?.[hi],'m³/m³',d.hourly.time[hi],'model');}

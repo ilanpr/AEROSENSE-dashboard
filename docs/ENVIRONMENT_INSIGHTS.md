@@ -4,16 +4,16 @@ Branch: `feat/environment-insights`, melanjutkan integrasi backend sebelumnya.
 
 ## Yang dilihat pengguna
 
-Beranda menampilkan arti kondisi terlebih dahulu, diikuti saran singkat. Rincian angka dapat dibuka dari Hub lingkungan. Panel **Sumber & cara membaca data** memuat atribusi, tautan penyedia, waktu pembaruan, lokasi acuan, dan batas interpretasi.
+Beranda mengutamakan pembacaan node AEROSENSE, diikuti informasi lingkungan publik. Setiap panel menampilkan kesimpulan singkat, angka penting dan langkah yang bisa dilakukan. Panel **Sumber & cara membaca data** memuat atribusi, tautan penyedia, waktu pembaruan, lokasi acuan, dan batas interpretasi.
 
-Data yang kedaluwarsa tidak menjadi dasar ringkasan kondisi saat ini. Prakiraan diberi label prakiraan; catatan gempa dan biodiversitas tetap menjadi referensi. Perangkat yang belum mengirim pembaruan berada di panel terpisah pada beranda.
+Data yang kedaluwarsa tidak menjadi dasar ringkasan kondisi saat ini. Prakiraan diberi label prakiraan; catatan gempa dan biodiversitas tetap menjadi referensi. Jika node belum mengirim pembaruan, panel utama menampilkan status menunggu dengan angka kosong. Informasi publik tidak menjadi pengganti nilai sensor.
 
-Animasi memakai CSS dan ikon yang sudah tersedia. Gerak berhenti setelah beberapa siklus dan mengikuti pengaturan Reduce Motion. Tidak ada library animasi tambahan.
+Ilustrasi 3D tersedia per kondisi. Animasi memakai CSS dan video latar ringan yang dirender dengan Remotion. Web tidak memuat Remotion Player. Gerak bisa dijeda, berhenti saat panel tidak terlihat, dan mengikuti pengaturan Reduce Motion. Detail aset ada di [ENVIRONMENT_VISUALS.md](ENVIRONMENT_VISUALS.md).
 
 ## Alur n8n ke web
 
 1. Node HTTP mengambil data penyedia sesuai jadwal cache yang sudah ada.
-2. **Rapikan fakta dan sumber** tetap memeriksa koordinat, format, waktu, dan nilai. Node yang sama menambahkan `payload.insights` dan `payload.summary_method`.
+2. **Rapikan fakta dan sumber** tetap memeriksa koordinat, format, waktu, dan nilai. Node yang sama menambahkan `payload.insights` dan `payload.summary_method`, serta mempertahankan kode cuaca WMO agar ilustrasi sesuai data.
 3. **Simpan cache lingkungan Supabase** menyimpan payload ke `ae_environment_area_cache`. Tidak diperlukan tabel atau migrasi baru.
 4. `GET /v1/environment` memeriksa kembali koordinat dan masa berlaku saat cache dibaca. API menyusun ringkasan lintas penyedia, mengurutkan rincian terbaru lebih dulu, dan memberikan hasil kepada web.
 
@@ -72,7 +72,7 @@ Tambahkan origin preview pada `WEB_ORIGINS` bila belum ada. Lihat [DEPLOYMENT.md
 
 ## Verifikasi pengembangan, 17 Oktober 2026
 
-- 13 tes Node lulus, termasuk batas kategori AQI, penolakan data lama, urutan rincian, eksekusi kode n8n, penolakan audit bagi viewer/operator/auditor, dan penolakan admin pada lokasi lain.
+- 16 tes Node lulus, termasuk angka penting yang masih berlaku, pemilihan gambar cuaca, hysteresis peringatan sensor, kategori AQI, penolakan data lama, eksekusi kode n8n, penolakan audit bagi viewer/operator/auditor, dan penolakan admin pada lokasi lain.
 - Pemeriksaan browser memakai data sintetis lokal. Menu audit tersembunyi untuk viewer dan URL audit menampilkan penolakan. Seluruh kategori hub dapat dipilih; rincian dan atribusi tersedia melalui panel yang dapat dibuka.
 - Node pada `flow.aerosense.me` diperbarui dan alur lengkap diuji manual. Cache Supabase nyata terkonfirmasi menyimpan `rules-v1` pada Open-Meteo cuaca, Open-Meteo udara, FIRMS, dan BMKG gempa. Tidak semua penyedia menghasilkan ringkasan baru pada uji ini.
 - Workflow Hub masih berstatus tidak aktif saat diperiksa. Uji manual tidak mengaktifkan jadwal otomatis.

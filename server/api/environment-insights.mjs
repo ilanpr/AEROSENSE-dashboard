@@ -52,19 +52,39 @@ export function summarizeEnvironment(facts, now = Date.now()) {
   }
   const temp = match(current, "weather", /^Suhu udara$/i);
   const rain = match(current, "weather", /Presipitasi interval/i);
+  const weatherCode = match(current, "weather", /Kode kondisi cuaca \(WMO\)/i);
   const today = fresh
     .filter(
       (f) => f.kind === "forecast" && f.valid_at && day(time(f)) === day(now),
     )
     .sort((a, b) => time(a) - time(b));
   const chance = match(today, "weather", /peluang presipitasi/i);
-  if (rain && rain.value > 0)
+  if (weatherCode && [95, 96, 99].includes(weatherCode.value))
+    add(
+      "weather",
+      "Ada potensi hujan petir",
+      "Model cuaca wilayah menunjukkan kondisi hujan disertai petir.",
+      "Tunda aktivitas di area terbuka saat petir terdengar.",
+      [weatherCode, ...(temp ? [temp] : [])],
+      "warning",
+    );
+  else if (
+    (rain && rain.value > 0) ||
+    (weatherCode &&
+      [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(
+        weatherCode.value,
+      ))
+  )
     add(
       "weather",
       "Ada hujan dalam estimasi cuaca",
       "Model wilayah menunjukkan hujan pada interval terbaru.",
       "Siapkan payung sebelum keluar.",
-      [rain, ...(temp ? [temp] : [])],
+      [
+        ...(rain ? [rain] : []),
+        ...(weatherCode ? [weatherCode] : []),
+        ...(temp ? [temp] : []),
+      ],
       "notice",
     );
   else if (temp)

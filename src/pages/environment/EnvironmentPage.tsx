@@ -1,7 +1,6 @@
 import { Link, useSearchParams } from "react-router-dom";
 import {
   CloudSun,
-  CloudRain,
   Wind,
   Sprout,
   Flame,
@@ -14,18 +13,20 @@ import {
   MapPin,
   ShieldCheck,
   ChevronDown,
-  Cloud,
-  Sun,
   Clock3,
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import { DataState } from "@/components/shared/DataState";
-import {
-  dateLabel,
-  type EnvironmentResponse,
-  type EnvironmentInsight,
-} from "@/types/live.types";
+import { dateLabel, type EnvironmentResponse } from "@/types/live.types";
 import "@/styles/insights.css";
+import {
+  Atmosphere,
+  ConditionScene,
+} from "@/components/environment/ConditionScene";
+import {
+  conditionScene,
+  environmentHighlights,
+} from "@/lib/environment-presentation";
 
 const categories = [
   { id: "weather", label: "Cuaca", icon: CloudSun },
@@ -43,36 +44,8 @@ const periodLabel: Record<string, string> = {
   reference: "Catatan referensi",
 };
 
-function EnvironmentVisual({ insight }: { insight: EnvironmentInsight }) {
-  const type = categories.find((c) => c.id === insight.category)!;
-  const Icon =
-    insight.category === "weather" && /hujan/i.test(insight.title)
-      ? CloudRain
-      : type.icon;
-  return (
-    <div
-      className={`insight-visual visual-${insight.category} ${!insight.available ? "visual-unavailable" : ""}`}
-      aria-hidden="true"
-    >
-      {insight.category === "weather" ? (
-        <>
-          <Sun className="weather-sun" />
-          <Cloud className="weather-cloud cloud-back" />
-          <Icon className="weather-main" />
-        </>
-      ) : (
-        <>
-          <span className="visual-orbit" />
-          <Icon className="visual-main" />
-          <type.icon className="visual-echo" />
-        </>
-      )}
-      <span className="visual-ground" />
-    </div>
-  );
-}
-
 export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
+  const Heading = compact ? "h2" : "h1";
   const { data, error, loading, refresh } = useLiveData<EnvironmentResponse>(
     "/v1/environment",
     60000,
@@ -110,6 +83,8 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
         i.category !== selected?.category,
     )
     .slice(0, 3);
+  const highlights = selected ? environmentHighlights(selected, facts) : [];
+  const scene = selected ? conditionScene(selected, facts) : "cloudy";
   const activeCategory = categories.find((c) => c.id === selected?.category);
   return (
     <section
@@ -117,11 +92,11 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
     >
       <header className="insights-heading">
         <div>
-          <h1>
+          <Heading>
             {compact
-              ? "Bagaimana lingkungan hari ini?"
+              ? "Sekilas lingkungan sekitar."
               : "Kenali lingkungan sekitar."}
-          </h1>
+          </Heading>
           <p>
             <MapPin size={15} aria-hidden="true" />
             {data?.area.name || "Surabaya"}
@@ -177,8 +152,9 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           )}
           <article
             key={selected.category}
-            className={`insight-lead tone-${selected.tone}`}
+            className={`insight-lead panel-${scene} tone-${selected.tone}`}
           >
+            <Atmosphere />
             <div className="insight-message">
               <span
                 className={`insight-status ${selected.available ? "" : "status-pending"}`}
@@ -206,7 +182,29 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 </small>
               )}
             </div>
-            <EnvironmentVisual insight={selected} />
+            <ConditionScene scene={scene} muted={!selected.available} />
+            {highlights.length > 0 && (
+              <dl className="panel-metrics">
+                {highlights.map((h) => (
+                  <div key={h.label}>
+                    <dt>{h.label}</dt>
+                    <dd>
+                      {h.value}
+                      <small>{h.unit}</small>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            <div className="panel-caption">
+              {selected.category === "air_quality"
+                ? "Estimasi wilayah · US AQI, bukan ISPU"
+                : selected.category === "flood"
+                  ? "Prakiraan model, bukan pengukuran di sungai"
+                  : selected.category === "fire"
+                    ? "Deteksi satelit, bukan konfirmasi kebakaran"
+                    : "Informasi wilayah · pelengkap pembacaan node"}
+            </div>
           </article>
           {compact && (
             <div className="insight-glances" aria-label="Sekilas lingkungan">
@@ -218,12 +216,25 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                     to={`/environment?topic=${i.category}`}
                     className={`insight-glance tone-${i.tone}`}
                   >
-                    <div>
+                    <div className="glance-heading">
                       <c.icon size={18} aria-hidden="true" />
                       <span>{c.label}</span>
                       <ArrowUpRight size={15} />
                     </div>
+                    <ConditionScene
+                      scene={conditionScene(i, facts)}
+                      muted={!i.available}
+                      small
+                    />
                     <h3>{i.title}</h3>
+                    {environmentHighlights(i, facts)
+                      .slice(0, 1)
+                      .map((h) => (
+                        <div className="glance-number" key={h.label}>
+                          <strong>{h.value}</strong>
+                          <span>{h.unit}</span>
+                        </div>
+                      ))}
                     <small>
                       {i.available
                         ? periodLabel[i.period]
@@ -252,7 +263,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                   if (details) details.open = true;
                 }}
               >
-                Lihat angka & waktu data <ChevronDown size={16} />
+                Lihat rincian data <ChevronDown size={16} />
               </a>
             </div>
           )}
@@ -334,9 +345,9 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 masing-masing node.
               </p>
               <p>
-                Ringkasan dibuat otomatis dari data yang masih berlaku, tanpa
-                panggilan AI tambahan. Kategori udara memakai US AQI, bukan
-                ISPU. Prakiraan tidak ditampilkan sebagai pengukuran langsung.
+                Ringkasan hanya memakai data yang masih berlaku. Kategori udara
+                memakai US AQI, bukan ISPU. Prakiraan tidak ditampilkan sebagai
+                pengukuran langsung.
               </p>
               <ul className="insight-source-list">
                 {data?.providers.map((p) => {
