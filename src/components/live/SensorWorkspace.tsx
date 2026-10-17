@@ -21,12 +21,18 @@ export function SensorWorkspace({
   mode = "overview",
 }: {
   mode?:
-    "overview" | "map" | "nodes" | "detail" | "analytics" | "alerts" | "report";
+    | "overview"
+    | "map"
+    | "nodes"
+    | "detail"
+    | "analytics"
+    | "alerts"
+    | "report";
 }) {
   const { user, isLoading, error: authError } = useAuth();
   const { id } = useParams();
   const dashboard = useLiveData<{ nodes: LiveNode[]; refreshed_at: string }>(
-    user ? "/v1/dashboard" : null,
+    user ? (mode === "report" ? "/v1/esg/report" : "/v1/dashboard") : null,
   );
   const [selected, setSelected] = useState("");
   const [metric, setMetric] = useState("dust_ug_m3");
@@ -42,7 +48,7 @@ export function SensorWorkspace({
   const nodeQuery = node ? "?node_id=" + encodeURIComponent(node.id) : "";
   const history = useLiveData<{ readings: Reading[] }>(
     node && ["analytics", "detail", "report"].includes(mode)
-      ? "/v1/history" + nodeQuery
+      ? (mode === "report" ? "/v1/esg/report" : "/v1/history") + nodeQuery
       : null,
     60000,
   );
@@ -59,19 +65,17 @@ export function SensorWorkspace({
     detail: node?.name || "Detail node",
     analytics: "Pembacaan dan model GRU",
     alerts: "Peringatan sensor",
-    report: "Laporan pemantauan",
+    report: "Audit ESG",
   }[mode];
-  const chart = [...readings]
-    .reverse()
-    .map((r) => ({
-      time: dateLabel(r.observed_at),
-      reading: r.metrics[metric] ?? null,
-      raw: r.raw_metrics?.[metric] ?? null,
-      gru:
-        r.gru?.target === metric && r.gru.horizon_seconds === 0
-          ? r.gru.value
-          : null,
-    }));
+  const chart = [...readings].reverse().map((r) => ({
+    time: dateLabel(r.observed_at),
+    reading: r.metrics[metric] ?? null,
+    raw: r.raw_metrics?.[metric] ?? null,
+    gru:
+      r.gru?.target === metric && r.gru.horizon_seconds === 0
+        ? r.gru.value
+        : null,
+  }));
   function exportReadings() {
     const blob = new Blob(
       [
@@ -89,6 +93,86 @@ export function SensorWorkspace({
     link.download = "aerosense-" + node!.id + ".json";
     link.click();
     URL.revokeObjectURL(url);
+  }
+  if (mode === "overview") {
+    const fresh = nodes.filter((n) => n.latest?.reading_id && !n.latest.stale);
+    const older = nodes.filter((n) => !fresh.includes(n));
+    return (
+      <section className="sensor-workspace insights-hub">
+        <header className="live-heading">
+          <div>
+            <h2>Sensor di lokasi Anda</h2>
+            <p>Pembacaan langsung dari perangkat AEROSENSE.</p>
+          </div>
+          <Link to="/nodes" className="insight-text-link">
+            Lihat perangkat <ArrowUpRight size={16} />
+          </Link>
+        </header>
+        {isLoading || (user && dashboard.loading && !dashboard.data) ? (
+          <DataState loading />
+        ) : !user ? (
+          <DataState empty="Masuk untuk melihat sensor yang terhubung ke akun Anda." />
+        ) : dashboard.error ? (
+          <DataState error={dashboard.error} retry={dashboard.refresh} />
+        ) : (
+          <>
+            {fresh.length ? (
+              <div className="sensor-summary-list">
+                {fresh.map((n) => (
+                  <div className="sensor-summary-row" key={n.id}>
+                    <MapPin size={20} />
+                    <div>
+                      <strong>{n.name}</strong>
+                      <p>
+                        Pembacaan terbaru tersedia ·{" "}
+                        {dateLabel(n.latest?.observed_at)}
+                      </p>
+                    </div>
+                    <Link
+                      to={`/nodes/${encodeURIComponent(n.id)}`}
+                      className="insight-text-link"
+                    >
+                      Detail <ArrowUpRight size={15} />
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <DataState empty="Belum ada pembacaan sensor yang cukup baru. Informasi wilayah di atas tetap bisa Anda gunakan." />
+            )}
+            {older.length > 0 && (
+              <details className="insight-disclosure">
+                <summary>
+                  <span>Perangkat yang menunggu pembaruan</span>
+                  <span>{older.length}</span>
+                </summary>
+                <div className="sensor-summary-list">
+                  {older.map((n) => (
+                    <div className="sensor-summary-row" key={n.id}>
+                      <MapPin size={18} />
+                      <div>
+                        <strong>{n.name}</strong>
+                        <p>
+                          {n.latest?.reading_id
+                            ? `Pembacaan terakhir ${dateLabel(n.latest.observed_at)}. Data ini sudah lama.`
+                            : "Belum ada pembacaan dari perangkat."}
+                        </p>
+                      </div>
+                      <Link
+                        to={`/nodes/${encodeURIComponent(n.id)}`}
+                        className="insight-text-link"
+                      >
+                        Detail <ArrowUpRight size={15} />
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+          </>
+        )}
+      </section>
+    );
   }
   return (
     <section className="sensor-workspace">

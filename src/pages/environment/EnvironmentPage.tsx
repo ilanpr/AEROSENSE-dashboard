@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   CloudSun,
+  CloudRain,
   Wind,
   Sprout,
   Flame,
@@ -10,11 +10,22 @@ import {
   Activity,
   RefreshCw,
   ArrowUpRight,
+  ArrowRight,
   MapPin,
+  ShieldCheck,
+  ChevronDown,
+  Cloud,
+  Sun,
+  Clock3,
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import { DataState } from "@/components/shared/DataState";
-import { dateLabel, type EnvironmentResponse } from "@/types/live.types";
+import {
+  dateLabel,
+  type EnvironmentResponse,
+  type EnvironmentInsight,
+} from "@/types/live.types";
+import "@/styles/insights.css";
 
 const categories = [
   { id: "weather", label: "Cuaca", icon: CloudSun },
@@ -25,168 +36,359 @@ const categories = [
   { id: "earthquake", label: "Gempa", icon: Activity },
   { id: "biodiversity", label: "Hayati", icon: Leaf },
 ];
+const periodLabel: Record<string, string> = {
+  current: "Estimasi wilayah terbaru",
+  forecast: "Prakiraan",
+  monitoring: "Pantauan satelit 24 jam",
+  reference: "Catatan referensi",
+};
+
+function EnvironmentVisual({ insight }: { insight: EnvironmentInsight }) {
+  const type = categories.find((c) => c.id === insight.category)!;
+  const Icon =
+    insight.category === "weather" && /hujan/i.test(insight.title)
+      ? CloudRain
+      : type.icon;
+  return (
+    <div
+      className={`insight-visual visual-${insight.category} ${!insight.available ? "visual-unavailable" : ""}`}
+      aria-hidden="true"
+    >
+      {insight.category === "weather" ? (
+        <>
+          <Sun className="weather-sun" />
+          <Cloud className="weather-cloud cloud-back" />
+          <Icon className="weather-main" />
+        </>
+      ) : (
+        <>
+          <span className="visual-orbit" />
+          <Icon className="visual-main" />
+          <type.icon className="visual-echo" />
+        </>
+      )}
+      <span className="visual-ground" />
+    </div>
+  );
+}
+
 export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
   const { data, error, loading, refresh } = useLiveData<EnvironmentResponse>(
     "/v1/environment",
     60000,
     false,
   );
-  const [category, setCategory] = useState("weather");
-  const facts = data?.providers.flatMap((p) => p.facts) || [];
-  const selected = facts.filter(
+  const [params, setParams] = useSearchParams();
+  const category = categories.some((c) => c.id === params.get("topic"))
+    ? params.get("topic")!
+    : "weather";
+  const insights = data?.insights || [];
+  const important =
+    insights.find(
+      (i) =>
+        i.category === "air_quality" &&
+        ["warning", "danger"].includes(i.tone) &&
+        i.available,
+    ) ||
+    insights.find((i) => i.category === "weather" && i.available) ||
+    insights.find((i) => i.available && i.period !== "reference") ||
+    insights[0];
+  const selected = compact
+    ? important
+    : insights.find((i) => i.category === category);
+  const facts = data?.facts || data?.providers.flatMap((p) => p.facts) || [];
+  const selectedFacts = facts.filter(
     (f) =>
-      f.category === category ||
-      (category === "soil" && f.category === "soil_profile"),
+      f.category === (selected?.category || category) ||
+      ((selected?.category || category) === "soil" &&
+        f.category === "soil_profile"),
   );
+  const glances = insights
+    .filter(
+      (i) =>
+        ["air_quality", "soil", "fire", "weather"].includes(i.category) &&
+        i.category !== selected?.category,
+    )
+    .slice(0, 3);
+  const activeCategory = categories.find((c) => c.id === selected?.category);
   return (
-    <section className="environment-hub">
-      <header className="live-heading">
+    <section
+      className={`environment-hub insights-hub ${compact ? "insights-compact" : ""}`}
+    >
+      <header className="insights-heading">
         <div>
           <h1>
-            {compact ? "Lingkungan sekitar" : "Hub lingkungan"}{" "}
-            <span>Surabaya</span>
+            {compact
+              ? "Bagaimana lingkungan hari ini?"
+              : "Kenali lingkungan sekitar."}
           </h1>
           <p>
-            Cuaca, udara, tanah, dan informasi lingkungan dalam satu tempat.
+            <MapPin size={15} aria-hidden="true" />
+            {data?.area.name || "Surabaya"}
+            <span>Informasi wilayah</span>
           </p>
         </div>
         <div className="live-actions">
           {compact && (
-            <Link className="live-button secondary" to="/environment">
-              Lihat semua <ArrowUpRight size={15} />
+            <Link className="insight-text-link" to="/environment">
+              Jelajahi hub <ArrowUpRight size={16} />
             </Link>
           )}
           <button
             className="live-icon-button"
             onClick={refresh}
+            disabled={loading}
             aria-label="Perbarui informasi lingkungan"
           >
-            <RefreshCw size={17} />
+            <RefreshCw size={17} className={loading ? "refreshing" : ""} />
           </button>
         </div>
       </header>
-      {data && (
-        <div className="hub-location">
-          <MapPin size={16} />
-          <span>
-            <strong>{data.area.name}</strong> · {data.area.latitude},{" "}
-            {data.area.longitude}
-          </span>
-          <small>Acuan wilayah kota</small>
+      {!compact && (
+        <div
+          className="insight-topics"
+          role="group"
+          aria-label="Jenis informasi lingkungan"
+        >
+          {categories.map((c) => (
+            <button
+              key={c.id}
+              aria-pressed={category === c.id}
+              onClick={() => setParams({ topic: c.id }, { replace: true })}
+            >
+              <c.icon size={17} />
+              {c.label}
+            </button>
+          ))}
         </div>
       )}
-      <div
-        className="hub-tabs"
-        role="group"
-        aria-label="Jenis informasi lingkungan"
-      >
-        {categories.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            aria-pressed={category === c.id}
-            onClick={() => setCategory(c.id)}
-          >
-            <c.icon size={17} />
-            {c.label}
-          </button>
-        ))}
-      </div>
       {loading && !data ? (
         <DataState loading />
       ) : error && !data ? (
         <DataState error={error} retry={refresh} />
+      ) : !selected ? (
+        <DataState empty="Ringkasan belum siap. Coba perbarui beberapa saat lagi." />
       ) : (
         <>
           {error && (
             <p className="live-notice" role="alert">
-              Pembaruan gagal. Informasi sebelumnya masih ditampilkan.
+              Pembaruan belum berhasil. Periksa waktu data di bawah.
             </p>
           )}
-          {!selected.length ? (
-            <DataState empty="Belum ada informasi untuk kategori ini." />
-          ) : (
-            <div className="hub-facts">
-              {selected.slice(0, compact ? 4 : 30).map((f) => (
-                <article className="hub-fact" key={f.id}>
-                  <div className="hub-fact-label">
-                    {f.label}
-                    {f.stale && (
-                      <span className="live-tag warning">Data lama</span>
-                    )}
-                  </div>
-                  <p className="hub-value">
-                    {typeof f.value === "number"
-                      ? f.value.toLocaleString("id-ID", {
-                          maximumFractionDigits: 2,
-                        })
-                      : f.value}{" "}
-                    <small>{f.unit}</small>
-                  </p>
-                  <p className="hub-time">
-                    {dateLabel(f.valid_at)} ·{" "}
-                    {f.kind === "forecast"
-                      ? "Prakiraan"
-                      : f.kind === "model" || f.kind === "static_model"
-                        ? "Estimasi model"
-                        : "Catatan sumber"}
-                  </p>
-                  <a
-                    href={
-                      /^https:\/\//.test(f.source_url)
-                        ? f.source_url
-                        : undefined
-                    }
-                    target="_blank"
-                    rel="noreferrer"
+          <article
+            key={selected.category}
+            className={`insight-lead tone-${selected.tone}`}
+          >
+            <div className="insight-message">
+              <span
+                className={`insight-status ${selected.available ? "" : "status-pending"}`}
+              >
+                <span />
+                {selected.available
+                  ? periodLabel[selected.period]
+                  : "Menunggu pembaruan"}
+              </span>
+              <h2>{selected.title}</h2>
+              <p>{selected.body}</p>
+              <div className="insight-action">
+                <ArrowRight size={18} aria-hidden="true" />
+                <strong>{selected.action}</strong>
+              </div>
+              {selected.valid_at && (
+                <small className="insight-date">
+                  <Clock3 size={13} aria-hidden="true" />
+                  {selected.period === "reference"
+                    ? "Catatan sumber"
+                    : selected.period === "forecast"
+                      ? "Berlaku pada"
+                      : "Waktu data"}{" "}
+                  {dateLabel(selected.valid_at)}
+                </small>
+              )}
+            </div>
+            <EnvironmentVisual insight={selected} />
+          </article>
+          {compact && (
+            <div className="insight-glances" aria-label="Sekilas lingkungan">
+              {glances.map((i) => {
+                const c = categories.find((c) => c.id === i.category)!;
+                return (
+                  <Link
+                    key={i.category}
+                    to={`/environment?topic=${i.category}`}
+                    className={`insight-glance tone-${i.tone}`}
                   >
-                    {f.source} <ArrowUpRight size={13} />
-                  </a>
-                  {!compact && (
-                    <p className="hub-spatial">{f.spatial_context}</p>
-                  )}
-                </article>
-              ))}
+                    <div>
+                      <c.icon size={18} aria-hidden="true" />
+                      <span>{c.label}</span>
+                      <ArrowUpRight size={15} />
+                    </div>
+                    <h3>{i.title}</h3>
+                    <small>
+                      {i.available
+                        ? periodLabel[i.period]
+                        : "Belum ada pembaruan"}
+                    </small>
+                  </Link>
+                );
+              })}
             </div>
           )}
           {!compact && (
-            <details className="hub-providers">
-              <summary>Status sumber data</summary>
-              <ul>
-                {data?.providers.map((p) => (
-                  <li key={p.provider}>
-                    <strong>{p.provider.replace(/_/g, " ")}</strong>
-                    <span>
-                      {p.last_error ||
-                        (p.facts.length
-                          ? `${p.facts.length} informasi tersimpan`
-                          : "Belum ada informasi yang sesuai area")}
-                    </span>
-                    <small>{dateLabel(p.last_attempt_at)}</small>
-                  </li>
-                ))}
-              </ul>
-              <p>
-                IQAir memerlukan key, BMKG cuaca memerlukan kode kelurahan, dan
-                REST SoilGrids sedang tidak tersedia. Sumber yang belum
-                dikonfigurasi dapat belum muncul.
-              </p>
+            <div className="insight-secondary">
+              <Link
+                className="live-button"
+                to={`/aerobot?question=${encodeURIComponent(`Jelaskan kondisi ${activeCategory?.label.toLowerCase()} di sekitar Surabaya dari informasi publik terbaru.`)}`}
+              >
+                Tanya AERO-BOT <ArrowUpRight size={16} />
+              </Link>
+              <a
+                href="#rincian-lingkungan"
+                className="insight-text-link"
+                onClick={() => {
+                  const details = document.getElementById(
+                    "rincian-lingkungan",
+                  ) as HTMLDetailsElement | null;
+                  if (details) details.open = true;
+                }}
+              >
+                Lihat angka & waktu data <ChevronDown size={16} />
+              </a>
+            </div>
+          )}
+          {!compact && (
+            <details id="rincian-lingkungan" className="insight-disclosure">
+              <summary>
+                <span>Rincian {activeCategory?.label.toLowerCase()}</span>
+                <ChevronDown size={18} />
+              </summary>
+              <div className="insight-detail-body">
+                <p>
+                  Data terbaru ditampilkan lebih dulu. Prakiraan, catatan
+                  referensi, dan data lama diberi penanda tersendiri.
+                </p>
+                {!selectedFacts.length ? (
+                  <p>Belum ada rincian untuk kategori ini.</p>
+                ) : (
+                  <dl className="insight-fact-list">
+                    {selectedFacts.map((f) => (
+                      <div key={f.id}>
+                        <dt>
+                          {f.label}
+                          <small>
+                            {f.stale
+                              ? "Data lama, bukan kondisi sekarang"
+                              : f.kind === "forecast"
+                                ? "Prakiraan"
+                                : [
+                                      "historical",
+                                      "static_model",
+                                      "event",
+                                    ].includes(f.kind)
+                                  ? "Catatan referensi"
+                                  : "Estimasi terbaru"}
+                          </small>
+                        </dt>
+                        <dd>
+                          <strong>
+                            {typeof f.value === "number"
+                              ? f.value.toLocaleString("id-ID", {
+                                  maximumFractionDigits: 2,
+                                })
+                              : f.value}{" "}
+                            <small>{f.unit}</small>
+                          </strong>
+                          <span>{dateLabel(f.valid_at)}</span>
+                          <a
+                            href={
+                              /^https:\/\//.test(f.source_url)
+                                ? f.source_url
+                                : undefined
+                            }
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {f.source}
+                            <ArrowUpRight size={12} />
+                          </a>
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+              </div>
             </details>
           )}
-          <p className="hub-footnote">
-            Data publik melengkapi pembacaan sensor AEROSENSE. Lokasi sensor
-            mengikuti titik asli node. Titik panas tidak selalu berarti
-            kebakaran; debit sungai bukan konfirmasi banjir. Sumber: Open-Meteo
-            dan CAMS, BMKG, NASA FIRMS, GBIF, serta IQAir jika diaktifkan.
-          </p>
-          {!compact && (
-            <Link
-              className="live-button"
-              to="/aerobot?question=Bagaimana%20kondisi%20lingkungan%20Surabaya%20dari%20data%20publik%20terbaru%3F"
-            >
-              Tanyakan kondisi ini ke AERO-BOT <ArrowUpRight size={16} />
-            </Link>
-          )}
+          <details className="insight-disclosure credibility-section">
+            <summary>
+              <span>
+                <ShieldCheck size={18} />
+                Sumber & cara membaca data
+              </span>
+              <ChevronDown size={18} />
+            </summary>
+            <div className="insight-detail-body">
+              <p>
+                <strong>Informasi publik adalah gambaran wilayah.</strong>{" "}
+                Pembacaan sensor AEROSENSE tetap berasal dari titik asli
+                masing-masing node.
+              </p>
+              <p>
+                Ringkasan dibuat otomatis dari data yang masih berlaku, tanpa
+                panggilan AI tambahan. Kategori udara memakai US AQI, bukan
+                ISPU. Prakiraan tidak ditampilkan sebagai pengukuran langsung.
+              </p>
+              <ul className="insight-source-list">
+                {data?.providers.map((p) => {
+                  const f = p.facts[0];
+                  return (
+                    <li key={p.provider}>
+                      <div>
+                        {f && /^https:\/\//.test(f.source_url) ? (
+                          <a
+                            href={f.source_url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {f.source}
+                            <ArrowUpRight size={13} />
+                          </a>
+                        ) : (
+                          <strong>{p.provider.replace(/_/g, " ")}</strong>
+                        )}
+                        <small>
+                          {p.last_error ||
+                            (p.facts.length
+                              ? "Terhubung ke sumber"
+                              : "Belum ada data yang sesuai")}
+                        </small>
+                      </div>
+                      <span>
+                        Terakhir dicoba {dateLabel(p.last_attempt_at)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p>
+                Titik panas satelit belum tentu kebakaran. Debit sungai tidak
+                memastikan banjir. Catatan gempa dan spesies memiliki waktu
+                serta cakupan pengamatan masing-masing.
+              </p>
+              <p>
+                Lokasi acuan: {data?.area.latitude}, {data?.area.longitude}.
+                Data dan atribusi tersedia pada tautan sumber di atas.{" "}
+                <a
+                  href="https://www.airnow.gov/aqi/aqi-basics/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Tentang kategori US AQI
+                </a>
+                .
+              </p>
+            </div>
+          </details>
         </>
       )}
     </section>

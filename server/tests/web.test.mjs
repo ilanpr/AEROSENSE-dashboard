@@ -57,6 +57,7 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     result: { text: "Jawaban dari worker" },
   };
   let contextReads = 0;
+  let memberRole = "viewer";
   const mock = http.createServer(async (req, res) => {
     const url = new URL(req.url, "http://x");
     let output = [];
@@ -72,7 +73,7 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
       output =
         url.searchParams.get("location_id") === "eq.L2"
           ? []
-          : [{ user_id: uid, location_id: "L1", role: "viewer" }];
+          : [{ user_id: uid, location_id: "L1", role: memberRole }];
     if (url.pathname === "/rest/v1/ae_nodes")
       output =
         url.searchParams.get("id") === "eq.n2"
@@ -147,6 +148,27 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     assert.equal(dash.nodes[0].latitude, -7.1);
     assert.equal(dash.nodes[0].role, "viewer");
     assert.equal(dash.nodes[0].latest.reading_id, null);
+    assert.equal((await fetch(base + "/v1/esg/report")).status, 401);
+    for (const role of ["viewer", "operator", "auditor"]) {
+      memberRole = role;
+      assert.equal(
+        (await (await fetch(base + "/v1/access", auth)).json()).can_audit_esg,
+        false,
+      );
+      assert.equal((await fetch(base + "/v1/esg/report", auth)).status, 403);
+    }
+    memberRole = "admin";
+    assert.equal(
+      (await (await fetch(base + "/v1/access", auth)).json()).can_audit_esg,
+      true,
+    );
+    assert.equal((await fetch(base + "/v1/esg/report", auth)).status, 200);
+    assert.equal(
+      (await fetch(base + "/v1/esg/report?node_id=n2", auth)).status,
+      403,
+    );
+    memberRole = "viewer";
+    assert.equal((await fetch(base + "/v1/esg/report", auth)).status, 403);
     assert.equal(
       (await fetch(base + "/v1/rules?node_id=n2", auth)).status,
       403,

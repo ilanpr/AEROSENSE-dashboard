@@ -1,3 +1,7 @@
+import {
+  summarizeEnvironment,
+  orderEnvironmentFacts,
+} from "./environment-insights.mjs";
 // Browser routes share the ae_ tables and the existing authorization checks.
 export function webRoutes({ db, one, user, member, send, filter, env }) {
   return async (req, res, url) => {
@@ -39,9 +43,9 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
         last_error: c.last_error ? "Pembaruan sumber belum berhasil" : null,
         request_latitude: c.request_latitude,
         request_longitude: c.request_longitude,
-        facts:
+        facts: orderEnvironmentFacts(
           c.request_latitude === area.latitude &&
-          c.request_longitude === area.longitude
+            c.request_longitude === area.longitude
             ? (Array.isArray(c.payload?.facts) ? c.payload.facts : [])
                 .filter(
                   (f) =>
@@ -56,10 +60,21 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
                     Date.parse(f.fresh_until) < now,
                 }))
             : [],
+          now,
+        ),
       }));
       send(res, 200, {
         area,
         providers,
+        facts: orderEnvironmentFacts(
+          providers.flatMap((p) => p.facts),
+          now,
+        ),
+        insights: summarizeEnvironment(
+          providers.flatMap((p) => p.facts),
+          now,
+        ),
+        summary_method: "rules-v1",
         fetched_at: new Date(now).toISOString(),
       });
       return true;
@@ -70,20 +85,47 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
         "/v1/rules",
         "/v1/subscriptions",
         "/v1/robots",
+        "/v1/access",
+        "/v1/esg/report",
       ].includes(path)
     )
       return false;
     const u = await user(req),
       memberships = await db("ae_members", "user_id=eq." + filter(u.id)),
       nodes = [];
-    for (const m of memberships) {
+    const admins = memberships.filter((m) => m.role === "admin");
+    if (path === "/v1/access") {
+      send(res, 200, { can_audit_esg: admins.length > 0 });
+      return true;
+    }
+    if (path === "/v1/esg/report" && !admins.length)
+      throw Object.assign(new Error("Audit ESG hanya tersedia untuk admin."), {
+        status: 403,
+      });
+    for (const m of path === "/v1/esg/report" ? admins : memberships) {
       const found = await db(
         "ae_nodes",
         "location_id=eq." + filter(m.location_id) + "&enabled=eq.true",
       );
       nodes.push(...found.map((n) => ({ ...n, role: m.role })));
     }
-    if (path === "/v1/dashboard") {
+    if (path === "/v1/dashboard" || path === "/v1/esg/report") {
+      const requested = url.searchParams.get("node_id");
+      if (path === "/v1/esg/report" && requested) {
+        if (!nodes.some((n) => n.id === requested))
+          throw Object.assign(
+            new Error("Anda bukan admin untuk lokasi node ini."),
+            { status: 403 },
+          );
+        const readings = await db(
+          "ae_readings",
+          "node_id=eq." +
+            filter(requested) +
+            "&order=observed_at.desc&limit=288",
+        );
+        send(res, 200, { readings });
+        return true;
+      }
       const data = await Promise.all(
         nodes.map(async (n) => ({
           ...n,
@@ -91,6 +133,13 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
             (await one("ae_sensor_context", "node_id=eq." + filter(n.id))) ??
             null,
         })),
+      );
+      data.sort(
+        (a, b) =>
+          Number(!!a.latest?.stale || !a.latest?.reading_id) -
+            Number(!!b.latest?.stale || !b.latest?.reading_id) ||
+          (Date.parse(b.latest?.observed_at) || 0) -
+            (Date.parse(a.latest?.observed_at) || 0),
       );
       send(res, 200, { nodes: data, refreshed_at: new Date().toISOString() });
       return true;

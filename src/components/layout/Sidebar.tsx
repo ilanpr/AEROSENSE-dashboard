@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { NAV_ITEMS, ROUTES } from "@/lib/constants";
+import { useAccess } from "@/hooks/useAccess";
 import {
   LayoutGrid,
   Map,
@@ -31,6 +32,7 @@ interface SidebarProps {
 
 export function Sidebar({ onClose }: SidebarProps) {
   const navigate = useNavigate();
+  const { canAudit } = useAccess();
 
   return (
     <aside className="w-[242px] shrink-0 bg-white border-r border-[#e8eff8] flex flex-col h-screen sticky top-0 z-30 select-none overflow-hidden">
@@ -87,7 +89,9 @@ export function Sidebar({ onClose }: SidebarProps) {
 
           {/* Main Navigation */}
           <nav className="space-y-0.5">
-            {NAV_ITEMS.map((item) => {
+            {NAV_ITEMS.filter(
+              (item) => item.path !== ROUTES.ESG_REPORTS || canAudit,
+            ).map((item) => {
               const Icon = ICON_MAP[item.icon] || LayoutGrid;
 
               return (

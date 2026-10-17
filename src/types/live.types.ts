@@ -63,6 +63,9 @@ export interface EnvironmentFact {
   data_origin: string;
 }
 export interface EnvironmentResponse {
+  facts: EnvironmentFact[];
+  insights: EnvironmentInsight[];
+  summary_method: string;
   area: {
     id: string;
     name: string;
@@ -78,6 +81,19 @@ export interface EnvironmentResponse {
     facts: EnvironmentFact[];
   }[];
   fetched_at: string;
+}
+export interface EnvironmentInsight {
+  category: string;
+  title: string;
+  body: string;
+  action: string;
+  tone: string;
+  period: string;
+  available: boolean;
+  fact_ids: string[];
+  valid_at: string | null;
+  fresh_until: string | null;
+  method: string;
 }
 export const metricLabels: Record<string, [string, string]> = {
   dust_ug_m3: ["Debu optik", "µg/m³"],

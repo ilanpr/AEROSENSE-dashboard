@@ -5,10 +5,12 @@ AEROSENSE menggabungkan pemantauan sensor, hasil model GRU, dan informasi lingku
 ## Fitur
 
 - Hub lingkungan Surabaya: cuaca, udara, tanah, titik panas, sungai, gempa, dan keanekaragaman hayati.
+- Ringkasan kondisi dan saran singkat tanpa panggilan AI tambahan. Angka serta sumber tersedia pada panel rincian.
 - Peta mengikuti koordinat asli setiap node.
 - Pembacaan terbaru, historis input, hasil GRU, dan ekspor JSON.
 - Chat melalui backend, dengan jawaban dibaca dari job milik pengguna.
 - Login Supabase, akses lokasi berdasarkan keanggotaan, dan aturan peringatan untuk operator.
+- Audit ESG khusus admin, diperiksa pada halaman dan endpoint backend sesuai lokasi.
 - Penghubung langganan WhatsApp dan perintah mendengarkan pada layar robot.
 
 Jika sensor belum mengirim data, dashboard menampilkan kondisi kosong. Informasi publik tidak dimasukkan sebagai pembacaan sensor.
@@ -62,6 +64,8 @@ Untuk pemeriksaan browser tanpa layanan produksi, jalankan `node server/tests/pr
 ## Deploy
 
 Panduan lengkap: [DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+Penjelasan ringkasan n8n, urutan data, dan pembatasan audit: [ENVIRONMENT_INSIGHTS.md](docs/ENVIRONMENT_INSIGHTS.md).
 
 - Backend memakai `server/compose.yaml`, hostname Docker `aerosense-api:8080`.
 - Web memakai `compose.yaml` di root dan proxy nginx dalam `deploy/nginx.conf`.
