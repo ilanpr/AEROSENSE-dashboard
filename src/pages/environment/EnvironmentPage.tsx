@@ -5,7 +5,6 @@ import {
   Sprout,
   Flame,
   Waves,
-  Leaf,
   Activity,
   RefreshCw,
   ArrowUpRight,
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import { DataState } from "@/components/shared/DataState";
+import { DisasterNews } from "@/components/environment/DisasterNews";
 import { dateLabel, type EnvironmentResponse } from "@/types/live.types";
 import "@/styles/insights.css";
 import {
@@ -35,13 +35,12 @@ const categories = [
   { id: "fire", label: "Titik panas", icon: Flame },
   { id: "flood", label: "Sungai", icon: Waves },
   { id: "earthquake", label: "Gempa", icon: Activity },
-  { id: "biodiversity", label: "Hayati", icon: Leaf },
 ];
 const periodLabel: Record<string, string> = {
-  current: "Estimasi wilayah terbaru",
+  current: "Estimasi wilayah",
   forecast: "Prakiraan",
   monitoring: "Pantauan satelit 24 jam",
-  reference: "Catatan referensi",
+  reference: "Catatan sumber",
 };
 
 export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
@@ -94,13 +93,13 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
         <div>
           <Heading>
             {compact
-              ? "Sekilas lingkungan sekitar."
-              : "Kenali lingkungan sekitar."}
+              ? "Lingkungan Surabaya"
+              : "Lingkungan Surabaya"}
           </Heading>
           <p>
             <MapPin size={15} aria-hidden="true" />
             {data?.area.name || "Surabaya"}
-            <span>Informasi wilayah</span>
+
           </p>
         </div>
         <div className="live-actions">
@@ -165,7 +164,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                   : "Menunggu pembaruan"}
               </span>
               <h2>{selected.title}</h2>
-              <p>{selected.body}</p>
+
               <div className="insight-action">
                 <ArrowRight size={18} aria-hidden="true" />
                 <strong>{selected.action}</strong>
@@ -196,15 +195,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 ))}
               </dl>
             )}
-            <div className="panel-caption">
-              {selected.category === "air_quality"
-                ? "Estimasi wilayah · US AQI, bukan ISPU"
-                : selected.category === "flood"
-                  ? "Prakiraan model, bukan pengukuran di sungai"
-                  : selected.category === "fire"
-                    ? "Deteksi satelit, bukan konfirmasi kebakaran"
-                    : "Informasi wilayah · pelengkap pembacaan node"}
-            </div>
+
           </article>
           {compact && (
             <div className="insight-glances" aria-label="Sekilas lingkungan">
@@ -275,8 +266,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
               </summary>
               <div className="insight-detail-body">
                 <p>
-                  Data terbaru ditampilkan lebih dulu. Prakiraan, catatan
-                  referensi, dan data lama diberi penanda tersendiri.
+                  Waktu dan sumber tiap pembacaan.
                 </p>
                 {!selectedFacts.length ? (
                   <p>Belum ada rincian untuk kategori ini.</p>
@@ -288,7 +278,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                           {f.label}
                           <small>
                             {f.stale
-                              ? "Data lama, bukan kondisi sekarang"
+                              ? "Data lama"
                               : f.kind === "forecast"
                                 ? "Prakiraan"
                                 : [
@@ -296,7 +286,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                                       "static_model",
                                       "event",
                                     ].includes(f.kind)
-                                  ? "Catatan referensi"
+                                  ? "Catatan sumber"
                                   : "Estimasi terbaru"}
                           </small>
                         </dt>
@@ -334,21 +324,12 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             <summary>
               <span>
                 <ShieldCheck size={18} />
-                Sumber & cara membaca data
+                Sumber & catatan
               </span>
               <ChevronDown size={18} />
             </summary>
             <div className="insight-detail-body">
-              <p>
-                <strong>Informasi publik adalah gambaran wilayah.</strong>{" "}
-                Pembacaan sensor AEROSENSE tetap berasal dari titik asli
-                masing-masing node.
-              </p>
-              <p>
-                Ringkasan hanya memakai data yang masih berlaku. Kategori udara
-                memakai US AQI, bukan ISPU. Prakiraan tidak ditampilkan sebagai
-                pengukuran langsung.
-              </p>
+              <p>Data publik memakai acuan Surabaya. Sensor AEROSENSE tetap mengikuti lokasi asli node. Kategori udara memakai US AQI, bukan ISPU.</p>
               <ul className="insight-source-list">
                 {data?.providers.map((p) => {
                   const f = p.facts[0];
@@ -382,9 +363,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 })}
               </ul>
               <p>
-                Titik panas satelit belum tentu kebakaran. Debit sungai tidak
-                memastikan banjir. Catatan gempa dan spesies memiliki waktu
-                serta cakupan pengamatan masing-masing.
+                Titik panas belum memastikan kebakaran. Debit sungai bukan peringatan banjir. Cakupan pantauan: titik panas 50 km dan gempa 300 km dari acuan Surabaya.
               </p>
               <p>
                 Lokasi acuan: {data?.area.latitude}, {data?.area.longitude}.
@@ -402,6 +381,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           </details>
         </>
       )}
+      <DisasterNews compact={compact} />
     </section>
   );
 }

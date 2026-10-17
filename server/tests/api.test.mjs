@@ -97,6 +97,7 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
   });
   await new Promise((resolve) => mock.listen(0, "127.0.0.1", resolve));
   Object.assign(process.env, {
+    DISASTER_NEWS_ENABLED: "false",
     PORT: "0",
     SUPABASE_URL: "http://127.0.0.1:" + mock.address().port,
     SUPABASE_ANON_KEY: "anon-test",

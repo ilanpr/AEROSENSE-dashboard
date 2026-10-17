@@ -16,9 +16,9 @@ Jangan menimpa file .env server yang sudah berisi credential. Salin contoh hanya
 
 ## 2. Database
 
-Instalasi baru: jalankan SQL di server/supabase sesuai urutan 001 sampai 004 melalui SQL Editor Supabase. 001 dan 002 berasal dari paket otomasi sebelumnya.
+Instalasi baru: jalankan SQL di server/supabase sesuai urutan 001 sampai 005 melalui SQL Editor Supabase. 001 dan 002 berasal dari paket otomasi sebelumnya.
 
-Instalasi yang sudah memiliki tabel ae_: periksa struktur terlebih dahulu. Jangan menjalankan ulang 001 karena tabel dan fungsi dasar sudah ada. 003 menyiapkan cache publik serta acuan Surabaya; tidak mengubah koordinat ae_nodes. 004 memasang event job. Fungsi ae_ready_kinds sudah disertakan pada 002.
+Instalasi yang sudah memiliki tabel ae_: periksa struktur terlebih dahulu. Jangan menjalankan ulang 001 karena tabel dan fungsi dasar sudah ada. 003 menyiapkan cache publik serta acuan Surabaya; tidak mengubah koordinat ae_nodes. 004 memasang event job. Fungsi ae_ready_kinds sudah disertakan pada 002. Migrasi 005 menyiapkan cache berita bencana nasional.
 
 Berikan akses lokasi secara sengaja melalui ae_members. Ambil user_id dari Supabase Auth dan location_id dari ae_nodes yang sebenarnya. Pendaftaran akun tidak memberikan peran admin.
 
@@ -30,6 +30,7 @@ Salin isi direktori server dari checkout ini ke direktori backend tersebut, deng
 
 ```env
 ENVIRONMENT_AREA_ID=surabaya
+DISASTER_NEWS_ENABLED=true
 WEB_ORIGINS=https://aerosense.me
 ```
 
@@ -38,6 +39,7 @@ Kemudian di ~/aerosense-api:
 ```bash
 docker compose up -d --build aerosense-api
 curl --fail http://127.0.0.1:8080/health
+curl --fail http://127.0.0.1:8080/v1/disasters
 docker compose exec -T aerosense-api node scripts/check-db.mjs
 ```
 

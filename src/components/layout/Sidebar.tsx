@@ -10,7 +10,6 @@ import {
   MessageCircle,
   Radio,
   ChevronRight,
-  Sparkles,
   MoreHorizontal,
   Leaf,
 } from "lucide-react";
@@ -135,22 +134,13 @@ export function Sidebar({ onClose }: SidebarProps) {
           />
 
           <div className="relative z-1">
-            <div className="w-7 h-7 rounded-lg bg-white text-[#007af2] grid place-items-center mb-2 shadow-2xs">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <strong className="block text-xs font-bold text-[#1b3154] mb-1">
-              Udara jadi lebih mudah.
-            </strong>
-            <p className="text-[10px] leading-relaxed text-[#617993] mb-2.5">
-              Lihat data, pahami risiko, lalu ambil langkah yang tepat.
-            </p>
             <button
               type="button"
               onClick={() => {
                 navigate(ROUTES.AEROBOT);
                 onClose?.();
               }}
-              className="text-[10px] font-extrabold text-[#086cfb] hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-[#086cfb] hover:underline flex items-center gap-1 cursor-pointer"
             >
               Tanya AERO-BOT
               <ChevronRight className="w-3 h-3" />

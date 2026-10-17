@@ -1,5 +1,5 @@
-// Ringkasan singkat dari fakta yang masih berlaku. Tidak memakai Gemini.
 /* oxlint-disable no-control-regex */
+// Shared by the API and the n8n Code node. No network calls or model tokens.
 function summarizeEnvironment(facts, now = Date.now()) {
   const time = (f) => Date.parse(f.valid_at || f.fetched_at || "") || 0;
   const day = (t) => new Date(t + 7 * 3600000).toISOString().slice(0, 10);
@@ -63,7 +63,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
   if (weatherCode && [95, 96, 99].includes(weatherCode.value))
     add(
       "weather",
-      "Ada potensi hujan petir",
+      "Waspadai hujan petir",
       "Model cuaca wilayah menunjukkan kondisi hujan disertai petir.",
       "Tunda aktivitas di area terbuka saat petir terdengar.",
       [weatherCode, ...(temp ? [temp] : [])],
@@ -78,7 +78,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
   )
     add(
       "weather",
-      "Ada hujan dalam estimasi cuaca",
+      "Hujan di sekitar Surabaya",
       "Model wilayah menunjukkan hujan pada interval terbaru.",
       "Siapkan payung sebelum keluar.",
       [
@@ -92,10 +92,10 @@ function summarizeEnvironment(facts, now = Date.now()) {
     add(
       "weather",
       temp.value >= 32
-        ? "Cuaca cenderung panas"
+        ? "Terasa panas"
         : temp.value >= 26
-          ? "Cuaca cenderung hangat"
-          : "Cuaca cenderung sejuk",
+          ? "Terasa hangat"
+          : "Terasa sejuk",
       chance && chance.value >= 60
         ? "Prakiraan hari ini juga menunjukkan peluang hujan."
         : `Suhu wilayah diperkirakan sekitar ${Math.round(temp.value)}°C. Kondisi di tiap lokasi bisa berbeda.`,
@@ -122,7 +122,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
   else
     add(
       "weather",
-      "Cuaca terbaru belum tersedia",
+      "Cuaca belum tersedia",
       "Kami belum punya data yang cukup baru untuk merangkum cuaca.",
       "Coba perbarui beberapa saat lagi.",
     );
@@ -131,42 +131,42 @@ function summarizeEnvironment(facts, now = Date.now()) {
     const bands = [
       [
         50,
-        "Kualitas udara diperkirakan baik",
+        "Udara baik",
         "Kategori baik menurut indeks US AQI wilayah.",
         "Tetap pilih rute yang jauh dari asap kendaraan.",
         "calm",
       ],
       [
         100,
-        "Kualitas udara diperkirakan sedang",
+        "Udara sedang",
         "Udara mungkin kurang nyaman bagi orang yang sangat sensitif.",
         "Perhatikan kenyamanan saat beraktivitas di luar.",
         "notice",
       ],
       [
         150,
-        "Udara kurang sehat bagi kelompok sensitif",
+        "Kurang sehat untuk yang sensitif",
         "Anak-anak, lansia, dan orang dengan gangguan pernapasan perlu lebih berhati-hati.",
         "Kurangi aktivitas berat di luar bila Anda sensitif.",
         "warning",
       ],
       [
         200,
-        "Udara diperkirakan tidak sehat",
+        "Udara tidak sehat",
         "Polusi dapat berdampak pada lebih banyak orang.",
         "Kurangi aktivitas berat atau lama di luar ruang.",
         "warning",
       ],
       [
         300,
-        "Udara diperkirakan sangat tidak sehat",
+        "Udara sangat tidak sehat",
         "Tingkat polusi wilayah memerlukan perhatian lebih.",
         "Pindahkan kegiatan luar ruang ke dalam bila memungkinkan.",
         "danger",
       ],
       [
         Infinity,
-        "Udara diperkirakan berbahaya",
+        "Udara berbahaya",
         "Indeks polusi wilayah berada pada kategori tertinggi.",
         "Hindari aktivitas luar ruang dan ikuti arahan resmi.",
         "danger",
@@ -179,7 +179,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
   } else
     add(
       "air_quality",
-      "Kondisi udara belum dapat disimpulkan",
+      "Indeks udara belum tersedia",
       "Indeks kualitas udara terbaru belum tersedia.",
       "Rincian polutan yang tersedia tetap bisa dilihat.",
     );
@@ -188,7 +188,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
   if (soil)
     add(
       "soil",
-      "Kenali kondisi tanah permukaan",
+      "Kadar air tanah",
       "Estimasi kadar air tanah tersedia untuk lapisan paling atas.",
       "Cek tanah langsung sebelum menentukan kebutuhan siram.",
       [soil],
@@ -197,7 +197,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
   else if (profile.length)
     add(
       "soil",
-      "Profil tanah tersedia sebagai acuan",
+      "Profil tanah",
       "Peta sifat tanah memberi gambaran umum, bukan kondisi tanah saat ini.",
       "Gunakan pengukuran setempat untuk keputusan perawatan.",
       profile.slice(0, 2),
@@ -207,7 +207,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
   else
     add(
       "soil",
-      "Tanah belum memiliki pembaruan",
+      "Data tanah belum tersedia",
       "Belum ada estimasi tanah terbaru untuk area ini.",
       "Cek kondisi tanah langsung bila diperlukan.",
     );
@@ -216,8 +216,8 @@ function summarizeEnvironment(facts, now = Date.now()) {
     add(
       "fire",
       fire.value > 0
-        ? "Ada titik panas pada pantauan satelit"
-        : "Tidak ada titik panas dalam hasil satelit",
+        ? "Titik panas terdeteksi"
+        : "Tidak ada deteksi titik panas",
       "Cakupan pantauan adalah feed 24 jam pada radius yang ditetapkan.",
       fire.value > 0
         ? "Cek lokasi dan informasi resmi. Titik panas belum tentu kebakaran."
@@ -229,7 +229,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
   else
     add(
       "fire",
-      "Pantauan titik panas belum tersedia",
+      "Pantauan satelit belum tersedia",
       "Feed satelit untuk area ini belum diperbarui.",
       "Gunakan informasi resmi untuk memeriksa kejadian.",
     );
@@ -248,7 +248,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
   if (river)
     add(
       "flood",
-      "Ada prakiraan aliran sungai",
+      "Prakiraan aliran sungai",
       "Model memperkirakan debit sungai di grid sekitar wilayah.",
       "Lihat peringatan resmi untuk memastikan risiko banjir.",
       [river],
@@ -266,7 +266,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
   if (quakes.length)
     add(
       "earthquake",
-      "Lihat catatan gempa dari BMKG",
+      "Gempa sekitar Surabaya",
       "Daftar ini memuat catatan M5+ yang tercakup di sekitar area.",
       "Buka rincian untuk waktu kejadian dan informasi resminya.",
       quakes.slice(0, 2),
@@ -276,30 +276,14 @@ function summarizeEnvironment(facts, now = Date.now()) {
   else
     add(
       "earthquake",
-      "Catatan gempa belum diperbarui",
+      "Catatan gempa belum tersedia",
       "Data yang tersedia belum cukup baru untuk ditampilkan.",
       "Cek BMKG untuk informasi kejadian terkini.",
     );
-  const species = fresh.filter((f) => f.category === "biodiversity");
-  if (species.length)
-    add(
-      "biodiversity",
-      "Kenali ragam hayati sekitar",
-      "Ada catatan pengamatan spesies dari kawasan ini.",
-      "Jelajahi catatannya; ini bukan pemantauan satwa saat ini.",
-      species.slice(0, 3),
-      "calm",
-      "reference",
-    );
-  else
-    add(
-      "biodiversity",
-      "Catatan hayati belum tersedia",
-      "Belum ada catatan spesies yang sesuai area.",
-      "Catatan pengamatan akan tampil saat sumber tersedia.",
-    );
   return out;
 }
+
+
 function normalizeResponse(response, request, now = Date.now()) {
   const fetched_at=new Date(now).toISOString();
   const clean=v=>String(v??'').replace(/[<>\r\n\u0000-\u001f]/g,' ').trim().slice(0,180);
@@ -341,7 +325,7 @@ function normalizeResponse(response, request, now = Date.now()) {
       const valid=iso(valid_at);
       if(['model','regional'].includes(kind)&&['weather','soil','air_quality'].includes(category)&&(!valid||Date.parse(valid)>now+1800000))return;
       if(valid && Date.parse(valid)>now+8*86400000)return;
-      const historical=['soil_profile','biodiversity','earthquake','fire'].includes(category);
+      const historical=['soil_profile','earthquake','fire'].includes(category);
       const fresh_until=new Date(historical||!valid?now+max_age*1000:Date.parse(valid)+max_age*1000).toISOString();
       facts.push({id:`${request.provider}:${n.id}:${key}:${valid||'static'}`,area_id:n.id,provider:request.provider,category,label:clean(label),value:typeof value==='number'?value:clean(value),unit:clean(unit),valid_at:valid,fresh_until,source:request.source,source_url:request.source_url,kind,spatial_context,data_origin:'external_api',role:'supplementary',reference,provider_coordinates,provider_location_known:provider_coordinates!==null,distance_km,...extra});
     };
@@ -392,9 +376,6 @@ function normalizeResponse(response, request, now = Date.now()) {
         const near=mapped.filter(x=>x.distance_km<=request.radius_km).slice(0,2);
         for(let i=0;i<near.length;i++){const x=near[i];add('quake'+i,'earthquake','Catatan BMKG dari daftar gempa M5+ sekitar lokasi',`${clean(x.Wilayah)}; magnitudo ${clean(x.Magnitude)}; kedalaman ${clean(x.Kedalaman)}; jarak sekitar ${x.distance_km.toFixed(0)} km; informasi potensi: ${clean(x.Potensi)}`,'',x.DateTime,'event',7200);}
         if(!near.length)add('coverage','earthquake','Cakupan hasil gempa BMKG',`Tidak ada entri dalam radius ${request.radius_km} km pada daftar M5+ yang diambil; ini tidak mencakup semua gempa`,'',null,'event',7200);
-      }else if(request.provider==='gbif'){
-        if(!Array.isArray(d.results))throw Error('Data biodiversitas kosong');
-        for(let i=0;i<d.results.length;i++){const x=d.results[i];if(!coordinate(x.decimalLatitude,x.decimalLongitude)||distance(n.latitude,n.longitude,x.decimalLatitude,x.decimalLongitude)>30||!x.scientificName||!/^\d+$/.test(String(x.key)))continue;add('occurrence'+i,'biodiversity','Contoh catatan spesies GBIF, bukan keberadaan saat ini',`${clean(x.scientificName)}; tanggal observasi ${clean(x.eventDate||x.year||'tidak tersedia')}`,'',null,'historical',604800,{provider_coordinates:{latitude:x.decimalLatitude,longitude:x.decimalLongitude,kind:'historical_record'},provider_location_known:true,distance_km:distance(n.latitude,n.longitude,x.decimalLatitude,x.decimalLongitude),record_url:`https://www.gbif.org/occurrence/${x.key}`,license:clean(x.license)});}
       }else throw Error('Provider tidak dikenal');
     }catch{error='Data provider kosong atau skemanya tidak sesuai';}
     const ok=!error&&facts.length>0;

@@ -4,7 +4,8 @@ AEROSENSE menggabungkan pemantauan sensor, hasil model GRU, dan informasi lingku
 
 ## Fitur
 
-- Hub lingkungan Surabaya: cuaca, udara, tanah, titik panas, sungai, gempa, dan keanekaragaman hayati.
+- Hub lingkungan Surabaya: cuaca, udara, tanah, titik panas, sungai, dan gempa.
+- Kabar bencana Indonesia dari ANTARA dan GDACS, dengan sumber dan tautan bantuan resmi.
 - Ringkasan kondisi dan saran singkat tanpa panggilan AI tambahan. Angka serta sumber tersedia pada panel rincian.
 - Peta mengikuti koordinat asli setiap node.
 - Pembacaan terbaru, historis input, hasil GRU, dan ekspor JSON.
@@ -35,6 +36,7 @@ Gunakan Node.js 22 dan pnpm.
 
 ```bash
 pnpm install --frozen-lockfile
+cd server && npm ci && cd ..
 cp server/.env.example server/.env
 ```
 
@@ -59,13 +61,17 @@ pnpm lint
 pnpm build
 ```
 
-Untuk pemeriksaan browser tanpa layanan produksi, jalankan `node server/tests/preview.mjs`, lalu jalankan Vite dengan variabel shell `API_PROXY_TARGET=http://127.0.0.1:8081`. Login pengujian: `preview@example.test` dengan password `fixture-password`. Seluruh data pada mode ini sintetis dan hanya berada di proses lokal. Jangan mengarahkan domain produksi ke server fixture.
+Untuk pemeriksaan browser tanpa layanan produksi, jalankan `node server/tests/preview.mjs`, lalu jalankan Vite dengan variabel shell `API_PROXY_TARGET=http://127.0.0.1:8081`. Login pengujian: `preview@example.test` dengan password `fixture-password`. Sensor, cuaca dan jawaban pada mode ini sintetis dan hanya berada di proses lokal. Untuk mencoba berita asli saja, set PREVIEW_LIVE_NEWS=true sebelum menjalankan fixture. Jangan mengarahkan domain produksi ke server fixture.
 
 ## Deploy
 
 Panduan lengkap: [DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 Penjelasan ringkasan n8n, urutan data, dan pembatasan audit: [ENVIRONMENT_INSIGHTS.md](docs/ENVIRONMENT_INSIGHTS.md).
+
+Berita bencana dan sumber publik: [DISASTER_NEWS.md](docs/DISASTER_NEWS.md).
+
+Hasil pemeriksaan alur otomatis dan langkah penerapan: [BACKEND_AUDIT.md](docs/BACKEND_AUDIT.md).
 
 Panel bergambar, pemilihan kondisi, dan sumber animasi: [ENVIRONMENT_VISUALS.md](docs/ENVIRONMENT_VISUALS.md).
 

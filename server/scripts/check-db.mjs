@@ -8,6 +8,7 @@ const tables = [
   "ae_commands",
   "ae_environment_areas",
   "ae_environment_area_cache",
+  "ae_disaster_news_cache",
 ];
 let failed = false;
 for (const table of tables) {

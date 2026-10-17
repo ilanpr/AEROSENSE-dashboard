@@ -87,17 +87,7 @@ test("forecasts and reference records retain their own time and meaning", () => 
   assert.deepEqual(summary.fact_ids, ["today"]);
   const current = summarizeEnvironment([chance, fact()], now)[0];
   assert.equal(current.valid_at, fact().valid_at);
-  const species = fact({
-    kind: "historical",
-    category: "biodiversity",
-    valid_at: null,
-  });
-  assert.equal(
-    summarizeEnvironment([species], now).find(
-      (x) => x.category === "biodiversity",
-    ).period,
-    "reference",
-  );
+  assert(!summarizeEnvironment([fact({category:"biodiversity"})], now).some(x => x.category === "biodiversity"));
   const fire = fact({
     kind: "satellite",
     category: "fire",

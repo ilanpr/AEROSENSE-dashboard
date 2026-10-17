@@ -1,4 +1,9 @@
 node_modules
+**/node_modules
+motion
+server
+n8n
+docs
 dist
 .git
 .env

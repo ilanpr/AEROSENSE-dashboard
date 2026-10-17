@@ -4,7 +4,7 @@ Beranda menempatkan node AEROSENSE di atas informasi publik. Nilai lama tidak di
 
 ## Aset
 
-Semua aset web berada di `public/assets/environment/`. Ada 12 ilustrasi WebP dengan latar transparan: sunny, cloudy, rain, storm, air, haze, soil, fire, flood, earthquake, biodiversity dan sensor. Gambar perangkat adalah ilustrasi, bukan foto produk.
+Semua aset web berada di `public/assets/environment/`. Ada 11 ilustrasi WebP dengan latar transparan: sunny, cloudy, rain, storm, air, haze, soil, fire, flood, earthquake, dan sensor. Gambar perangkat adalah ilustrasi, bukan foto produk.
 
 Ilustrasi dibuat menggunakan image generation bawaan, lalu diubah menjadi WebP maksimal 560 px. Tidak ada permintaan gambar atau model AI saat pengguna membuka halaman.
 
@@ -26,14 +26,13 @@ Subjek per gambar:
 | fire | An orbital satellite and orange observation pin above a land tile, no flames |
 | flood | A glossy river flowing between rounded stones and green banks |
 | earthquake | Geological blocks separated by a fault, globe and seismic rings |
-| biodiversity | A white bird, green branch and blue butterfly |
 | sensor | A generic white air monitor, blank screen and blue airflow curls |
 
 ## Pemilihan gambar
 
 Cuaca mengikuti kode WMO yang masih berlaku: 0 cerah, kode hujan untuk ilustrasi hujan, 95/96/99 untuk petir. Tanpa kode yang sesuai, gunakan awan netral. Suhu tinggi tidak otomatis dianggap cerah. Angka lama atau prakiraan masa depan tidak dipakai untuk ilustrasi kondisi sekarang.
 
-Udara mengikuti kategori US AQI dari penyedia. Tanah, sungai, titik panas, gempa dan hayati memiliki ilustrasi kategori sendiri. Gambar yang diredupkan berarti data belum tersedia. Ilustrasi bukan bukti kejadian.
+Udara mengikuti kategori US AQI dari penyedia. Tanah, sungai, titik panas, dan gempa memiliki ilustrasi kategori sendiri. Gambar yang diredupkan berarti data belum tersedia. Ilustrasi bukan bukti kejadian.
 
 Kadar air tanah `m³/m³` ditampilkan sebagai `% volume` dengan mengalikan nilai dengan 100. Nilai asli tetap tersedia di rincian, dan persentase ini bukan kelembapan udara.
 

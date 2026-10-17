@@ -12,9 +12,9 @@ interface Message {
   text: string;
 }
 const suggestions = [
-  "Bagaimana cuaca Surabaya hari ini?",
-  "Bagaimana mengurangi polusi udara?",
-  "Apa beda data sensor dan data publik?",
+  "Cuaca Surabaya hari ini?",
+  "Cara mengurangi polusi?",
+  "Kabar karhutla di Indonesia?",
 ];
 export function ChatPanel() {
   const { user, error: authError } = useAuth();
@@ -30,7 +30,7 @@ export function ChatPanel() {
     {
       id: "welcome",
       sender: "bot",
-      text: "Halo! Saya AERO-BOT. Tanyakan tentang udara, cuaca, tanah, atau cara menjaga lingkungan.",
+      text: "Halo! Ada yang ingin ditanyakan soal lingkungan?",
     },
   ]);
   const [input, setInput] = useState(params.get("question") || "");
@@ -55,7 +55,7 @@ export function ChatPanel() {
         {
           id: "welcome",
           sender: "bot",
-          text: "Halo! Saya AERO-BOT. Tanyakan tentang udara, cuaca, tanah, atau cara menjaga lingkungan.",
+          text: "Halo! Ada yang ingin ditanyakan soal lingkungan?",
         },
       ]);
       setPending(null);
@@ -82,7 +82,7 @@ export function ChatPanel() {
         if (job.status === "done") {
           if (!job.result?.text)
             throw new Error(
-              "Jawaban belum berisi teks. Periksa eksekusi worker di n8n.",
+              "Jawaban belum tersedia. Coba cek lagi sebentar.",
             );
           setMessages((prev) =>
             prev.some((m) => m.id === job.id)
@@ -168,23 +168,18 @@ export function ChatPanel() {
             {robotId ? "Layar robot · " + robotId : "Asisten lingkungan"}
           </small>
         </div>
-        <span className="live-tag">
-          {busy
-            ? "Memproses"
-            : user
-              ? "Siap menerima pesan"
-              : "Masuk untuk bertanya"}
-        </span>
+        {user ? <span className="live-tag">{busy ? "Memproses" : "Siap"}</span>
+          : <Link className="live-tag" to="/login">Masuk untuk bertanya</Link>}
       </header>
       <label className="chat-scope">
-        Sumber sensor
+        Sensor
         <select
           aria-label="Sumber sensor percakapan"
           value={nodeId}
           onChange={(e) => setNodeId(e.target.value)}
           disabled={!!robotId || busy || !!pending}
         >
-          <option value="">Informasi lingkungan umum dan API publik</option>
+          <option value="">Tanpa sensor</option>
           {nodes.data?.nodes.map((n) => (
             <option key={n.id} value={n.id}>
               {n.name}
@@ -207,13 +202,7 @@ export function ChatPanel() {
         )}
         <div ref={end} />
       </div>
-      {!user && (
-        <p className="live-notice">
-          {authError ||
-            "Masuk agar pertanyaan dan jawaban hanya dapat diakses oleh akun Anda."}{" "}
-          <Link to="/login">Masuk akun</Link>
-        </p>
-      )}
+      {!user && authError && <p className="live-notice" role="alert">{authError}</p>}
       {error && (
         <div className="live-notice" role="alert">
           {error}
@@ -260,10 +249,6 @@ export function ChatPanel() {
           <ArrowUp size={18} />
         </button>
       </form>
-      <small className="chat-note">
-        Angka mengikuti data yang tersedia. Pembacaan sensor dan estimasi dari
-        API publik dijelaskan terpisah.
-      </small>
     </section>
   );
 }

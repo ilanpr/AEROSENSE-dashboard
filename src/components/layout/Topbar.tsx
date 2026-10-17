@@ -1,14 +1,12 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { NAV_ITEMS, ROUTES } from "@/lib/constants";
 import { Menu, ChevronRight, Bell } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 
 interface TopbarProps {
   onMenuClick: () => void;
 }
 
 export function Topbar({ onMenuClick }: TopbarProps) {
-  const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -39,7 +37,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           aria-label="Breadcrumb"
           className="flex items-center gap-2 text-[#97a7bb] text-xs font-semibold"
         >
-          <span className="hidden sm:inline">Workspace</span>
+          <span className="hidden sm:inline">AEROSENSE</span>
           <ChevronRight className="hidden sm:block w-3.5 h-3.5 text-[#97a7bb]" />
           <strong className="text-[#25405f] font-bold">{currentLabel}</strong>
         </nav>
@@ -47,11 +45,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
       {/* Right: Actions & Badges */}
       <div className="flex items-center gap-3 sm:gap-4">
-        {/* Data simulation badge */}
-        <span className="flex items-center gap-2 bg-[#f0f8ff] text-[#2170bd] border border-[#d7ebff] px-3 py-1.5 rounded-full text-[10px] font-black tracking-wider">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#2586ff] animate-pulse" />
-          {user ? "AKUN AKTIF" : "AKSES PUBLIK"}
-        </span>
 
         {/* Quick alerts button with notification indicator */}
         <button

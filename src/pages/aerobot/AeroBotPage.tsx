@@ -7,7 +7,6 @@ export function AeroBotPage() {
     <div className="space-y-5">
       <PageHeading
         title="Tanya AERO-BOT"
-        description="Pahami udara, cuaca, tanah, dan lingkungan di sekitar Anda."
       />
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.7fr)] gap-5 items-start">
         <ChatPanel />

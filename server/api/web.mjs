@@ -11,74 +11,20 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
       send(res, 200, {
         supabase_url: env.SUPABASE_URL,
         supabase_publishable_key: env.SUPABASE_ANON_KEY,
-        environment_area_id: env.ENVIRONMENT_AREA_ID || "surabaya",
+        environment_area_id: "surabaya",
         robot_id: env.WEB_ROBOT_ID || null,
       });
       return true;
     }
     if (path === "/v1/environment") {
-      const id =
-        url.searchParams.get("area_id") ||
-        env.ENVIRONMENT_AREA_ID ||
-        "surabaya";
-      if (!/^[a-zA-Z0-9_-]{1,40}$/.test(id))
-        throw Object.assign(new Error("Invalid area"), { status: 400 });
-      const area = await one(
-        "ae_environment_areas",
-        "id=eq." + filter(id) + "&enabled=eq.true",
-      );
-      if (!area) {
-        send(res, 404, { error: "Area lingkungan belum tersedia" });
+      const requested = url.searchParams.get("area_id");
+      if (requested && requested !== "surabaya") {
+        send(res, /^[a-zA-Z0-9_-]{1,40}$/.test(requested) ? 404 : 400, {error:"Area belum tersedia"});
         return true;
       }
-      const rows = await db(
-        "ae_environment_area_cache",
-        "area_id=eq." + filter(id),
-      );
-      const now = Date.now();
-      const providers = rows.map((c) => ({
-        provider: c.provider,
-        last_attempt_at: c.last_attempt_at,
-        refresh_after: c.refresh_after,
-        last_error: c.last_error ? "Pembaruan sumber belum berhasil" : null,
-        request_latitude: c.request_latitude,
-        request_longitude: c.request_longitude,
-        facts: orderEnvironmentFacts(
-          c.request_latitude === area.latitude &&
-            c.request_longitude === area.longitude
-            ? (Array.isArray(c.payload?.facts) ? c.payload.facts : [])
-                .filter(
-                  (f) =>
-                    f.area_id === area.id &&
-                    f.reference?.latitude === area.latitude &&
-                    f.reference?.longitude === area.longitude,
-                )
-                .map((f) => ({
-                  ...f,
-                  stale:
-                    !Number.isFinite(Date.parse(f.fresh_until)) ||
-                    Date.parse(f.fresh_until) < now,
-                }))
-            : [],
-          now,
-        ),
-      }));
-      send(res, 200, {
-        area,
-        providers,
-        facts: orderEnvironmentFacts(
-          providers.flatMap((p) => p.facts),
-          now,
-        ),
-        insights: summarizeEnvironment(
-          providers.flatMap((p) => p.facts),
-          now,
-        ),
-        summary_method: "rules-v1",
-        fetched_at: new Date(now).toISOString(),
-      });
+      send(res, 200, await readEnvironment({db, one}));
       return true;
-    }
+      }
     if (
       ![
         "/v1/dashboard",
@@ -180,4 +126,23 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
     });
     return true;
   };
+}
+
+// Public reference is Surabaya. Sensor coordinates are never taken from this area.
+export async function readEnvironment({db, one}, now = Date.now()) {
+  const area = await one("ae_environment_areas", "id=eq.surabaya&enabled=eq.true");
+  if (!area || !Number.isFinite(area.latitude) || !Number.isFinite(area.longitude) || Math.abs(area.latitude - (-7.24917)) > 0.00001 || Math.abs(area.longitude - 112.75083) > 0.00001)
+    throw Object.assign(new Error("Lokasi acuan Surabaya belum sesuai"), {status:503});
+  const providersAllowed = new Set(["openmeteo_weather","openmeteo_air","openmeteo_flood","soilgrids","firms","bmkg_quake","bmkg_weather","iqair"]);
+  const categoriesAllowed = new Set(["weather","air_quality","soil","soil_profile","fire","earthquake","flood"]);
+  const rows = await db("ae_environment_area_cache", "area_id=eq.surabaya");
+  const providers = rows.filter(c => providersAllowed.has(c.provider)).map(c => ({
+    provider:c.provider, last_attempt_at:c.last_attempt_at, refresh_after:c.refresh_after,
+    last_error:c.last_error ? "Pembaruan sumber belum berhasil" : null,
+    request_latitude:c.request_latitude, request_longitude:c.request_longitude,
+    facts:orderEnvironmentFacts(c.request_latitude === area.latitude && c.request_longitude === area.longitude
+      ? (Array.isArray(c.payload?.facts) ? c.payload.facts : []).filter(f => categoriesAllowed.has(f.category) && f.area_id === area.id && f.reference?.latitude === area.latitude && f.reference?.longitude === area.longitude).map(f => ({...f,stale:!Number.isFinite(Date.parse(f.fresh_until)) || Date.parse(f.fresh_until) < now})) : [],now),
+  }));
+  const facts = orderEnvironmentFacts(providers.flatMap(p=>p.facts),now);
+  return {area,providers,facts,insights:summarizeEnvironment(facts,now),summary_method:"rules-v1",fetched_at:new Date(now).toISOString()};
 }

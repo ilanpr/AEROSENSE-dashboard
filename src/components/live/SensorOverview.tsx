@@ -41,9 +41,7 @@ export function SensorOverview() {
     <section className="insights-hub sensor-overview">
       <header className="insights-heading">
         <div>
-          <span className="section-eyebrow">AEROSENSE DI LOKASI ANDA</span>
-          <h1>Udara di dekat Anda.</h1>
-          <p>Pembacaan node Anda menjadi acuan utama.</p>
+          <h1>Sensor AEROSENSE</h1>
         </div>
         <button
           className="live-icon-button"
@@ -72,14 +70,14 @@ export function SensorOverview() {
                 className={`insight-status ${fresh ? "" : "status-pending"}`}
               >
                 <span />
-                {fresh ? "Pembacaan node terbaru" : "Belum ada data terbaru"}
+                {fresh ? "Sensor terhubung" : "Menunggu data"}
               </span>
               <h2>{summary.title}</h2>
               <p>
                 {!user
-                  ? "Masuk untuk melihat pembacaan perangkat yang terhubung ke akun Anda."
+                  ? "Masuk untuk melihat sensor Anda."
                   : !nodes.length
-                    ? "Belum ada node yang terhubung ke akun Anda. Hubungi pengelola untuk menambahkan akses lokasi."
+                    ? "Minta pengelola menambahkan akses node."
                     : summary.body}
               </p>
               {nodes.length > 0 && (
@@ -129,10 +127,10 @@ export function SensorOverview() {
                       <small>{metricLabels[key][1]}</small>
                     </dd>
                     {key === "dust_ug_m3" && (
-                      <span>Sinyal debu, bukan PM2.5 tervalidasi</span>
+                      <span>Debu optik</span>
                     )}
                     {key === "eco2_ppm" && (
-                      <span>Estimasi sensor, bukan CO₂ langsung</span>
+                      <span>Estimasi eCO₂</span>
                     )}
                   </div>
                 );
@@ -143,7 +141,7 @@ export function SensorOverview() {
                 <Radio size={13} />
                 {fresh
                   ? dateLabel(node?.latest?.observed_at)
-                  : "Nilai menunggu pembacaan baru"}
+                  : "Belum ada pembacaan"}
               </span>
               {node && (
                 <span>

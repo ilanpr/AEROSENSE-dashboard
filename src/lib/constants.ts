@@ -68,8 +68,6 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
     label: "Tanya AERO-BOT",
     path: ROUTES.AEROBOT,
     icon: "MessageCircle",
-    badge: "BARU",
-    badgeType: "pill",
   },
   {
     label: "Monitoring node",

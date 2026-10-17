@@ -21,3 +21,15 @@ Docker Desktop lokal tidak berjalan. Image Docker, resolusi hostname aerosense-a
 Perubahan ini belum dipasang pada aerosense.me. Tidak ada credential produksi yang dimasukkan ke repositori. Tidak ada perubahan koordinat node sensor atau pengisian data contoh ke database produksi.
 
 Perangkat infrared, mikrofon, speaker, agent mini PC, dan pengiriman WhatsApp memerlukan uji perangkat serta credential masing-masing. Hub publik masih bergantung pada ketersediaan penyedia: IQAir menunggu key, BMKG cuaca menunggu kode kelurahan, dan REST SoilGrids sedang dihentikan sementara.
+
+
+## Pembaruan 18 Oktober 2026
+
+- 21 pengujian otomatis lulus, termasuk filter berita Indonesia, penolakan XML berbahaya, cache saat sumber gagal, konteks worker dan validasi referensi nasional.
+- Build TypeScript/Vite lulus. Lint menyisakan empat peringatan Fast Refresh bawaan.
+- Tampilan hub diperiksa pada lebar 1280 dan 390 piksel tanpa overflow halaman. Jarak kotak angka ke bawah panel 24 piksel. Filter karhutla hanya menampilkan kartu bertipe karhutla.
+- Kartu promosi AERO-BOT dihapus; halaman chat memakai label dan sumber yang singkat.
+- Feed ANTARA/GDACS diambil langsung untuk berita Indonesia; sensor dan cuaca pratinjau tetap sintetis.
+- Migrasi 005 dibuat di Supabase. Pemeriksaan database menunjukkan trigger job, fungsi pemulihan, acuan Surabaya, bucket audio privat dan RLS cache berita tersedia.
+- Draft Hub, Web, Robot dan WhatsApp di n8n diperbarui melalui UI lalu diekspor kembali untuk memeriksa hasil simpan.
+- Backend Ubuntu belum diperbarui karena login SSH otomatis ditolak. Pengiriman WhatsApp, perangkat fisik dan jalur produksi dari domain belum diuji sampai akhir.

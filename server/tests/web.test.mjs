@@ -34,7 +34,7 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     },
     {
       area_id: area.id,
-      provider: "wrong-coordinates",
+      provider: "openmeteo_weather",
       request_latitude: 0,
       request_longitude: 0,
       payload: { facts: [fact] },
@@ -95,6 +95,10 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     if (url.pathname === "/rest/v1/ae_environment_areas")
       output = url.searchParams.get("id") === "eq.surabaya" ? [area] : [];
     if (url.pathname === "/rest/v1/ae_environment_area_cache") output = cache;
+    if (url.pathname === "/rest/v1/ae_disaster_news_cache") output = [{
+      provider:"gdacs", last_success_at:new Date().toISOString(), last_error:null,
+      items:[{id:"idn",country_code:"IDN",url:"https://www.gdacs.org/report.aspx?eventid=1",published_at:new Date().toISOString(),title:"Indonesia",metrics:[]}],
+    }];
     if (url.pathname === "/rest/v1/ae_jobs") {
       const candidate =
         url.searchParams.get("id") === "eq.job-own"
@@ -117,6 +121,7 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     INTERNAL_API_KEY: "internal-test",
     DEVICE_KEYS_JSON: "{}",
     WEB_ORIGINS: "https://aerosense.me",
+    DISASTER_NEWS_ENABLED: "false",
   });
   const { server } = await import("../api/server.mjs");
   if (!server.listening) await new Promise((r) => server.once("listening", r));
@@ -135,6 +140,10 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     assert.equal(hub.providers[0].facts[0].stale, true);
     assert.deepEqual(hub.providers[1].facts, []);
     assert.equal(contextReads, 0);
+    const news = await (await fetch(base + "/v1/disasters")).json();
+    assert.equal(news.scope,"Indonesia");
+    assert.equal(news.items[0].country_code,"IDN");
+    assert(!JSON.stringify(news).includes("private-test"));
     assert.equal(
       (await fetch(base + "/v1/environment?area_id=disabled")).status,
       404,

@@ -25,7 +25,7 @@ export function PageHeading({
             {eyebrow}
           </p>
         )}
-        <h1 className="text-2xl sm:text-[28px] font-black tracking-[-1.1px] leading-[1.18] text-[#11223D]">
+        <h1 className="text-2xl sm:text-[28px] font-semibold tracking-[-0.6px] leading-[1.18] text-[#11223D]">
           {title} {titleAccent && <span className="text-[#086CFB]">{titleAccent}</span>}
         </h1>
         {description && (

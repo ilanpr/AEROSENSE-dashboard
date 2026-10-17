@@ -64,17 +64,7 @@ https://firms.modaps.eosdis.nasa.gov/data/active_fire/viirs/csv/SUOMI_VIIRS_C2_S
 
 CSV Asia Tenggara disaring berdasarkan koordinat area. Titik panas satelit bukan konfirmasi kebakaran di lapangan. Jika nanti menggunakan FIRMS Area API, buat MAP_KEY di https://firms.modaps.eosdis.nasa.gov/api/map_key/ . MAP_KEY belum dibutuhkan untuk URL CSV di atas.
 
-## 7. GBIF keanekaragaman hayati
-
-API key: tidak diperlukan untuk pencarian publik ini.
-
-```text
-https://api.gbif.org/v1/occurrence/search?decimalLatitude=-7.44917,-7.04917&decimalLongitude=112.55083,112.95083&hasCoordinate=true&limit=5
-```
-
-Catatan temuan organisme yang memiliki koordinat, bukan jumlah satwa saat ini. Kotak pencarian kemudian disaring jaraknya oleh workflow.
-
-## 8. IQAir
+## 7. IQAir
 
 API key: diperlukan. Buat dari akun sendiri di https://dashboard.iqair.com/ . Pilih paket sesuai kebutuhan dan batas akses yang tersedia.
 
@@ -114,4 +104,9 @@ Target data: pH, karbon organik, liat dan pasir. Wilayah perkotaan dapat tidak m
 
 Konfigurasi area publik Surabaya sudah disimpan pada hub dan worker web, robot, serta WhatsApp. Hub pernah berhasil dijalankan manual. Ini belum membuktikan semua sumber tersedia: IQAir menunggu key, BMKG cuaca menunggu ADM4, SoilGrids sedang tidak tersedia. Integrasi jawaban AI ke frontend produksi masih perlu pengujian menyeluruh.
 
-Dokumentasi: https://open-meteo.com/en/docs , https://open-meteo.com/en/docs/air-quality-api , https://open-meteo.com/en/docs/flood-api , https://data.bmkg.go.id/ , https://firms.modaps.eosdis.nasa.gov/ , https://techdocs.gbif.org/en/openapi/ , https://api-docs.iqair.com/ , https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs_02.html
+Dokumentasi: https://open-meteo.com/en/docs , https://open-meteo.com/en/docs/air-quality-api , https://open-meteo.com/en/docs/flood-api , https://data.bmkg.go.id/ , https://firms.modaps.eosdis.nasa.gov/ , https://api-docs.iqair.com/ , https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs_02.html
+
+
+## Kabar bencana Indonesia
+
+Feed ANTARA dan GDACS, batas cakupan, serta alur cache: [DISASTER_NEWS.md](DISASTER_NEWS.md). Tidak memerlukan API key.

@@ -43,6 +43,7 @@ const node = {
   pm25_validated: false,
 };
 const jobs = [];
+const newsTime = new Date().toISOString();
 const facts = [
   ["weather", "Suhu udara", 30, "°C"],
   ["weather", "Kelembapan udara", 72, "%"],
@@ -56,12 +57,6 @@ const facts = [
     "earthquake",
     "Cakupan hasil gempa BMKG",
     "Tidak ada entri pada daftar M5+ dalam radius contoh.",
-    "",
-  ],
-  [
-    "biodiversity",
-    "Contoh catatan spesies GBIF",
-    "Catatan pengujian antarmuka",
     "",
   ],
   ["flood", "Prakiraan debit sungai", 12, "m³/s"],
@@ -82,7 +77,6 @@ const facts = [
     {
       fire: "satellite",
       earthquake: "event",
-      biodiversity: "historical",
       flood: "forecast",
     }[category] || "model",
   source: "Open-Meteo / data pengujian lokal",
@@ -97,6 +91,17 @@ facts.unshift({
   valid_at: new Date(Date.now() - 86400000).toISOString(),
   fresh_until: new Date(Date.now() - 1000).toISOString(),
 });
+// Opt in to real public headlines while sensor/weather fixtures stay synthetic.
+let publicNewsRows = null;
+if (process.env.PREVIEW_LIVE_NEWS === "true") {
+  publicNewsRows = [];
+  const { disasterNews } = await import("../api/disaster-news.mjs");
+  const news = disasterNews({db:async (_table,_query,method,body) => {
+    if (method === "POST") {publicNewsRows=publicNewsRows.filter(r=>r.provider!==body.provider).concat(body);return null;}
+    return publicNewsRows;
+  }});
+  await news.refresh();
+}
 const mock = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   let raw = "";
@@ -114,6 +119,13 @@ const mock = http.createServer(async (req, res) => {
     return;
   }
   let output = [];
+  if (url.pathname === "/rest/v1/ae_disaster_news_cache") output = publicNewsRows || [{
+    provider: "gdacs", last_success_at: newsTime, refresh_after: new Date(Date.now()+3600000).toISOString(), last_error:null,
+    items: [
+      {id:"example-fire", title:"Contoh pantauan karhutla", original_title:"Data sintetis untuk pratinjau, bukan kejadian nyata", url:"https://www.gdacs.org/", source:"GDACS · contoh tampilan", published_at:newsTime, kind:"monitoring",type:"Karhutla",location:"Indonesia",country_code:"IDN",metrics:[{value:1200,unit:"ha",label:"Estimasi area GDACS"}]},
+      {id:"example-flood", title:"Contoh pantauan banjir", original_title:"Data sintetis untuk pratinjau, bukan kejadian nyata", url:"https://www.gdacs.org/report.aspx?eventtype=FL", source:"GDACS · contoh tampilan", published_at:newsTime, kind:"monitoring",type:"Banjir",location:"Indonesia",country_code:"IDN",metrics:[]}
+    ]
+  }];
   if (url.pathname === "/auth/v1/token") {
     if (
       p?.password !== "fixture-password" &&
@@ -243,6 +255,7 @@ Object.assign(process.env, {
   INTERNAL_API_KEY: "fixture-internal",
   DEVICE_KEYS_JSON: "{}",
   WEB_ORIGINS: "http://127.0.0.1:4173",
+  DISASTER_NEWS_ENABLED: "false",
 });
 await import("../api/server.mjs");
 console.log(

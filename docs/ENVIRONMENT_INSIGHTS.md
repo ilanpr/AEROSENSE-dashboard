@@ -6,7 +6,7 @@ Branch: `feat/environment-insights`, melanjutkan integrasi backend sebelumnya.
 
 Beranda mengutamakan pembacaan node AEROSENSE, diikuti informasi lingkungan publik. Setiap panel menampilkan kesimpulan singkat, angka penting dan langkah yang bisa dilakukan. Panel **Sumber & cara membaca data** memuat atribusi, tautan penyedia, waktu pembaruan, lokasi acuan, dan batas interpretasi.
 
-Data yang kedaluwarsa tidak menjadi dasar ringkasan kondisi saat ini. Prakiraan diberi label prakiraan; catatan gempa dan biodiversitas tetap menjadi referensi. Jika node belum mengirim pembaruan, panel utama menampilkan status menunggu dengan angka kosong. Informasi publik tidak menjadi pengganti nilai sensor.
+Data yang kedaluwarsa tidak menjadi dasar ringkasan kondisi saat ini. Prakiraan diberi label prakiraan; catatan gempa tetap menjadi referensi. Jika node belum mengirim pembaruan, panel utama menampilkan status menunggu dengan angka kosong. Informasi publik tidak menjadi pengganti nilai sensor.
 
 Ilustrasi 3D tersedia per kondisi. Animasi memakai CSS dan video latar ringan yang dirender dengan Remotion. Web tidak memuat Remotion Player. Gerak bisa dijeda, berhenti saat panel tidak terlihat, dan mengikuti pengaturan Reduce Motion. Detail aset ada di [ENVIRONMENT_VISUALS.md](ENVIRONMENT_VISUALS.md).
 

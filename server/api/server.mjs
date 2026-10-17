@@ -1,5 +1,6 @@
 import http from "node:http";
 import { webRoutes } from "./web.mjs";
+import { disasterNews } from "./disaster-news.mjs";
 import { randomUUID, randomBytes } from "node:crypto";
 import {
   REFUSAL,
@@ -613,11 +614,25 @@ async function nativeRefresh(j, p) {
     quality: r.quality ?? {},
   }));
   await stage(j, { context: rows, snapshot_at: new Date().toISOString() });
+  let disaster_news = [];
+  if (/berita|kabar|bencana|karhutla|indonesia/i.test(j.stage.text || "")) {
+    try {
+      disaster_news = (await news.read()).items.filter(i => !i.stale).slice(0, 3).map(i => ({
+        id: "news-" + i.id, area_id: "indonesia", fresh_until: i.fresh_until, category: ({Karhutla:"fire",Banjir:"flood",Gempa:"earthquake"})[i.type] || "weather",
+        label: "Kabar bencana Indonesia · " + i.type, value: i.title, unit: "",
+        valid_at: i.published_at, source: i.source, source_url: i.url,
+        kind: i.kind === "monitoring" ? "monitoring_notification" : "news",
+        spatial_context: "Indonesia, bukan pembacaan atau kejadian terkonfirmasi di Surabaya.",
+        data_origin: "external_api", role: "supplementary",
+      }));
+    } catch { /* Missing news cache must not stop sensor questions. */ }
+  }
   return {
     id: j.id,
     lease_token: j.lease_token,
     text: j.stage.text,
     context: rows,
+    disaster_news,
   };
 }
 async function nativeGate(j, p) {
@@ -835,6 +850,7 @@ async function internal(path, p) {
   }
 }
 
+const news = disasterNews({ db });
 const browserRoutes = webRoutes({
   db,
   one,
@@ -861,6 +877,8 @@ const server = http.createServer(async (req, res) => {
   try {
     if (path === "/health") return send(res, 200, { status: "ok" });
     if (path.startsWith("/v1/")) res.setHeader("Cache-Control", "no-store");
+    if (path === "/v1/disasters" && req.method === "GET")
+      return send(res, 200, await news.read());
     if (await browserRoutes(req, res, url)) return;
     if (path === "/webhooks/whatsapp" && req.method === "GET") {
       if (
@@ -1242,6 +1260,15 @@ const server = http.createServer(async (req, res) => {
   }
 });
 server.requestTimeout = 20000;
+// One refresh per backend process; visitors read the persisted Supabase cache.
+let newsTimer;
+if (e.DISASTER_NEWS_ENABLED !== "false") {
+  const refreshNews = () => news.refresh().catch(() => console.error("Disaster news refresh failed. Check migration 005 and outbound HTTPS."));
+  void refreshNews();
+  newsTimer = setInterval(refreshNews, 15 * 60000);
+  newsTimer.unref();
+}
+server.on("close", () => clearInterval(newsTimer));
 server.listen(Number(e.PORT || 8080), "0.0.0.0", () =>
   console.log("AEROSENSE API listening on " + (e.PORT || 8080)),
 );

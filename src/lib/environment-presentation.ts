@@ -15,7 +15,6 @@ export type Scene =
   | "fire"
   | "flood"
   | "earthquake"
-  | "biodiversity"
   | "sensor";
 export type Highlight = { label: string; value: string; unit: string };
 export type SensorRule = {
@@ -75,7 +74,7 @@ export function conditionScene(
       ? "haze"
       : "air";
   return (
-    ["soil", "fire", "flood", "earthquake", "biodiversity"].includes(
+    ["soil", "fire", "flood", "earthquake"].includes(
       insight.category,
     )
       ? insight.category
@@ -154,8 +153,8 @@ export function sensorSummary(
   const reading = node?.latest;
   if (!reading?.reading_id || reading.stale)
     return {
-      title: "Menunggu pembacaan terbaru.",
-      body: "Panel ini akan terisi saat node AEROSENSE mengirim data baru.",
+      title: "Sensor belum mengirim data.",
+      body: "",
       tone: "pending",
     };
   const usable = rules.filter(
@@ -173,19 +172,19 @@ export function sensorSummary(
   );
   if (raised)
     return {
-      title: "Ada pembacaan yang perlu diperhatikan.",
-      body: "Salah satu parameter masih memicu peringatan sesuai ambang node ini. Lihat detail sebelum melanjutkan aktivitas.",
+      title: "Periksa kondisi udara.",
+      body: "Ada parameter yang melewati ambang peringatan.",
       tone: "warning",
     };
   if (usable.length)
     return {
-      title: "Parameter terpantau di bawah ambang.",
-      body: "Parameter yang memiliki aturan aktif tidak sedang memicu peringatan. Pembacaan lain tetap bisa dilihat di detail.",
+      title: "Di bawah ambang peringatan.",
+      body: "",
       tone: "calm",
     };
   return {
-    title: "Pembacaan terbaru sudah masuk.",
-    body: "Lihat kondisi di titik sensor Anda. Penilaian ambang tersedia setelah aturan peringatan diatur.",
+    title: "Pembacaan terbaru.",
+    body: "",
     tone: "calm",
   };
 }
