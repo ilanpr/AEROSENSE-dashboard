@@ -18,7 +18,11 @@ tar -xzf "$staging/source.tar.gz" -C "$staging"
 source_dir="$staging/AEROSENSE-dashboard-$revision/server"
 test -f "$source_dir/api/environment-events.mjs"
 backup="$HOME/aerosense-api-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
-tar -czf "$backup" -C "$target" .env api scripts Dockerfile package.json package-lock.json
+backup_paths=(.env api)
+for path in scripts Dockerfile package.json package-lock.json; do
+  if [[ -e "$target/$path" ]]; then backup_paths+=("$path"); fi
+done
+tar -czf "$backup" -C "$target" "${backup_paths[@]}"
 cp -a "$source_dir/api/." "$target/api/"
 cp -a "$source_dir/scripts/." "$target/scripts/"
 cp "$source_dir/Dockerfile" "$source_dir/package.json" "$source_dir/package-lock.json" "$target/"
