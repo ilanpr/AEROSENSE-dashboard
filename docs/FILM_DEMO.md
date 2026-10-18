@@ -75,3 +75,5 @@ Tampilan memakai font Sora variabel yang disimpan lokal (Google Fonts, lisensi O
 
 
 Font antarmuka: Sora variabel lokal (`public/fonts/sora/Sora-Variable.ttf`, lisensi OFL). Judul dan angka 750, tombol 700, navigasi 600, teks pendukung 450.
+
+Peringatan `/alerts`: demo dimulai dari titik contoh Surabaya berlabel simulasi. Radius 5 km memperlihatkan dua node bahaya dan dua waspada pada skenario ini; 2,5 km memperlihatkan satu node bahaya. Tombol **Gunakan lokasi saya** meminta geolokasi browser dan menghitung ulang jarak dari perangkat, bukan dari pilihan node. Popup peta memuat tiga pembacaan dan waktu data. Berita demo tetap tidak berisi kejadian rekaan dan sekarang menjelaskan bahwa sumber live belum disambungkan.

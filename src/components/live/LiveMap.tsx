@@ -1,10 +1,15 @@
 import { sensorSummary } from "@/lib/environment-presentation";
 import { NodeStatus } from "./NodeStatus";
+import { NodeReadings } from "./NodeReadings";
+import { Link } from "react-router-dom";
+import type { GeoPoint } from "@/lib/nearby-nodes";
+import { ArrowUpRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
   CircleMarker,
+  Circle,
   Popup,
   useMap,
 } from "react-leaflet";
@@ -28,14 +33,29 @@ function Focus({ node, nodes }: { node?: LiveNode; nodes: LiveNode[] }) {
   }, [latitude, longitude, map]);
   return null;
 }
+function LocationFocus({ point, radiusKm }: { point: GeoPoint; radiusKm: number }) {
+  const map = useMap();
+  useEffect(() => {
+    const dy = radiusKm / 111.2;
+    const dx = dy / Math.max(0.01, Math.cos(point.latitude * Math.PI / 180));
+    map.fitBounds([[point.latitude - dy, point.longitude - dx], [point.latitude + dy, point.longitude + dx]], { padding: [20, 20], maxZoom: 14 });
+  }, [map, point.latitude, point.longitude, radiusKm]);
+  return null;
+}
 export function LiveMap({
   nodes,
   selected,
   onSelect,
+  userLocation,
+  radiusKm = 5,
+  locationLabel = "Lokasi Anda",
 }: {
   nodes: LiveNode[];
   selected: string;
   onSelect: (id: string) => void;
+  userLocation?: GeoPoint;
+  radiusKm?: number;
+  locationLabel?: string;
 }) {
   const valid = nodes.filter(
     (n) =>
@@ -45,20 +65,25 @@ export function LiveMap({
       Math.abs(n.longitude) <= 180,
   );
   const active = valid.find((n) => n.id === selected) || valid[0];
-  if (!active)
+  if (!active && !userLocation)
     return <p className="live-notice">Koordinat node belum tersedia.</p>;
   return (
     <div className="live-map">
       <MapContainer
-        center={[active.latitude, active.longitude]}
+        center={userLocation ? [userLocation.latitude, userLocation.longitude] : [active!.latitude, active!.longitude]}
         zoom={13}
         className="h-full w-full"
       >
-        <Focus node={active} nodes={valid} />
+        {userLocation ? <LocationFocus point={userLocation} radiusKm={radiusKm} /> : <Focus node={active} nodes={valid} />}
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
+        {userLocation && <>
+          <Circle center={[userLocation.latitude, userLocation.longitude]} radius={radiusKm * 1000} pathOptions={{ color: "#0b6fe5", weight: 1, dashArray: "5 7", fillOpacity: 0.04 }} interactive={false} />
+          {userLocation.accuracy != null && <Circle center={[userLocation.latitude, userLocation.longitude]} radius={userLocation.accuracy} pathOptions={{ color: "#0b6fe5", weight: 1, fillOpacity: 0.1 }} interactive={false} />}
+          <CircleMarker center={[userLocation.latitude, userLocation.longitude]} radius={7} pathOptions={{ color: "#fff", weight: 3, fillColor: "#076cfb", fillOpacity: 1 }}><Popup>{locationLabel}</Popup></CircleMarker>
+        </>}
         {valid.map((n) => (
           <CircleMarker
             key={n.id}
@@ -71,10 +96,11 @@ export function LiveMap({
             }}
             eventHandlers={{ click: () => onSelect(n.id) }}
           >
-            <Popup>
-              <strong>{n.name}</strong>
-              <br />
+            <Popup minWidth={250} maxWidth={290} className="node-reading-popup">
+              <strong className="node-popup-title">{n.name}</strong>
               <NodeStatus node={n} />
+              <NodeReadings node={n} />
+              <Link className="node-popup-detail" to={`/nodes/${encodeURIComponent(n.id)}`}>Lihat detail node <ArrowUpRight size={13} aria-hidden="true" /></Link>
             </Popup>
           </CircleMarker>
         ))}
