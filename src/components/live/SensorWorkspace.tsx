@@ -1,8 +1,10 @@
 import { NodeStatus } from "./NodeStatus";
+import { MapSymbol } from "./MapSymbol";
+import "@/styles/event-map.css";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { RefreshCw, Download, MapPin, ArrowUpRight, RadioTower, Layers, Flame, Activity } from "lucide-react";
+import { RefreshCw, Download, MapPin, ArrowUpRight, ChevronDown } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import { useAuth } from "@/hooks/useAuth";
 import { DataState } from "@/components/shared/DataState";
@@ -67,6 +69,15 @@ export function SensorWorkspace({
   const readings = history.data?.readings || [];
   const environment = useLiveData<EnvironmentResponse>(node && mode==="map" ? `/v1/environment?node_id=${encodeURIComponent(node.id)}&account=${encodeURIComponent(user?.id||"guest")}` : null,60000);
   const events=(environment.data?.events||[]).filter(e=>eventType==="all"||e.category===eventType);
+  function changeMapParam(key: string, value: string) {
+    const next = new URLSearchParams(mapParams);
+    next.set(key, value);
+    setMapParams(next);
+  }
+  const eventWarning = environment.error || (!environment.loading && !environment.data?.event_layers?.length)
+    ? "Lokasi kejadian dari sumber publik belum tersedia."
+    : environment.data?.event_layers?.some(l => l.last_error || !l.available)
+      ? "Sebagian sumber belum berhasil diperbarui." : "";
   const title = {
     overview: "Kondisi sensor",
     map: "Peta sensor",
@@ -203,12 +214,11 @@ export function SensorWorkspace({
       <header className="live-heading">
         <div>
           <h1>{title}</h1>
-          <p>
+          {mode !== "map" && <p>
             {mode === "report"
               ? "Riwayat sensor untuk pemeriksaan kondisi udara."
-              : mode === "map" ? "Sensor AEROSENSE dan kejadian dari sumber publik."
               : "Pembacaan node dan hasil model, terpisah dari informasi wilayah."}
-          </p>
+          </p>}
         </div>
         <button
           aria-label="Perbarui data sensor"
@@ -234,35 +244,68 @@ export function SensorWorkspace({
         <DataState empty="Belum ada node yang tersedia." />
       ) : (
         <>
-          <div className="sensor-toolbar">
+          {mode !== "map" && <div className="sensor-toolbar">
             <label>
-              {mode==="map"?"Titik acuan":"Node"}
+              Node
               <MonitoringSelect label="Pilih node" value={node?.id || ""} disabled={!!id}
                 onValueChange={setSelected} options={nodes.map(n => ({value:n.id,label:n.name}))} />
             </label>
             <span>Diperiksa {dateLabel(dashboard.data?.refreshed_at)}</span>
-          </div>
+          </div>}
           {node ? (
             <>
-              <div className="sensor-location">
+              {mode !== "map" && <div className="sensor-location">
                 <MapPin size={16} />
                 <span>
                   {node.name} · {node.latitude}, {node.longitude}
                 </span>
                 <NodeStatus node={node} />
-              </div>
+              </div>}
               {["map", "nodes", "overview"].includes(mode) && (
                 <>
-                {mode==="map"&&<>
-                  <div className="map-layer-picker" role="group" aria-label="Lapisan peta">
-                    {([{id:"sensors",label:"Sensor saja",Icon:RadioTower},{id:"mixed",label:"Sensor & kejadian",Icon:Layers},{id:"events",label:"Kejadian publik",Icon:Flame}]).map(({id:layer,label,Icon})=><button key={layer} aria-pressed={mapLayer===layer} onClick={()=>{const next=new URLSearchParams(mapParams);next.set("layer",layer);setMapParams(next);}}><Icon size={16} aria-hidden="true" />{label}</button>)}
+                {mode === "map" && <div className="map-controls" data-public={mapLayer !== "sensors"}>
+                  <div className="map-controls-main">
+                    <div className="map-node-picker">
+                      <MapPin size={17} aria-hidden="true" />
+                      <MonitoringSelect label="Titik acuan" value={node.id} onValueChange={setSelected}
+                        options={nodes.map(n => ({value:n.id,label:n.name}))} />
+                    </div>
+                    <div className="map-layer-picker" role="group" aria-label="Lapisan peta">
+                      {[
+                        {id:"sensors",label:"Sensor",name:"Sensor saja"},
+                        {id:"mixed",label:"Gabungan",name:"Sensor & kejadian"},
+                        {id:"events",label:"Kejadian",name:"Kejadian publik"},
+                      ].map(layer => <button key={layer.id} aria-label={layer.name} aria-pressed={mapLayer === layer.id}
+                        onClick={() => changeMapParam("layer",layer.id)}>{layer.label}</button>)}
+                    </div>
+                    {mapLayer !== "sensors" && <div className="map-kind-picker">
+                      <MonitoringSelect label="Jenis kejadian" value={eventType}
+                        onValueChange={value => changeMapParam("event_type",value)}
+                        options={[{value:"all",label:"Semua kejadian"},{value:"fire",label:"Titik panas"},{value:"earthquake",label:"Gempa"}]} />
+                    </div>}
                   </div>
-                  {mapLayer!=="sensors"&&<>
-                    <div className="map-event-legend">{mapLayer!=="events"&&<span><RadioTower size={15} />Node AEROSENSE</span>}<span className="legend-fire"><Flame size={15} />Titik panas satelit</span><span className="legend-earthquake"><Activity size={15} />Episenter gempa BMKG</span></div>
-                    <div className="map-layer-picker" role="group" aria-label="Jenis kejadian">{[{id:"all",label:"Semua"},{id:"fire",label:"Titik panas"},{id:"earthquake",label:"Gempa"}].map(type=><button key={type.id} aria-pressed={eventType===type.id} onClick={()=>{const next=new URLSearchParams(mapParams);next.set("event_type",type.id);setMapParams(next);}}>{type.label}</button>)}</div>
-                    <p className="map-event-notice" role="status">{environment.loading&&!environment.data?"Memuat lokasi kejadian…":environment.error||!environment.data?.event_layers?.length?"Lokasi kejadian dari sumber publik belum tersedia.":`${events.length} titik dalam cakupan feed. Titik panas: 24 jam / 50 km. Gempa: daftar M5+ / 7 hari / 300 km dari titik acuan.`}{environment.data?.event_layers?.some(l=>l.last_error||!l.available)?" Sebagian sumber belum berhasil diperbarui.":""}</p>
-                  </>}
-                </>}
+                  <div className="map-controls-meta">
+                    <span role="status">{mapLayer !== "events" ? nodes.length + " node" : ""}
+                      {mapLayer === "mixed" ? " · " : ""}
+                      {mapLayer !== "sensors" ? environment.loading && !environment.data ? "Memuat kejadian…" : events.length + " kejadian" : ""}
+                    </span>
+                    <details className="map-info">
+                      <summary>Legenda & cakupan <ChevronDown size={14} aria-hidden="true" /></summary>
+                      <div className="map-info-content">
+                        <div className="map-event-legend">
+                          <span className="legend-sensor"><MapSymbol kind="sensor" />Node AEROSENSE</span>
+                          <span className="legend-fire"><MapSymbol kind="fire" />Titik panas satelit</span>
+                          <span className="legend-earthquake"><MapSymbol kind="earthquake" />Episenter gempa BMKG</span>
+                        </div>
+                        <p>Titik acuan: <strong>{node.name}</strong><br />{node.latitude}, {node.longitude}</p>
+                        <p>Titik panas: feed 24 jam, radius 50 km. Deteksi satelit belum mengonfirmasi kebakaran.</p>
+                        <p>Gempa: daftar M5+ dalam 7 hari, radius 300 km. Tidak mencakup seluruh gempa atau menunjukkan radius dampak.</p>
+                        <p>Diperiksa {dateLabel(dashboard.data?.refreshed_at)}</p>
+                      </div>
+                    </details>
+                  </div>
+                  {mapLayer !== "sensors" && eventWarning && <p className="map-event-notice" role="status">{eventWarning}</p>}
+                </div>}
                 <Suspense fallback={<DataState loading />}>
                   <LiveMap
                     nodes={nodes}
