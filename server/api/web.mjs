@@ -2,6 +2,13 @@ import {
   summarizeEnvironment,
   orderEnvironmentFacts,
 } from "./environment-insights.mjs";
+const reportScope = {
+  type: "ambient_monitoring",
+  assurance_status: "not_assured",
+  source_attribution: "not_determined",
+  max_readings_per_node: 288,
+  excludes: ["esg_rating", "regulatory_compliance", "corporate_emissions_inventory"],
+};
 // Browser routes share the ae_ tables and the existing authorization checks.
 export function webRoutes({ db, one, user, member, send, filter, env }) {
   return async (req, res, url) => {
@@ -46,7 +53,7 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
       return true;
     }
     if (path === "/v1/esg/report" && !admins.length)
-      throw Object.assign(new Error("Audit ESG hanya tersedia untuk admin."), {
+      throw Object.assign(new Error("Laporan lingkungan hanya tersedia untuk admin."), {
         status: 403,
       });
     for (const m of path === "/v1/esg/report" ? admins : memberships) {
@@ -70,7 +77,7 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
             filter(requested) +
             "&order=observed_at.desc&limit=288",
         );
-        send(res, 200, { readings });
+        send(res, 200, { readings, report_scope: reportScope });
         return true;
       }
       const data = await Promise.all(
@@ -88,7 +95,11 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
           (Date.parse(b.latest?.observed_at) || 0) -
             (Date.parse(a.latest?.observed_at) || 0),
       );
-      send(res, 200, { nodes: data, refreshed_at: new Date().toISOString() });
+      send(res, 200, {
+        nodes: data,
+        refreshed_at: new Date().toISOString(),
+        ...(path === "/v1/esg/report" ? { report_scope: reportScope } : {}),
+      });
       return true;
     }
     if (path === "/v1/robots") {

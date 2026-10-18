@@ -1,6 +1,6 @@
 # AEROSENSE Dashboard
 
-AEROSENSE menggabungkan pemantauan sensor, hasil model GRU, dan informasi lingkungan publik. AERO-BOT menjelaskan data yang tersedia melalui chat web dan layar robot. Pemrosesan pertanyaan serta notifikasi dijalankan di n8n.
+AEROSENSE dikembangkan untuk pemantauan bersama di sekitar kawasan industri. Web memisahkan pembacaan node, hasil model GRU, dan informasi wilayah dari API publik. AERO-BOT menjelaskan konteks yang tersedia; pekerjaan otomatis memakai backend dan n8n. Kesiapan lapangan mengikuti bukti pengujian tiap jalur.
 
 ## Fitur
 
@@ -11,10 +11,16 @@ AEROSENSE menggabungkan pemantauan sensor, hasil model GRU, dan informasi lingku
 - Pembacaan terbaru, historis input, hasil GRU, dan ekspor JSON.
 - Chat melalui backend, dengan jawaban dibaca dari job milik pengguna.
 - Login Supabase, akses lokasi berdasarkan keanggotaan, dan aturan peringatan untuk operator.
-- Audit ESG khusus admin, diperiksa pada halaman dan endpoint backend sesuai lokasi.
+- Laporan lingkungan khusus admin, dengan cakupan data dan batas penggunaan untuk bukti pendukung ESG. Akses diperiksa pada halaman dan endpoint sesuai lokasi.
 - Penghubung langganan WhatsApp dan perintah mendengarkan pada layar robot.
 
 Jika sensor belum mengirim data, dashboard menampilkan kondisi kosong. Informasi publik tidak dimasukkan sebagai pembacaan sensor.
+
+## Biaya dan pembeda
+
+Acuan tracker tim 18 Oktober 2026: Rp633.500 untuk lima komponen dasar satu node. Angka ini belum mencakup HPP lengkap, gateway, daya, casing, rakit, uji, instalasi, layanan, dan perawatan. Harga jual belum ditetapkan. Sasaran pengembangan adalah biaya pemantauan per titik yang layak dan gateway bersama; keunggulan biaya membutuhkan perbandingan total biaya pada lingkup dan mutu data yang setara.
+
+[Pembeda, status bukti, biaya, dan batas klaim](docs/POSITIONING_AND_EVIDENCE.md). Laporan tidak memberi skor ESG, menetapkan sumber pencemar, atau menghitung inventaris emisi. Alur pelaporan warga dan tindak lanjut instansi masih dalam pengembangan. Route `/esg-reports` dan endpoint `/v1/esg/report` dipertahankan agar tautan lama tetap berfungsi.
 
 ## Alur sistem
 

@@ -55,7 +55,7 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
     icon: "LineChart",
   },
   {
-    label: "Audit ESG",
+    label: "Laporan lingkungan",
     path: ROUTES.ESG_REPORTS,
     icon: "FileText",
   },

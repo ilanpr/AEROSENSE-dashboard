@@ -37,18 +37,18 @@ Ringkasan memakai aturan lokal, tanpa panggilan Gemini atau API tambahan. Cache 
 - Titik panas bukan kebakaran terkonfirmasi. Debit sungai bukan status banjir. Cakupan feed dan waktu kejadian tetap tersedia pada rincian.
 - Data publik tidak mengubah koordinat, histori, atau hasil model sensor AEROSENSE.
 
-## Audit ESG khusus admin
+## Laporan lingkungan khusus admin
 
 Hak akses diambil dari `ae_members`, bukan metadata profil yang bisa diubah pengguna.
 
 | Jalur                        | Pemeriksaan                                                                  |
 | ---------------------------- | ---------------------------------------------------------------------------- |
-| Menu Audit ESG               | Ditampilkan setelah `/v1/access` mengonfirmasi keanggotaan admin             |
+| Menu Laporan lingkungan               | Ditampilkan setelah `/v1/access` mengonfirmasi keanggotaan admin             |
 | `/esg-reports`               | Pengunjung diarahkan ke login; akun non-admin mendapat penolakan             |
 | `/v1/esg/report`             | Backend memeriksa sesi dan peran admin pada setiap permintaan                |
 | `/v1/esg/report?node_id=...` | Hanya node dari lokasi yang dikelola sebagai admin; lokasi lain mendapat 403 |
 
-Viewer, operator, dan auditor tidak mendapat akses audit ESG. Admin pada satu lokasi tidak otomatis menjadi admin lokasi lain. Pembacaan sensor biasa tetap mengikuti keanggotaan yang sudah ada. Laporan adalah data pemantauan, bukan sertifikasi kepatuhan atau perhitungan emisi.
+Viewer, operator, dan auditor tidak mendapat akses laporan lingkungan. Admin pada satu lokasi tidak otomatis menjadi admin lokasi lain. Pembacaan sensor biasa tetap mengikuti keanggotaan yang sudah ada. Laporan adalah data pemantauan, bukan sertifikasi kepatuhan atau perhitungan emisi.
 
 ## Mencoba branch di server
 

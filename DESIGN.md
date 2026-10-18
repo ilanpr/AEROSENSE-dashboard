@@ -15,3 +15,5 @@ Motion: gentle condition-specific image movement, drifting atmospheric light and
 Access: ESG remains restricted to admins in both navigation and server authorization.
 
 Review target: Purpose 5, Hierarchy 5, Evidence 5, Specificity 4, Restraint 4, Visual craft 4. Validate the rendered desktop and narrow layouts before accepting these scores.
+
+Evidence: call the admin view Laporan lingkungan. Keep cost/method/source detail in disclosures, with Rp633.500 labeled as the five-component subtotal, never a selling price. Distinguish current sensor history from planned citizen reporting and follow-up. No ESG/compliance score, corporate emissions conversion, source attribution, or assurance claim from ambient sensor values.

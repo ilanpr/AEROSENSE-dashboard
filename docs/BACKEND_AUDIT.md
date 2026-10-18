@@ -75,7 +75,7 @@ Empat node WhatsApp belum memiliki credential: `WhatsApp pesan masuk`, `WhatsApp
 
 ## Bukti pengujian
 
-- Pengujian otomatis mencakup akses akun/lokasi, audit ESG khusus admin, tanda tangan webhook, format audio, filter sumber, cache, konteks dan validasi referensi berita.
+- Pengujian otomatis mencakup akses akun/lokasi, laporan lingkungan khusus admin, tanda tangan webhook, format audio, filter sumber, cache, konteks dan validasi referensi berita.
 - Feed ANTARA dan GDACS diambil langsung. Filter menghasilkan berita Indonesia dan notifikasi IDN, dengan metadata sumber/waktu.
 - Pratinjau web memakai pembacaan sensor/cuaca sintetis yang diberi label. Berita asli hanya dipakai saat `PREVIEW_LIVE_NEWS=true`; cache pratinjau berada di memori lokal.
 - Build frontend dan lint dijalankan sebelum perubahan dikirim. Hasil ini tidak menyatakan backend Ubuntu sudah diperbarui atau sensor fisik telah bekerja.

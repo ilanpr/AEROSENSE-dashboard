@@ -176,7 +176,18 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
       (await (await fetch(base + "/v1/access", auth)).json()).can_audit_esg,
       true,
     );
-    assert.equal((await fetch(base + "/v1/esg/report", auth)).status, 200);
+    const report = await fetch(base + "/v1/esg/report", auth);
+    assert.equal(report.status, 200);
+    const reportData = await report.json();
+    assert.equal(reportData.report_scope.type, "ambient_monitoring");
+    assert.equal(reportData.report_scope.assurance_status, "not_assured");
+    assert.equal(reportData.report_scope.source_attribution, "not_determined");
+    assert.deepEqual(reportData.report_scope.excludes, ["esg_rating", "regulatory_compliance", "corporate_emissions_inventory"]);
+    assert.equal(reportData.nodes[0].id, "n1");
+    const historyReport = await (await fetch(base + "/v1/esg/report?node_id=n1", auth)).json();
+    assert.equal(historyReport.report_scope.type, "ambient_monitoring");
+    assert.equal(historyReport.report_scope.max_readings_per_node, 288);
+    assert(Array.isArray(historyReport.readings));
     assert.equal(
       (await fetch(base + "/v1/esg/report?node_id=n2", auth)).status,
       403,

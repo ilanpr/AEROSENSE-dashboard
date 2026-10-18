@@ -16,6 +16,7 @@ const LiveMap = lazy(() =>
 );
 const ReadingChart = lazy(() => import("./ReadingChart"));
 import { api } from "@/services/api";
+import { MonitoringScope } from "./MonitoringScope";
 
 export function SensorWorkspace({
   mode = "overview",
@@ -31,7 +32,7 @@ export function SensorWorkspace({
 }) {
   const { user, isLoading, error: authError } = useAuth();
   const { id } = useParams();
-  const dashboard = useLiveData<{ nodes: LiveNode[]; refreshed_at: string }>(
+  const dashboard = useLiveData<{ nodes: LiveNode[]; refreshed_at: string; report_scope?: Record<string, unknown> }>(
     user ? (mode === "report" ? "/v1/esg/report" : "/v1/dashboard") : null,
   );
   const [selected, setSelected] = useState("");
@@ -65,7 +66,7 @@ export function SensorWorkspace({
     detail: node?.name || "Detail node",
     analytics: "Pembacaan dan model GRU",
     alerts: "Peringatan sensor",
-    report: "Audit ESG",
+    report: "Laporan lingkungan",
   }[mode];
   const chart = [...readings].reverse().map((r) => ({
     time: dateLabel(r.observed_at),
@@ -80,7 +81,24 @@ export function SensorWorkspace({
     const blob = new Blob(
       [
         JSON.stringify(
-          { node, readings, exported_at: new Date().toISOString() },
+          {
+            report_type: "ambient_monitoring",
+            node,
+            readings,
+            report_scope: dashboard.data?.report_scope,
+            coverage: {
+              reading_count: readings.length,
+              from: readings.at(-1)?.observed_at ?? null,
+              to: readings[0]?.observed_at ?? null,
+              limit: 288,
+            },
+            limitations: [
+              "Pembacaan asli dan hasil model harus ditafsirkan terpisah.",
+              "Tidak menetapkan sumber pencemar, kepatuhan, skor ESG, atau jumlah emisi.",
+              "Belum mendapat assurance independen.",
+            ],
+            exported_at: new Date().toISOString(),
+          },
           null,
           2,
         ),
@@ -180,8 +198,9 @@ export function SensorWorkspace({
         <div>
           <h1>{title}</h1>
           <p>
-            Data asli node AEROSENSE, terpisah dari informasi wilayah pada API
-            publik.
+            {mode === "report"
+              ? "Riwayat sensor untuk pemeriksaan kondisi udara."
+              : "Pembacaan node dan hasil model, terpisah dari informasi wilayah."}
           </p>
         </div>
         <button
@@ -196,6 +215,7 @@ export function SensorWorkspace({
           <RefreshCw size={17} />
         </button>
       </header>
+      {mode === "report" && <MonitoringScope report />}
       {isLoading ? (
         <DataState loading />
       ) : !user ? (
@@ -334,7 +354,7 @@ export function SensorWorkspace({
                     <button
                       className="live-button secondary"
                       onClick={exportReadings}
-                      disabled={!readings.length || !!history.error}
+                      disabled={!readings.length || history.loading || !!history.error}
                     >
                       <Download size={15} />
                       Ekspor JSON
@@ -469,9 +489,9 @@ export function SensorWorkspace({
               )}
               {mode === "report" && (
                 <p className="live-notice">
-                  Laporan ini berisi pembacaan dan hasil model yang tersimpan.
-                  Perhitungan emisi serta audit ESG memerlukan data aktivitas
-                  dan metodologi tambahan.
+                  Ekspor menyertakan cakupan waktu dan batas penggunaan data.
+                  Penilaian ESG memerlukan bukti lain serta pemeriksaan sesuai
+                  metodologi yang digunakan.
                 </p>
               )}
             </>

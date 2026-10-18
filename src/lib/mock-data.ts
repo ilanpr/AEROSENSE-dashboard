@@ -1,6 +1,5 @@
 import type { Node, NodeReading } from '@/types/node.types'
 import type { Alert } from '@/types/alert.types'
-import type { CarbonSummary, EmissionLog } from '@/types/esg.types'
 
 /**
  * ============================================
@@ -255,52 +254,6 @@ export const mockAlerts: Alert[] = [
     status: 'active',
     value: 221,
     threshold: 200,
-  },
-]
-
-export const mockCarbonSummary: CarbonSummary = {
-  estimatedCO2e: 10240,
-  avgTVOC: 117.4,
-  avgPM25: 18.4,
-  complianceScore: 92,
-}
-
-export const mockEmissionLogs: EmissionLog[] = [
-  {
-    id: 'log-1',
-    date: '30 Sep, 09.25',
-    nodeId: 'AS-SDY-05',
-    nodeName: 'Sidayu',
-    co2: 714,
-    tvoc: 168,
-    pm25: 32.4,
-  },
-  {
-    id: 'log-2',
-    date: '30 Sep, 08.50',
-    nodeId: 'AS-MYR-03',
-    nodeName: 'Manyar',
-    co2: 688,
-    tvoc: 221,
-    pm25: 25.8,
-  },
-  {
-    id: 'log-3',
-    date: '30 Sep, 08.30',
-    nodeId: 'AS-GRK-02',
-    nodeName: 'Gresik Kota',
-    co2: 590,
-    tvoc: 89,
-    pm25: 15.2,
-  },
-  {
-    id: 'log-4',
-    date: '30 Sep, 08.15',
-    nodeId: 'AS-CRM-01',
-    nodeName: 'Cerme',
-    co2: 552,
-    tvoc: 74,
-    pm25: 12.1,
   },
 ]
 

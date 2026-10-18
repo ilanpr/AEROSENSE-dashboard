@@ -1,4 +1,45 @@
 /* Shared runtime surfaces follow the dashboard's blue, white and rounded controls. */
+.monitoring-scope {
+  margin: 24px 0;
+  border: 1px solid #dce8f5;
+  border-radius: 16px;
+  background: #fff;
+  color: #153657;
+  overflow: hidden;
+}
+.monitoring-scope summary {
+  min-height: 48px;
+  padding: 18px 22px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 650;
+}
+.monitoring-scope summary:focus-visible {
+  outline: 3px solid #086cfb;
+  outline-offset: -4px;
+  border-radius: 12px;
+}
+.scope-summary-note { float: right; color: #526b85; font-size: 12px; font-weight: 400; }
+.scope-content { padding: 4px 22px 22px; }
+.scope-content h2 { font-size: 19px; line-height: 1.4; font-weight: 750; letter-spacing: -.02em; }
+.scope-content p, .scope-evidence dd { font-size: 14px; line-height: 1.7; color: #4c6782; max-width: 72ch; }
+.scope-content p { margin-top: 12px; }
+.scope-evidence { margin-top: 22px; }
+.scope-evidence > div { display: grid; grid-template-columns: 145px minmax(0, 1fr); gap: 20px; padding: 16px 0; border-bottom: 1px solid #e5eef8; }
+.scope-evidence dt { font-weight: 650; font-size: 14px; }
+.scope-evidence dd strong { font-weight: 750; color: #153657; font-variant-numeric: tabular-nums; }
+.scope-content .scope-limit { margin-top: 22px; color: #153657; }
+.scope-method { margin-top: 22px; }
+.scope-method summary { padding: 12px 0; color: #0758d3; }
+.scope-sources { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-top: 18px; }
+.scope-sources a { display: inline-flex; gap: 6px; align-items: center; color: #0758d3; font-size: 13px; min-height: 40px; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 600px) {
+  .monitoring-scope summary { padding: 16px; }
+  .scope-summary-note { float: none; display: block; margin-top: 5px; }
+  .scope-content { padding: 4px 16px 20px; }
+  .scope-evidence > div { grid-template-columns: 1fr; gap: 5px; }
+  .scope-method summary { padding: 12px 0; }
+}
 .live-heading {
   display: flex;
   align-items: center;
