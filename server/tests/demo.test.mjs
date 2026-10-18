@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DEMO_POINTS,demoNodes,demoHistory,demoEnvironment } from '../../src/demo/data.ts';
+import { sensorSummary } from '../../src/lib/environment-presentation.ts';
 import { demoRequest } from '../../src/demo/api.ts';
 import { authenticateDemo, demoUser } from '../../src/demo/session.ts';
 const distance=(a,b)=>{
@@ -19,6 +20,8 @@ test('film demo keeps 16 Surabaya points about 2.5 km apart and preserves sensor
   const now=Date.now(),nodes=demoNodes('viewer',now);
   assert.equal(nodes.filter(n=>n.latest.stale).length,1);
   assert(nodes.every(n=>!n.pm25_validated&&!('pm25_ug_m3' in n.latest.metrics)));
+  const labels = new Set(nodes.map(n=>sensorSummary(n).label));
+  assert.deepEqual(labels,new Set(["Relatif bersih","Waspada","Bahaya","Data belum cukup"]));
   assert.equal(demoHistory(15,now)[0].observed_at,nodes[15].latest.observed_at);
   for(let i=0;i<16;i++){
     const env=demoEnvironment(i,now);

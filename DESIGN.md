@@ -4,7 +4,7 @@ Purpose: make the latest readings understandable before showing the full dataset
 
 The dashboard starts with AEROSENSE devices at their actual locations. Public environmental information follows as regional context. Missing or expired sensor readings never borrow public API values.
 
-Keep the blue and white application shell, its navigation, Inter typography and existing account controls. Inside the hub, use atmospheric midnight blue panels, periwinkle lighting, generous space and white sculptural illustrations inspired by the supplied weather UI. Do not reproduce phone frames or reference text.
+Keep the blue and white application shell, its navigation, Inter typography and existing account controls. Inside the hub, use bright AEROSENSE cobalt-to-sky blue panels, generous space and pale metric surfaces with navy text, following the user-approved bright blue reference. Do not reproduce phone frames or reference text.
 
 Hierarchy: short conclusion, two or three important numbers, practical next step, observation time. Full readings and attribution remain in separate disclosures. US AQI, eCO2, optical dust, forecasts and satellite detections retain their correct labels.
 
@@ -21,3 +21,5 @@ Refinement: retain Inter with restrained 500–650 weights, tabular readings, a 
 Review target: Purpose 5, Hierarchy 5, Evidence 5, Specificity 4, Restraint 4, Visual craft 4. Validate the rendered desktop and narrow layouts before accepting these scores.
 
 Evidence: call the admin view Laporan lingkungan. Keep cost/method/source detail in disclosures, with Rp633.500 labeled as the five-component subtotal, never a selling price. Distinguish current sensor history from planned citizen reporting and follow-up. No ESG/compliance score, corporate emissions conversion, source attribution, or assurance claim from ambient sensor values.
+
+Sensor status: classify only fresh valid pollution indicators against explicit enabled sensor rules. Relatif bersih is relative to those rules, not a health guarantee. Waspada respects hysteresis; Bahaya requires a separate operator-configured danger_high threshold. Missing, partial or stale data must never appear clean. Public API AQI stays separate. AERO-BOT uses three generated pose variants plus its original mascot.

@@ -1146,6 +1146,7 @@ const server = http.createServer(async (req, res) => {
               "humidity_pct",
             ].includes(p.metric) ||
             !Number.isFinite(p.high) ||
+            (p.danger_high != null && (!Number.isFinite(p.danger_high) || p.danger_high <= p.high)) ||
             !Number.isFinite(p.clear_below) ||
             p.clear_below >= p.high ||
             !Number.isInteger(p.cooldown_seconds) ||
@@ -1167,6 +1168,7 @@ const server = http.createServer(async (req, res) => {
                 node_id: p.node_id,
                 metric: p.metric,
                 high: p.high,
+                ...(p.danger_high !== undefined ? { danger_high: p.danger_high } : {}),
                 clear_below: p.clear_below,
                 unit: p.unit,
                 cooldown_seconds: p.cooldown_seconds,

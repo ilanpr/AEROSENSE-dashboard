@@ -1,3 +1,4 @@
+import { NodeStatus } from "./NodeStatus";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -139,7 +140,7 @@ export function SensorWorkspace({
                   <div className="sensor-summary-row" key={n.id}>
                     <MapPin size={20} />
                     <div>
-                      <strong>{n.name}</strong>
+                      <strong>{n.name}</strong><NodeStatus node={n} />
                       <p>
                         Pembacaan terbaru tersedia ·{" "}
                         {dateLabel(n.latest?.observed_at)}
@@ -168,7 +169,7 @@ export function SensorWorkspace({
                     <div className="sensor-summary-row" key={n.id}>
                       <MapPin size={18} />
                       <div>
-                        <strong>{n.name}</strong>
+                        <strong>{n.name}</strong><NodeStatus node={n} />
                         <p>
                           {n.latest?.reading_id
                             ? `Pembacaan terakhir ${dateLabel(n.latest.observed_at)}. Data ini sudah lama.`
@@ -240,17 +241,7 @@ export function SensorWorkspace({
                 <span>
                   {node.name} · {node.latitude}, {node.longitude}
                 </span>
-                <span
-                  className={
-                    "live-tag " + (node.latest?.stale ? "warning" : "")
-                  }
-                >
-                  {!node.latest?.reading_id
-                    ? "Belum ada pembacaan"
-                    : node.latest.stale
-                      ? "Pembacaan lama"
-                      : "Pembacaan terbaru"}
-                </span>
+                <NodeStatus node={node} />
               </div>
               {["map", "nodes", "overview"].includes(mode) && (
                 <Suspense fallback={<DataState loading />}>
@@ -306,7 +297,7 @@ export function SensorWorkspace({
                       {nodes.map((n) => (
                         <tr key={n.id}>
                           <td>
-                            <strong>{n.name}</strong>
+                            <strong>{n.name}</strong><NodeStatus node={n} />
                             <small>{n.id}</small>
                           </td>
                           <td>

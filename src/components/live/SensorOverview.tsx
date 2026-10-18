@@ -1,3 +1,5 @@
+import { NodeStatus } from "./NodeStatus";
+import { AeroMascot } from "@/components/environment/AeroMascot";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -32,7 +34,8 @@ export function SensorOverview() {
     node ? `/v1/rules?node_id=${encodeURIComponent(node.id)}` : null,
     60000,
   );
-  const summary = sensorSummary(node, rules.data?.rules);
+  const summary = sensorSummary(node, rules.data?.rules || node?.rules);
+  const pose = summary.tone === "danger" ? "alert" : summary.tone === "warning" || summary.tone === "pending" ? "watch" : "calm";
   const fresh = !!node?.latest?.reading_id && !node.latest.stale;
   const keys = [
     node?.pm25_validated ? "pm25_ug_m3" : "dust_ug_m3",
@@ -65,6 +68,7 @@ export function SensorOverview() {
         <DataState error={dashboard.error} retry={dashboard.refresh} />
       ) : (
         <>
+          <div className="sensor-focus-grid">
           <article className={`sensor-hero tone-${summary.tone}`}>
             <Atmosphere />
             <div className="sensor-hero-copy">
@@ -72,7 +76,7 @@ export function SensorOverview() {
                 className={`insight-status ${fresh ? "" : "status-pending"}`}
               >
                 <span />
-                {fresh ? "Sensor terhubung" : "Menunggu data"}
+                {summary.label}
               </span>
               <h2>{summary.title}</h2>
               <p>
@@ -137,6 +141,15 @@ export function SensorOverview() {
               )}
             </footer>
           </article>
+          <aside className={`aero-assist assist-${summary.tone}`}>
+            <div className="assist-copy">
+              <h2>{summary.tone === "danger" ? "Periksa titik ini sekarang." : summary.tone === "warning" ? "Ada yang perlu dicek." : summary.tone === "pending" ? "Tunggu data terbaru." : "Kenali kondisi sekitar."}</h2>
+              <p>{summary.tone === "danger" ? "Cek lokasi dan perangkat sebelum menentukan tindakan." : summary.tone === "warning" ? "Bandingkan dengan titik terdekat dan periksa sumber perubahan." : summary.tone === "pending" ? "Status baru muncul setelah pembacaan dan aturan tersedia." : "Lihat titik terdekat sebelum beraktivitas di luar."}</p>
+              <Link to="/aerobot" className="assist-link">Tanya AERO-BOT <ArrowUpRight size={15} /></Link>
+            </div>
+            <AeroMascot pose={pose} />
+          </aside>
+          </div>
           {nodes.length > 1 && (
             <div className="node-strip" aria-label="Status perangkat">
               {nodes.map((n) => (
@@ -150,23 +163,21 @@ export function SensorOverview() {
                     setParams(next);
                   }}
                 >
-                  <span
-                    className={
-                      n.latest?.reading_id && !n.latest.stale
-                        ? "node-dot"
-                        : "node-dot node-dot-pending"
-                    }
-                  />
+                  <span className={`node-dot dot-${sensorSummary(n).tone}`} />
                   <strong>{n.name}</strong>
-                  <small>
-                    {n.latest?.reading_id && !n.latest.stale
-                      ? "Data terbaru"
-                      : "Menunggu data"}
-                  </small>
+                  <NodeStatus node={n} />
                 </button>
               ))}
             </div>
           )}
+          <details className="insight-disclosure status-method">
+            <summary><span>Arti status sensor</span><ChevronDown size={17} /></summary>
+            <div className="insight-detail-body">
+              <p>Relatif bersih: pembacaan parameter udara berada di bawah ambang yang diatur. Waspada: ambang peringatan terlewati atau belum pulih. Bahaya: ambang bahaya yang diatur terlewati. Data lama, nilai tidak valid, atau aturan belum tersedia tidak diberi status bersih.</p>
+              <p>Status ini untuk pemantauan sensor, bukan AQI, ISPU, kategori kesehatan, atau bukti sumber emisi. Debu optik dan eCO₂ tetap merupakan indikator sensor.</p>
+              {node?.rules?.map(r=><p key={r.metric}>{metricLabels[r.metric]?.[0] || r.metric}: waspada ≥ {r.high} {r.unit}{r.danger_high != null ? ` · bahaya ≥ ${r.danger_high} ${r.unit}` : " · ambang bahaya belum diatur"}.</p>)}
+            </div>
+          </details>
           {node?.latest?.reading_id && node.latest.stale && (
             <details className="insight-disclosure">
               <summary>

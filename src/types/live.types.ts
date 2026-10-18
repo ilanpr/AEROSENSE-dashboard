@@ -15,6 +15,15 @@ export interface SensorContext {
   stale: boolean;
   pm25_validated: boolean;
 }
+export interface SensorRule {
+  metric: string;
+  high: number;
+  danger_high?: number | null;
+  clear_below: number;
+  enabled: boolean;
+  active: boolean;
+  unit: string;
+}
 export interface LiveNode {
   id: string;
   name: string;
@@ -26,6 +35,7 @@ export interface LiveNode {
   calibration_version: string | null;
   role: string;
   latest: SensorContext | null;
+  rules?: SensorRule[];
 }
 export interface Reading {
   id: string;

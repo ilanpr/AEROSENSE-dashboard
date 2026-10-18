@@ -23,7 +23,7 @@ export function demoHistory(index:number, now=Date.now()): Reading[] {
       humidity_pct:round(74-8*daylight-(index%3)*1.2-wave),
       tvoc_ppb:Math.round(95+index*6+14*wave+bump*3),
       eco2_ppm:Math.round(460+index*12+18*wave+bump*2),
-      dust_ug_m3:round(22+index*1.3+3*wave+bump),
+      dust_ug_m3:round(22+index*1.3+3*wave+bump+([10,13].includes(index)?28:[4,7].includes(index)?10:0)),
     };
     return {id:`${DEMO_POINTS[index].id}-${j}`,node_id:DEMO_POINTS[index].id,
       observed_at:iso(at),metrics,raw_metrics:{...metrics,dust_ug_m3:round(metrics.dust_ug_m3+0.6*Math.cos(j*0.6))},
@@ -37,7 +37,7 @@ export function demoNodes(role="viewer",now=Date.now()):LiveNode[] {
     const reading=demoHistory(i,now)[0];
     const stale=i===15;
     return {...p,location_id:"demo-surabaya",gateway_id:`demo-gateway-${1+Math.floor(i/8)}`,
-      pm25_validated:false,calibration_version:null,role,
+      pm25_validated:false,calibration_version:null,role,rules:demoRules(i,now),
       latest:{node_id:p.id,name:p.name,reading_id:reading.id,
         observed_at:reading.observed_at,
         received_at:iso(Date.parse(reading.observed_at)+1500),
@@ -47,9 +47,9 @@ export function demoNodes(role="viewer",now=Date.now()):LiveNode[] {
     };
   });
 }
-export function demoRules(index:number) {
-  const value=demoHistory(index)[0].metrics.dust_ug_m3!;
-  return [{id:`demo-rule-${index}`,metric:"dust_ug_m3",high:40,clear_below:35,
+export function demoRules(index:number,now=Date.now()) {
+  const value=demoHistory(index,now)[0].metrics.dust_ug_m3!;
+  return [{id:`demo-rule-${index}`,metric:"dust_ug_m3",high:40,danger_high:60,clear_below:35,
     unit:"µg/m³",cooldown_seconds:1800,enabled:true,active:value>=40,
     note:"Ambang skenario demo, bukan baku mutu atau kategori kesehatan."}];
 }

@@ -11,6 +11,7 @@ interface Rule {
   id: string;
   metric: string;
   high: number;
+  danger_high?: number | null;
   clear_below: number;
   unit: string;
   cooldown_seconds: number;
@@ -33,6 +34,7 @@ export function SystemPage() {
   const [metric, setMetric] = useState("eco2_ppm");
   const [high, setHigh] = useState("");
   const [clear, setClear] = useState("");
+  const [danger, setDanger] = useState("");
   const [cooldown, setCooldown] = useState("1800");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -86,7 +88,7 @@ export function SystemPage() {
                     <li key={r.id}>
                       <strong>{metricLabels[r.metric]?.[0] || r.metric}</strong>
                       <span>
-                        Ambang {r.high} {r.unit} · Pulih di bawah{" "}
+                        Waspada {r.high} {r.unit}{r.danger_high != null ? ` · Bahaya ${r.danger_high} ${r.unit}` : ""} · Pulih di bawah{" "}
                         {r.clear_below} · {r.enabled ? "Aktif" : "Nonaktif"}
                       </span>
                     </li>
@@ -104,6 +106,7 @@ export function SystemPage() {
                           node_id: node.id,
                           metric,
                           high: Number(high),
+                          danger_high: danger.trim() ? Number(danger) : null,
                           clear_below: Number(clear),
                           unit: metricLabels[metric][1],
                           cooldown_seconds: Number(cooldown),
@@ -128,7 +131,7 @@ export function SystemPage() {
                         options={Object.entries(metricLabels).filter(([k])=>k!=="pm25_ug_m3"||node.pm25_validated).map(([value,[label]])=>({value,label}))} />
                     </label>
                     <label>
-                      Ambang atas
+                      Ambang waspada
                       <input
                         type="number"
                         step="any"
@@ -136,6 +139,10 @@ export function SystemPage() {
                         value={high}
                         onChange={(e) => setHigh(e.target.value)}
                       />
+                    </label>
+                    <label>
+                      Ambang bahaya (opsional)
+                      <input type="number" step="any" min={high ? Number(high) : undefined} value={danger} onChange={e=>setDanger(e.target.value)} />
                     </label>
                     <label>
                       Batas pulih

@@ -1,3 +1,5 @@
+import { sensorSummary } from "@/lib/environment-presentation";
+import { NodeStatus } from "./NodeStatus";
 import { useEffect, useRef } from "react";
 import {
   MapContainer,
@@ -64,9 +66,7 @@ export function LiveMap({
             radius={n.id === selected ? 10 : 7}
             pathOptions={{
               color:
-                n.latest?.stale || !n.latest?.reading_id
-                  ? "#6c7f93"
-                  : "#0875ff",
+                ({calm:"#218160",warning:"#b87808",danger:"#c33f43"} as Record<string,string>)[sensorSummary(n).tone] || "#6c7f93",
               fillOpacity: 0.8,
             }}
             eventHandlers={{ click: () => onSelect(n.id) }}
@@ -74,11 +74,7 @@ export function LiveMap({
             <Popup>
               <strong>{n.name}</strong>
               <br />
-              {n.latest?.reading_id
-                ? n.latest.stale
-                  ? "Pembacaan lama"
-                  : "Pembacaan tersedia"
-                : "Belum ada pembacaan"}
+              <NodeStatus node={n} />
             </Popup>
           </CircleMarker>
         ))}

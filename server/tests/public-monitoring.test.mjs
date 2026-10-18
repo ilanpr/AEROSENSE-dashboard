@@ -14,6 +14,7 @@ test("guest monitoring publishes only opted-in nodes and strips private fields",
     db:async (table, query) => {
       calls.push([table,query]);
       if (table === "ae_nodes") return nodes;
+      if (table === "ae_rules") return [{node_id:"public",metric:"dust_ug_m3",high:40,danger_high:60,clear_below:35,enabled:true,active:false,unit:"µg/m³",internal_key:"private-rule"}];
       return [{id:"r1",node_id:"public",metrics:{dust_ug_m3:23,secret:999},raw_metrics:{dust_ug_m3:24},processing:{private:true},acknowledged_by:"user-secret",phone:"123"}];
     },
     one:async () => ({reading_id:"r1",metrics:{dust_ug_m3:23,secret:999},quality:{secret:true},internal_key:"hidden",stale:false}),
@@ -27,6 +28,8 @@ test("guest monitoring publishes only opted-in nodes and strips private fields",
   assert.equal(dash.status,200);
   assert.deepEqual(dash.data.nodes.map(n=>n.id),["public"]);
   assert.equal(dash.data.nodes[0].role,"guest");
+  assert.equal(dash.data.nodes[0].rules[0].danger_high,60);
+  assert.equal(dash.data.nodes[0].rules[0].internal_key,undefined);
   assert(!JSON.stringify(dash).includes("private"));
   assert.deepEqual(dash.data.nodes[0].latest.metrics,{dust_ug_m3:23});
   assert(calls.some(([table,q])=>table==="ae_nodes"&&q.includes("public_read=eq.true&enabled=eq.true")));

@@ -33,7 +33,7 @@ Tombol Akun warga/Admin pada form login mengisi email dan password. Tekan Masuk 
 - 15 node menampilkan contoh data baru, satu node menampilkan keterlambatan 45 menit. Waktu skenario disusun terhadap waktu perangkat saat membuka demo; ini bukan waktu pengukuran nyata.
 - Tiap node mempunyai 96 sampel berjarak 15 menit, mendekati 24 jam. Suhu, kelembapan, TVOC, eCO2 dan debu optik bervariasi secara halus antarwaktu dan titik.
 - Garis GRU adalah ilustrasi, dengan versi `demo-illustration-not-inference`; bukan hasil inferensi atau bukti peningkatan akurasi.
-- Ambang debu 40 adalah aturan skenario, bukan baku mutu/kategori kesehatan. Ada contoh peringatan dan status ditinjau. Sumber pencemar tidak ditetapkan.
+- Ambang debu 40 (waspada) dan 60 (bahaya) adalah aturan skenario, bukan baku mutu/kategori kesehatan. Dua node memiliki skenario debu lebih tinggi; data sintetis ini bukan bukti polusi di lokasi sebenarnya. Ada contoh peringatan dan status ditinjau. Sumber pencemar tidak ditetapkan.
 - Hub lingkungan memakai nilai contoh Surabaya pada koordinat node pilihan: cuaca, udara wilayah, tanah, titik panas, sungai dan cakupan gempa. Label penyedia memakai “simulasi”; tidak ada fetch API publik langsung.
 - Berita bencana tidak diisi dengan kejadian rekaan. Kanal PMI/BNPB tetap menuju sumber resminya.
 - AERO-BOT menyediakan jawaban contoh untuk cuaca, udara, sensor, tanah, karhutla dan ESG. Tidak memanggil Gemini atau n8n. Pertanyaan di luar contoh mendapat penjelasan cakupan demo.
@@ -59,3 +59,14 @@ Rujukan: https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/
 4. Buka Peringatan pada node bernilai tinggi, lalu hub lingkungan dan sumbernya.
 5. Tanya “Cuaca di Surabaya?” atau “Bagaimana kondisi udara node ini?” di AERO-BOT.
 6. Untuk rekaman laporan, masuk akun admin pada browser/sesi terpisah. Jangan menyajikan demo sebagai hasil pengujian alat atau respons instansi nyata.
+
+
+## Status node dan ilustrasi
+
+Status yang sama dipakai pada beranda, strip node, detail, tabel dan peta. Hanya pembacaan indikator udara sensor yang dibandingkan dengan aturan aktif; data API wilayah tidak menentukan status node. Data lama, aturan kosong, atau parameter tidak valid tidak diberi label bersih. Histeresis mengikuti `clear_below`; label bahaya hanya tersedia bila `danger_high` diatur operator.
+
+Untuk backend produksi, terapkan `server/supabase/008_node_status_bands.sql` sebelum memperbarui backend. Atur ambang melalui Pengaturan. Migrasi tidak memasang ambang kesehatan default, tidak mengubah workflow notifikasi menjadi laporan darurat, dan tidak diterapkan ke database produksi dari sesi ini.
+
+Tiga pose AERO-BOT dibuat dengan ImageGen bawaan, memakai maskot asli sebagai referensi: memberi saran (`calm.png`), memeriksa data (`watch.png`), dan memberi perhatian (`alert.png`). File final berada di `public/assets/aerobot/`. Prompt: pertahankan tubuh putih-biru, layar wajah navy, mata cyan, sirip telinga dan emblem angin; ilustrasi 2D transparan seluruh tubuh; ubah pose sesuai status; tanpa teks atau latar. Ketiganya ditampilkan pada kartu saran sesuai pembacaan node; pose memeriksa data juga ada di halaman AERO-BOT.
+
+Build demo mempertahankan berkas JavaScript versi sebelumnya selama take agar tab yang sudah terbuka tetap bisa berpindah halaman. Bersihkan folder build hanya di antara sesi saat server demo berhenti. Jika tab masih menampilkan error dari build lama, tekan Muat ulang.

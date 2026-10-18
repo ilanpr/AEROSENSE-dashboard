@@ -82,9 +82,11 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
         send(res, 200, { readings, report_scope: reportScope });
         return true;
       }
+      const allRules = nodes.length ? await db("ae_rules", "node_id=in.(" + nodes.map(n=>filter(n.id)).join(",") + ")&select=node_id,metric,high,danger_high,clear_below,enabled,active,unit") : [];
       const data = await Promise.all(
         nodes.map(async (n) => ({
           ...n,
+          rules: allRules.filter(r => r.node_id === n.id),
           latest:
             (await one("ae_sensor_context", "node_id=eq." + filter(n.id))) ??
             null,

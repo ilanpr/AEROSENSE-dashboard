@@ -1,3 +1,4 @@
+import { AeroMascot } from "@/components/environment/AeroMascot";
 import { Radio, CloudSun, Newspaper } from "lucide-react";
 
 const sources = [
@@ -8,6 +9,7 @@ const sources = [
 
 export function ChatSide() {
   return <section className="rounded-2xl border border-[#dce8f5] bg-white p-5 sm:p-6">
+    <AeroMascot pose="watch" className="chat-mascot" />
     <h2 className="text-sm font-semibold text-[#25405f] mb-5">Sumber jawaban</h2>
     <dl className="space-y-5">
       {sources.map(s => <div key={s.title} className="flex gap-3">

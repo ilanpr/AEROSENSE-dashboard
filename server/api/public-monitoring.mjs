@@ -4,7 +4,7 @@ const metrics = row => pick(row, metricKeys);
 const gru = row => row ? pick(row, ["target", "value", "model_version", "horizon_seconds"]) : null;
 const context = row => row ? {
   ...pick(row, ["node_id", "name", "reading_id", "observed_at", "received_at", "stale", "pm25_validated"]),
-  metrics: metrics(row.metrics), gru: gru(row.gru),
+  metrics: metrics(row.metrics), gru: gru(row.gru), quality: { invalid: row.quality?.invalid === true },
 } : null;
 const allowed = new Set(["dashboard", "nodes", "history", "rules", "alerts", "environment"]);
 
@@ -22,8 +22,10 @@ export async function publicMonitoring({ db, one, send, filter, readEnvironment 
   const nodes = (await db("ae_nodes", "public_read=eq.true&enabled=eq.true" + (id ? "&id=eq." + filter(id) : "")))
     .filter(n => n.public_read === true && n.enabled === true && (!id || n.id === id));
   if (["dashboard", "nodes"].includes(resource)) {
+    const allRules = nodes.length ? await db("ae_rules", "node_id=in.(" + nodes.map(n=>filter(n.id)).join(",") + ")") : [];
     const data = await Promise.all(nodes.map(async n => ({
       ...pick(n, ["id", "name", "latitude", "longitude", "pm25_validated"]), role: "guest",
+      rules: allRules.filter(r=>r.node_id===n.id).map(r => pick(r,["metric","high","danger_high","clear_below","enabled","active","unit"])),
       latest: context(await one("ae_sensor_context", "node_id=eq." + filter(n.id))),
     })));
     data.sort((a,b) => Number(!a.latest?.reading_id || !!a.latest?.stale) - Number(!b.latest?.reading_id || !!b.latest?.stale)
@@ -39,7 +41,7 @@ export async function publicMonitoring({ db, one, send, filter, readEnvironment 
   }
   const fields = {
     history: ["id", "node_id", "observed_at"],
-    rules: ["metric", "high", "clear_below", "enabled", "active", "unit"],
+    rules: ["metric", "high", "danger_high", "clear_below", "enabled", "active", "unit"],
     alerts: ["id", "node_id", "metric", "value", "threshold", "unit", "created_at", "acknowledged_at"],
   }[resource];
   const table = { history: "ae_readings", rules: "ae_rules", alerts: "ae_alerts" }[resource];

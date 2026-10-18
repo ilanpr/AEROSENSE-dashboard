@@ -2,7 +2,9 @@ import type {
   EnvironmentFact,
   EnvironmentInsight,
   LiveNode,
+  SensorRule,
 } from "../types/live.types";
+export type { SensorRule } from "../types/live.types";
 
 export type Scene =
   | "sunny"
@@ -17,14 +19,6 @@ export type Scene =
   | "earthquake"
   | "sensor";
 export type Highlight = { label: string; value: string; unit: string };
-export type SensorRule = {
-  metric: string;
-  high: number;
-  clear_below: number;
-  enabled: boolean;
-  active: boolean;
-  unit: string;
-};
 
 const number = (n: number) =>
   n.toLocaleString("id-ID", { maximumFractionDigits: 2 });
@@ -148,23 +142,26 @@ export function environmentHighlights(
 
 export function sensorSummary(
   node: LiveNode | undefined,
-  rules: SensorRule[] = [],
+  rules: SensorRule[] = node?.rules || [],
 ) {
+  const pending = { label: "Data belum cukup", title: "Menunggu pembacaan.", body: "", tone: "pending" };
   const reading = node?.latest;
-  if (!reading?.reading_id || reading.stale)
-    return {
-      title: "Sensor belum mengirim data.",
-      body: "",
-      tone: "pending",
-    };
-  const usable = rules.filter(
+  if (!reading?.reading_id || reading.stale || reading.quality?.invalid === true) return pending;
+  const configured = rules.filter(r => r.enabled &&
+    ["dust_ug_m3", "eco2_ppm", "tvoc_ppb", ...(node?.pm25_validated ? ["pm25_ug_m3"] : [])].includes(r.metric));
+  const usable = configured.filter(
     (r) =>
-      r.enabled &&
-      Number.isFinite(r.high) &&
-      (r.metric !== "pm25_ug_m3" || node?.pm25_validated) &&
+      Number.isFinite(r.high) && r.high > 0 &&
+      Number.isFinite(r.clear_below) && r.clear_below >= 0 && r.clear_below < r.high &&
       typeof reading.metrics[r.metric] === "number" &&
-      Number.isFinite(reading.metrics[r.metric]),
+      Number.isFinite(reading.metrics[r.metric]) && Number(reading.metrics[r.metric]) >= 0,
   );
+  const critical = usable.find(r => typeof r.danger_high === "number" &&
+    Number.isFinite(r.danger_high) && r.danger_high > r.high && Number(reading.metrics[r.metric]) >= r.danger_high);
+  if (critical) return {
+    label: "Bahaya", title: "Perlu segera diperiksa.",
+    body: "Ambang bahaya sensor terlewati. Periksa lokasi dan perangkat.", tone: "danger",
+  };
   const raised = usable.find(
     (r) =>
       Number(reading.metrics[r.metric]) >= r.high ||
@@ -172,19 +169,17 @@ export function sensorSummary(
   );
   if (raised)
     return {
+      label: "Waspada",
       title: "Periksa kondisi udara.",
       body: "Ada parameter yang melewati ambang peringatan.",
       tone: "warning",
     };
-  if (usable.length)
+  if (usable.length && usable.length === configured.length)
     return {
-      title: "Di bawah ambang peringatan.",
+      label: "Relatif bersih",
+      title: "Relatif bersih.",
       body: "",
       tone: "calm",
     };
-  return {
-    title: "Pembacaan terbaru.",
-    body: "",
-    tone: "calm",
-  };
+  return pending;
 }
