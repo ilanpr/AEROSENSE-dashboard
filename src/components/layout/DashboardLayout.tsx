@@ -3,6 +3,8 @@ import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { AccessProvider } from "./AccessProvider";
+import { DEMO_MODE } from "@/lib/demo-mode";
+import { DemoBanner } from "@/components/shared/DemoBanner";
 
 export function DashboardLayout() {
   return (
@@ -33,7 +35,8 @@ function DashboardShell() {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-[#f3f8ff] text-[#11223D]">
+    <div className={`flex min-h-screen bg-[#f3f8ff] text-[#11223D] ${DEMO_MODE ? "demo-shell" : ""}`}>
+      {DEMO_MODE && <DemoBanner />}
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <Sidebar />

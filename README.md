@@ -1,5 +1,9 @@
 # AEROSENSE Dashboard
 
+## Demo untuk pengambilan video
+
+Mode demo menyediakan 16 titik sintetis di Surabaya dengan jarak tetangga sekitar 2,5 km, historis pembacaan, hub lingkungan Surabaya, jawaban contoh AERO-BOT, serta akun warga dan admin terpisah. Jalankan `pnpm.cmd demo:build` lalu `pnpm.cmd demo:serve`. [Akun, skenario, dan akses HP](docs/FILM_DEMO.md). Mode ini tidak memakai Supabase/n8n produksi; banner simulasi selalu tampil.
+
 AEROSENSE dikembangkan untuk pemantauan bersama di sekitar kawasan industri. Web memisahkan pembacaan node, hasil model GRU, dan informasi wilayah dari API publik. AERO-BOT menjelaskan konteks yang tersedia; pekerjaan otomatis memakai backend dan n8n. Kesiapan lapangan mengikuti bukti pengujian tiap jalur.
 
 ## Fitur

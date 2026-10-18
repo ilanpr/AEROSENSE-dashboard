@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/lib/constants";
 import { ArrowRight, Lock, Mail } from "lucide-react";
 import { authService } from "@/services/auth.service";
+import { DEMO_MODE } from "@/lib/demo-mode";
+import { DEMO_ACCOUNTS } from "@/demo/session";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -50,6 +52,11 @@ export function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {DEMO_MODE && <div className="demo-login">
+              <strong>Demo Surabaya · data simulasi</strong>
+              <p>Pilih akun untuk mengisi email dan kata sandi.</p>
+              <div>{DEMO_ACCOUNTS.map(a => <button type="button" key={a.role} onClick={()=>{setEmail(a.email);setPassword(a.password);setError("");}}>Akun {a.label.toLowerCase()}</button>)}</div>
+            </div>}
             {error && (
               <p className="live-notice" role="alert">
                 {error}

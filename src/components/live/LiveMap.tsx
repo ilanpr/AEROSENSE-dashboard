@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -8,13 +8,21 @@ import {
 } from "react-leaflet";
 import type { LiveNode } from "@/types/live.types";
 import "leaflet/dist/leaflet.css";
-function Focus({ node }: { node?: LiveNode }) {
+function Focus({ node, nodes }: { node?: LiveNode; nodes: LiveNode[] }) {
   const map = useMap();
+  const focused = useRef(false);
   const latitude = node?.latitude,
     longitude = node?.longitude;
   useEffect(() => {
-    if (latitude !== undefined && longitude !== undefined)
+    if (latitude === undefined || longitude === undefined) return;
+    if (!focused.current && nodes.length > 1) {
+      map.fitBounds(nodes.map(n => [n.latitude, n.longitude] as [number, number]), {padding:[28,28],maxZoom:13});
+    } else if (!focused.current) {
       map.setView([latitude, longitude], 13);
+    } else {
+      map.panTo([latitude, longitude]);
+    }
+    focused.current = true;
   }, [latitude, longitude, map]);
   return null;
 }
@@ -44,7 +52,7 @@ export function LiveMap({
         zoom={13}
         className="h-full w-full"
       >
-        <Focus node={active} />
+        <Focus node={active} nodes={valid} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

@@ -163,7 +163,12 @@ export function SensorOverview() {
                 <button
                   key={n.id}
                   aria-pressed={n.id === node?.id}
-                  onClick={() => setSelected(n.id)}
+                  onClick={() => {
+                    setSelected(n.id);
+                    const next = new URLSearchParams(params);
+                    next.set("node_id", n.id);
+                    setParams(next);
+                  }}
                 >
                   <span
                     className={

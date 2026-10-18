@@ -1,11 +1,16 @@
 import { API_CONFIG } from "@/lib/constants";
 import { getSupabase } from "./supabase";
+import { DEMO_MODE } from "@/lib/demo-mode";
 
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {},
   authenticated = true,
 ): Promise<T> {
+  if (DEMO_MODE) {
+    const { demoRequest } = await import("@/demo/api");
+    return await demoRequest(endpoint, options) as T;
+  }
   const headers = new Headers(options.headers);
   if (options.body) headers.set("Content-Type", "application/json");
   if (authenticated) {

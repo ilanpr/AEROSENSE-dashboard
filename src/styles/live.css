@@ -1,4 +1,15 @@
 /* Shared runtime surfaces follow the dashboard's blue, white and rounded controls. */
+.demo-banner { position:fixed; top:0; left:0; right:0; z-index:70; min-height:42px; display:flex; align-items:center; justify-content:center; gap:12px 24px; padding:9px 16px; background:#173d64; color:#fff; font-size:12px; line-height:1.5; }
+.demo-banner strong { font-weight:700; }
+.demo-banner span { color:#d6e9fc; }
+.demo-banner a { color:#fff; text-decoration:underline; text-underline-offset:3px; }
+.demo-shell { padding-top:42px; }
+.demo-shell aside { top:42px; height:calc(100vh - 42px); }
+.demo-login { padding:14px; border-radius:12px; background:#eaf3ff; color:#173d64; font-size:12px; line-height:1.6; }
+.demo-login strong { font-weight:700; }
+.demo-login div { display:flex; gap:10px; margin-top:10px; }
+.demo-login button { min-height:42px; padding:8px 14px; border:1px solid #b1cce9; border-radius:9px; background:#fff; cursor:pointer; }
+@media(max-width:600px) { .demo-banner { justify-content:space-between; gap:2px 10px; font-size:11px; min-height:58px; flex-wrap:wrap; } .demo-banner strong { flex-basis:100%; } .demo-shell { padding-top:58px; } .demo-shell aside { top:58px; height:calc(100vh - 58px); } }
 .monitoring-scope {
   margin: 24px 0;
   border: 1px solid #dce8f5;
