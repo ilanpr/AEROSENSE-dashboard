@@ -1,9 +1,14 @@
 .aerosense-map-marker { background:none; border:0; }
-.map-pin { display:grid; place-items:center; width:32px; height:32px; border-radius:10px; background:#fff; color:var(--pin-color); border:1.5px solid var(--pin-color); box-shadow:0 3px 7px -3px #14395866; }
+.map-pin { display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:#fff; color:var(--pin-color); border:1.5px solid var(--pin-color); box-shadow:0 3px 7px -3px #14395866; }
 .map-pin svg { width:18px; height:18px; }
 .map-pin.is-active { outline:3px solid #0967e9; outline-offset:3px; }
 .node-focus-tooltip { background:#0967e9; border:0; border-radius:8px; color:#fff; padding:7px 10px; font-family:var(--font-sans); font-size:11px; font-weight:700; box-shadow:0 4px 9px -4px #183e6577; }
 .leaflet-tooltip-top.node-focus-tooltip::before { border-top-color:#0967e9; }
+.map-location-control { display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.map-location-control button { display:grid; place-items:center; width:44px; height:44px; border:1px solid #d8e5f2; border-radius:12px; background:#fff; color:#0967e9; cursor:pointer; box-shadow:0 3px 7px -4px #14395855; }
+.map-location-control button:hover { background:#edf5ff; }
+.map-location-control button:disabled { color:#61788f; cursor:wait; }
+.map-location-message { width:max-content; max-width:min(260px,calc(100vw - 110px)); padding:9px 12px; border:1px solid #d8e5f2; border-radius:10px; background:#fff; color:#385976; font-family:var(--font-sans); font-size:11px; line-height:1.6; box-shadow:0 4px 10px -6px #14395855; }
 .event-popup .leaflet-popup-content { font-family:var(--font-sans); color:#18344e; margin:20px; }
 .event-popup strong { font-size:15px; font-weight:750; }
 .event-popup p { font-size:11px; line-height:1.7; margin:10px 0; }

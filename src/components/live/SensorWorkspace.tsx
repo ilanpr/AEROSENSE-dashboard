@@ -302,6 +302,7 @@ export function SensorWorkspace({
                         <p>Titik panas: feed 24 jam, radius 50 km. Deteksi satelit belum mengonfirmasi kebakaran.</p>
                         <p>Gempa: daftar M5+ dalam 7 hari, radius 300 km. Tidak mencakup seluruh gempa atau menunjukkan radius dampak.</p>
                         <p>Diperiksa {dateLabel(dashboard.data?.refreshed_at)}</p>
+                        <p>Titik biru menunjukkan lokasi perangkat setelah Anda mengizinkan akses lokasi. Koordinat tetap di peramban dan tidak dikirim ke server AEROSENSE.</p>
                       </div>
                     </details>
                   </div>
@@ -312,6 +313,7 @@ export function SensorWorkspace({
                     nodes={nodes}
                     selected={node.id}
                     previewed={previewNode}
+                    locateUser={mode === "map"}
                     onSelect={setSelected}
                     showNodes={mode!=="map"||mapLayer!=="events"}
                     events={mode==="map"&&mapLayer!=="sensors"?events:[]}

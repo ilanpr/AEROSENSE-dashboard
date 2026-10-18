@@ -2,10 +2,11 @@ import { sensorSummary } from "@/lib/environment-presentation";
 import { NodeStatus } from "./NodeStatus";
 import { NodeReadings } from "./NodeReadings";
 import { mapIcon } from "./map-icons";
+import { DeviceLocation } from "./DeviceLocation";
 import { Link } from "react-router-dom";
 import type { GeoPoint } from "@/lib/nearby-nodes";
 import { ArrowUpRight } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -72,6 +73,7 @@ export function LiveMap({
   locationLabel = "Lokasi Anda",
   events = [],
   showNodes = true,
+  locateUser = false,
 }: {
   nodes: LiveNode[];
   selected: string;
@@ -82,7 +84,10 @@ export function LiveMap({
   locationLabel?: string;
   events?: EnvironmentEvent[];
   showNodes?: boolean;
+  locateUser?: boolean;
 }) {
+  const [devicePoint, setDevicePoint] = useState<GeoPoint | null>(null);
+  const locationPoint = userLocation || devicePoint;
   const valid = nodes.filter(
     (n) =>
       Number.isFinite(n.latitude) &&
@@ -102,16 +107,20 @@ export function LiveMap({
         zoom={13}
         className="h-full w-full"
       >
-        {userLocation ? <LocationFocus point={userLocation} radiusKm={radiusKm} /> : eventPoints.length ? <EventFocus nodes={showNodes?valid:[]} events={eventPoints} /> : <Focus node={active} nodes={valid} />}
+        {userLocation ? <LocationFocus point={userLocation} radiusKm={radiusKm} /> : devicePoint ? null : eventPoints.length ? <EventFocus nodes={showNodes?valid:[]} events={eventPoints} /> : <Focus node={active} nodes={valid} />}
         {!userLocation && showNodes && <SelectionFocus node={highlighted} />}
+        {locateUser && <DeviceLocation point={devicePoint} onPoint={setDevicePoint} />}
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
-        {userLocation && <>
-          <Circle center={[userLocation.latitude, userLocation.longitude]} radius={radiusKm * 1000} pathOptions={{ color: "#0b6fe5", weight: 1, dashArray: "5 7", fillOpacity: 0.04 }} interactive={false} />
-          {userLocation.accuracy != null && <Circle center={[userLocation.latitude, userLocation.longitude]} radius={userLocation.accuracy} pathOptions={{ color: "#0b6fe5", weight: 1, fillOpacity: 0.1 }} interactive={false} />}
-          <CircleMarker center={[userLocation.latitude, userLocation.longitude]} radius={7} pathOptions={{ color: "#fff", weight: 3, fillColor: "#076cfb", fillOpacity: 1 }}><Popup>{locationLabel}</Popup></CircleMarker>
+        {locationPoint && <>
+          {userLocation && <Circle center={[userLocation.latitude, userLocation.longitude]} radius={radiusKm * 1000} pathOptions={{ color: "#0b6fe5", weight: 1, dashArray: "5 7", fillOpacity: 0.04 }} interactive={false} />}
+          {locationPoint.accuracy != null && <Circle center={[locationPoint.latitude, locationPoint.longitude]} radius={locationPoint.accuracy} pathOptions={{ color: "#0b6fe5", weight: 1, fillOpacity: 0.1 }} interactive={false} />}
+          <CircleMarker center={[locationPoint.latitude, locationPoint.longitude]} radius={7} pathOptions={{ color: "#fff", weight: 3, fillColor: "#076cfb", fillOpacity: 1 }}>
+            <Tooltip direction="top" offset={[0,-10]}>{locationLabel}</Tooltip>
+            <Popup><strong>{locationLabel}</strong>{locationPoint.accuracy != null && <p>Perkiraan akurasi ±{Math.round(locationPoint.accuracy).toLocaleString("id-ID")} m.</p>}</Popup>
+          </CircleMarker>
         </>}
         {showNodes && valid.map((n) => (
           <Marker
