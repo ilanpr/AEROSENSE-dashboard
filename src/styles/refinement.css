@@ -1,8 +1,7 @@
-@font-face { font-family:"Maple Mono"; src:url("/fonts/maple-mono/MapleMono-Variable.woff2") format("woff2"); font-style:normal; font-weight:100 800; font-display:swap; }
 @font-face { font-family:Manrope; src:url('/fonts/manrope/Manrope-Variable.ttf') format('truetype'); font-style:normal; font-weight:200 800; font-display:swap; }
 /* The blue shell and atmospheric panels share one type and control system. */
 :root { --ui-ink:#18344e; --ui-muted:#526a80; --ui-blue:#0967e9; --ui-line:#dce6ef; }
-body { font-weight:400; font-optical-sizing:auto; font-variant-ligatures:none; }
+body { font-weight:500; font-optical-sizing:auto; }
 button, input, select, textarea { font:inherit; }
 button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 :is(a,button,summary,input,select,textarea):focus-visible { outline:3px solid #4295ef; outline-offset:4px; }
@@ -16,9 +15,9 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .sidebar-intro { display:flex; align-items:center; gap:8px; font-size:11px; color:#61778b; margin:0 10px 17px; }
 .sidebar-signal { width:6px; height:6px; background:#2c8f92; border-radius:50%; }
 .app-navigation { flex:1; display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
-.nav-entry { display:flex; align-items:center; gap:12px; min-height:46px; padding:11px 14px; border-radius:13px; color:#586e82; font-size:13px; font-weight:500; text-decoration:none; transition:color .18s,background .18s; }
+.nav-entry { display:flex; align-items:center; gap:12px; min-height:46px; padding:11px 14px; border-radius:13px; color:#586e82; font-size:13px; font-weight:600; text-decoration:none; transition:color .18s,background .18s; }
 .nav-entry:hover { background:#f1f6fc; color:#125fc7; }
-.nav-entry.active { color:#075bca; background:#eaf3ff; font-weight:650; }
+.nav-entry.active { color:#075bca; background:#eaf3ff; font-weight:750; }
 .sidebar-account { display:flex; align-items:center; gap:10px; border-top:1px solid #e4ecf4; padding:21px 4px 0; margin-top:22px; }
 .account-avatar { flex-shrink:0; display:grid; place-items:center; width:36px; height:36px; border:1px solid #dfebf7; background:#f0f6fd; border-radius:12px; color:#276bb0; }
 .sidebar-account > div { min-width:0; flex:1; }
@@ -32,15 +31,15 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .account-link:hover { background:#edf5fe; }
 .app-shell main { padding:32px clamp(20px,3vw,48px) 48px; }
 .app-shell :is(.live-heading,.insights-heading) { margin-bottom:24px; }
-.app-shell :is(.live-heading h1,.insights-heading h1) { font-size:clamp(25px,2.3vw,34px); line-height:1.22; letter-spacing:-.045em; font-weight:650; color:#18344e; }
+.app-shell :is(.live-heading h1,.insights-heading h1) { font-size:clamp(25px,2.3vw,34px); line-height:1.22; letter-spacing:-.03em; font-weight:750; color:#18344e; }
 .app-shell :is(.live-heading h2,.insights-heading h2,.live-panel h2) { font-weight:600; letter-spacing:-.025em; }
 .app-shell :is(.live-heading p,.insights-heading p) { font-size:12px; color:#597189; line-height:1.6; }
-.app-shell :is(.sensor-hero-copy h2,.insight-message h2) { font-size:clamp(30px,3vw,46px); font-weight:650; letter-spacing:-.045em; line-height:1.14; }
+.app-shell :is(.sensor-hero-copy h2,.insight-message h2) { font-size:clamp(30px,3vw,46px); font-weight:750; letter-spacing:-.03em; line-height:1.14; }
 .app-shell .panel-metrics dd { font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.035em; }
 .app-shell .panel-metrics dt { font-weight:450; }
 .app-shell :is(.sensor-hero,.insight-lead) { border-radius:30px; box-shadow:0 16px 36px -22px #172d5770; }
 .app-shell .panel-link { min-height:44px; font-size:13px; }
-.app-shell :is(.live-button,.live-icon-button) { min-height:44px; border-radius:13px; font-weight:600; font-size:13px; transition:background .18s,box-shadow .18s; }
+.app-shell :is(.live-button,.live-icon-button) { min-height:44px; border-radius:13px; font-weight:700; font-size:13px; transition:background .18s,box-shadow .18s; }
 .app-shell .live-icon-button { min-width:44px; background:white; border:1px solid #dce7f2; color:#2969ab; }
 .app-shell .live-icon-button:hover { background:#e9f2fc; }
 .app-shell .category-tab { border-radius:14px; }
@@ -102,7 +101,7 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .login-input:focus-within { border-color:#3085e6; box-shadow:0 0 0 3px #3085e610; }
 .login-input input { width:100%; min-width:0; background:transparent; border:none; min-height:50px; outline:none; font-size:14px; color:#193b58; }
 .login-input input:focus-visible { outline:none; }
-.login-submit { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:52px; padding:14px 18px; background:#0967e9; color:white; border:0; border-radius:13px; margin-top:28px; cursor:pointer; font-size:14px; font-weight:550; box-shadow:0 5px 14px #0867e71a; }
+.login-submit { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:52px; padding:14px 18px; background:#0967e9; color:white; border:0; border-radius:13px; margin-top:28px; cursor:pointer; font-size:14px; font-weight:700; box-shadow:0 5px 14px #0867e71a; }
 .login-submit:hover { background:#0757c5; }
 .login-register { text-align:center; color:#657c91; font-size:12px; margin-top:24px; }
 .login-register a { color:#0863ca; font-weight:600; }
@@ -160,7 +159,7 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
   border-radius:16px; color:#fff; box-shadow:inset 0 1px 0 #ffffff20,0 7px 18px -12px #053d8d66;
 }
 .app-shell .panel-metrics dt { color:#fff; font-size:12px; line-height:1.5; }
-.app-shell .panel-metrics dd { font-family:Manrope,"Maple Mono",sans-serif; font-weight:650; margin-top:10px; color:#fff; line-height:1.2; letter-spacing:-.03em; }
+.app-shell .panel-metrics dd { font-family:Manrope,sans-serif; font-weight:750; margin-top:10px; color:#fff; line-height:1.2; letter-spacing:-.03em; }
 .app-shell .panel-metrics dd small,.app-shell .panel-metrics > div > span { color:#fff; }
 .app-shell .sensor-panel-footer { color:#fff; font-size:11px; padding:16px 0 22px; gap:10px; }
 .app-shell .sensor-panel-footer > span { padding:7px 10px; border-radius:8px; background:#0755b5; }
@@ -174,7 +173,7 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .sensor-focus-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:18px; }
 .aero-assist { overflow:hidden; position:relative; display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:196px; padding:26px 28px; background:linear-gradient(115deg,#fff,#e2f3ff); border:1px solid #cfe6fa; border-radius:24px; color:#1a446d; }
 .assist-copy { position:relative; z-index:1; max-width:47ch; }
-.assist-copy h2 { font-size:22px; line-height:1.3; font-weight:650; letter-spacing:-.025em; max-width:22ch; }
+.assist-copy h2 { font-size:22px; line-height:1.3; font-weight:750; letter-spacing:-.025em; max-width:22ch; }
 .assist-copy p { font-size:13px; line-height:1.7; margin:12px 0 8px; max-width:35ch; color:#476b8b; }
 .assist-link { display:inline-flex; align-items:center; gap:8px; min-height:44px; color:#075bb9; font-size:12px; font-weight:600; text-decoration:none; }
 .assist-link:hover { text-decoration:underline; text-underline-offset:4px; }
@@ -222,8 +221,8 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .app-shell .sensor-hero.tone-pending .insight-status { color:#526779; }
 
 /* Display type stays expressive without changing the navigation or reading text. */
-.app-shell :is(.insights-heading h1,.insights-heading h2,.live-heading h1,.sensor-hero-copy h2,.insight-message h2,.assist-copy h2,.sensor-values p) { font-family:Manrope,"Maple Mono",sans-serif; }
-.app-shell .sensor-hero-copy h2 { font-weight:650; letter-spacing:-.035em; }
+.app-shell :is(.insights-heading h1,.insights-heading h2,.live-heading h1,.sensor-hero-copy h2,.insight-message h2,.assist-copy h2,.sensor-values p) { font-family:Manrope,sans-serif; }
+.app-shell .sensor-hero-copy h2 { font-weight:750; letter-spacing:-.03em; }
 .app-shell .sensor-recommendation { display:flex; align-items:flex-start; gap:9px; max-width:37ch; color:#fff; line-height:1.7; margin:16px 0 20px; font-size:13px; }
 .sensor-recommendation > svg { flex-shrink:0; margin-top:3px; }
 .app-shell .sensor-hero > .condition-scene.scene-sensor { width:100%; max-width:360px; height:auto; aspect-ratio:1; }

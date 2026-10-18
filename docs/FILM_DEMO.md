@@ -73,4 +73,5 @@ Build demo mempertahankan berkas JavaScript versi sebelumnya selama take agar ta
 
 Tampilan memakai font Manrope variabel yang disimpan lokal (Google Fonts, lisensi OFL), kartu metrik kaca biru transparan dengan angka putih, satu judul status dan rekomendasi singkat. Sebaran tidak beraturan hanya berlaku pada titik simulasi; koordinat perangkat produksi tidak diubah.
 
-Font antarmuka: Maple Mono variabel disimpan di `public/fonts/maple-mono/MapleMono-Variable.woff2`, beserta OFL.txt. Sumber: https://github.com/subframe7536/maple-font/tree/v7/woff2/var . Maple Mono menggantikan Inter untuk menu, tombol dan teks pendukung; Manrope tetap digunakan untuk judul dan angka.
+
+Font antarmuka: Manrope variabel lokal (`public/fonts/manrope/Manrope-Variable.ttf`, lisensi OFL). Judul dan angka 750, tombol 700, navigasi 600, teks pendukung 500.
