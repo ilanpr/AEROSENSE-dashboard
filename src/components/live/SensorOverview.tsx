@@ -14,10 +14,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
 import { DataState } from "@/components/shared/DataState";
-import {
-  Atmosphere,
-  ConditionScene,
-} from "@/components/environment/ConditionScene";
+import { ConditionScene } from "@/components/environment/ConditionScene";
 import { sensorSummary, type SensorRule } from "@/lib/environment-presentation";
 import { dateLabel, metricLabels, type LiveNode } from "@/types/live.types";
 import "@/styles/insights.css";
@@ -75,7 +72,6 @@ export function SensorOverview() {
         <>
           <div className="sensor-focus-grid">
           <article className={`sensor-hero tone-${summary.tone}`}>
-            <Atmosphere />
             <div className="sensor-hero-copy">
               {summary.tone !== "calm" && <span
                 className={`insight-status ${fresh ? "" : "status-pending"}`}
@@ -87,6 +83,7 @@ export function SensorOverview() {
               <p className="sensor-recommendation"><ArrowRight size={17} aria-hidden="true" />
                 <span>{!nodes.length ? "Belum ada node publik yang tersedia." : recommendation}</span>
               </p>
+              <div className="sensor-node-controls">
               {nodes.length > 0 && (
                 <label className="sensor-select">
                   <MapPin size={15} aria-hidden="true" />
@@ -108,6 +105,7 @@ export function SensorOverview() {
                 Lihat detail sensor
                 <ArrowUpRight size={16} />
               </Link>
+              </div>
             </div>
             <ConditionScene scene="sensor" muted={!fresh} />
             <dl className="panel-metrics sensor-key-metrics">

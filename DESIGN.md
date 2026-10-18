@@ -28,3 +28,5 @@ Requested glass treatment: confine blur and translucent depth to metric surfaces
 
 
 Font revision: use self-hosted Sora throughout the interface. Strong headings and tabular readings use weight 750, controls 700, navigation 600 and body 450. Keep the existing blue palette and illustration-led composition. Source: https://fonts.google.com/specimen/Sora (SIL OFL). No Inter or Maple Mono is loaded.
+
+Sensor panel composition: group node selection and the sensor detail link in one aligned control row, with the location icon inside the selector. Keep readings immediately below the status/illustration row; use larger 36–48 px sensor readings (26–32 px on phones). Remove the sensor video/pause control; its illustration moves once for four seconds and respects reduced motion. Public hub playback controls remain available.

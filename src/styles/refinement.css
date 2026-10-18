@@ -225,15 +225,46 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .app-shell .sensor-hero-copy h2 { font-weight:750; letter-spacing:-.03em; }
 .app-shell .sensor-recommendation { display:flex; align-items:flex-start; gap:9px; max-width:37ch; color:#fff; line-height:1.7; margin:16px 0 20px; font-size:13px; }
 .sensor-recommendation > svg { flex-shrink:0; margin-top:3px; }
-.app-shell .sensor-hero > .condition-scene.scene-sensor { width:100%; max-width:360px; height:auto; aspect-ratio:1; }
+.app-shell .sensor-hero > .condition-scene.scene-sensor { width:100%; max-width:320px; height:248px; aspect-ratio:auto; }
 .app-shell .sensor-hero .scene-sensor img { scale:1.1; }
 @media(min-width:1300px) {
   .sensor-focus-grid .sensor-hero { grid-template-columns:minmax(0,1fr) minmax(240px,.95fr); }
-  .sensor-focus-grid .sensor-hero > .condition-scene.scene-sensor { max-width:325px; }
+  .sensor-focus-grid .sensor-hero > .condition-scene.scene-sensor { max-width:300px; }
 }
 @media(max-width:600px) {
-  .app-shell .sensor-hero > .condition-scene.scene-sensor { width:235px; height:235px; margin:6px auto 10px; }
+  .app-shell .sensor-hero > .condition-scene.scene-sensor { width:200px; height:152px; margin:12px auto 0; }
   .app-shell .sensor-hero .scene-sensor img { scale:1.05; }
   .app-shell .sensor-recommendation { font-size:12px; margin:14px 0 18px; }
 }
 @media(prefers-reduced-transparency:reduce) { .app-shell .panel-metrics > div { --metric-backdrop:none; backdrop-filter:none; -webkit-backdrop-filter:none; background:#155799; } }
+
+/* Keep status, node controls and the latest readings in one compact composition. */
+.app-shell .sensor-focus-grid .sensor-hero { padding:28px 32px 0; gap:0 24px; align-content:start; }
+.app-shell .sensor-hero-copy { padding:0; }
+.app-shell .sensor-hero-copy h2 { margin:0; }
+.app-shell .sensor-hero-copy .insight-status { margin-bottom:12px; }
+.app-shell .sensor-hero-copy .sensor-recommendation { margin:12px 0 0; line-height:1.6; }
+.sensor-node-controls { display:grid; grid-template-columns:minmax(0,1fr) max-content; align-items:center; gap:12px; width:100%; max-width:400px; margin-top:20px; }
+.app-shell .sensor-node-controls .sensor-select { position:relative; margin:0; width:100%; min-width:0; }
+.sensor-node-controls .sensor-select > svg { position:absolute; left:14px; z-index:1; color:#2867a8; pointer-events:none; }
+.app-shell .sensor-node-controls .monitoring-select[data-slot="select-trigger"] { padding-left:40px; min-width:0; height:48px; }
+.app-shell .sensor-node-controls .panel-link { font-size:12px; min-height:44px; }
+.app-shell .sensor-hero .sensor-key-metrics { margin-top:16px; }
+.app-shell .sensor-hero .sensor-key-metrics > div { padding:20px 20px 18px; min-height:0; }
+.app-shell .sensor-hero .sensor-key-metrics dd { font-size:clamp(36px,3.3vw,48px); line-height:1.12; margin-top:8px; }
+.app-shell .sensor-hero .sensor-key-metrics dd small { display:block; font-size:12px; line-height:1.5; margin:4px 0 0; }
+.app-shell .sensor-hero .sensor-key-metrics > div > span { margin-top:2px; }
+.app-shell .sensor-hero .sensor-panel-footer { padding:14px 0 20px; }
+/* A short decorative movement needs no persistent playback control. */
+.app-shell .sensor-hero .scene-sensor:not(.scene-muted) img { animation-duration:4s; animation-iteration-count:1; }
+@media(max-width:600px) {
+  .app-shell .sensor-focus-grid .sensor-hero { padding:24px 20px 0; gap:0; }
+  .sensor-node-controls { gap:12px; margin-top:16px; }
+  .app-shell .sensor-hero .sensor-key-metrics { margin-top:12px; }
+  .app-shell .sensor-hero .sensor-key-metrics > div { padding:16px 10px; }
+  .app-shell .sensor-hero .sensor-key-metrics dd { font-size:clamp(26px,7.7vw,32px); }
+  .app-shell .sensor-hero .sensor-key-metrics dd small { font-size:10px; }
+  .app-shell .sensor-hero .sensor-panel-footer { padding:12px 0 18px; }
+}
+
+@media(max-width:360px) { .sensor-node-controls { grid-template-columns:1fr; gap:4px; } .app-shell .sensor-node-controls .sensor-select { max-width:210px; } }
