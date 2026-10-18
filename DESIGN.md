@@ -4,7 +4,7 @@ Purpose: make the latest readings understandable before showing the full dataset
 
 The dashboard starts with AEROSENSE devices at their actual locations. Public environmental information follows as regional context. Missing or expired sensor readings never borrow public API values.
 
-Keep the blue and white application shell, its navigation, Inter body typography, Manrope display typography and existing account controls. Inside the hub, use bright AEROSENSE cobalt-to-sky blue panels, generous space and translucent blue glass metric surfaces with white text, following the user-approved bright blue reference. Do not reproduce phone frames or reference text.
+Keep the blue and white application shell, its navigation, Maple Mono body typography, Manrope display typography and existing account controls. Inside the hub, use bright AEROSENSE cobalt-to-sky blue panels, generous space and translucent blue glass metric surfaces with white text, following the user-approved bright blue reference. Do not reproduce phone frames or reference text.
 
 Hierarchy: short conclusion, two or three important numbers, practical next step, observation time. Full readings and attribution remain in separate disclosures. US AQI, eCO2, optical dust, forecasts and satellite detections retain their correct labels.
 
@@ -16,7 +16,7 @@ Access: ESG remains restricted to admins in both navigation and server authoriza
 
 Guest access: open the homepage, public nodes, map, history, alerts and regional hub without login. Account actions and admin reports retain their checks. Production nodes require explicit `public_read` publication; demo nodes are synthetic and public by default.
 
-Refinement: retain Inter with restrained 500–650 weights, tabular readings, a quiet white navigation rail and the existing illustrated blue panels. Main controls use 44–52 px targets and the shared Radix MonitoringSelect for keyboard and touch. Login offers a direct guest entry. Never present a guest as the AEROSENSE team.
+Refinement: use Maple Mono for interface text with restrained 400–600 weights, tabular readings, a quiet white navigation rail and the existing illustrated blue panels. Main controls use 44–52 px targets and the shared Radix MonitoringSelect for keyboard and touch. Login offers a direct guest entry. Never present a guest as the AEROSENSE team.
 
 Review target: Purpose 5, Hierarchy 5, Evidence 5, Specificity 4, Restraint 4, Visual craft 4. Validate the rendered desktop and narrow layouts before accepting these scores.
 
@@ -25,3 +25,5 @@ Evidence: call the admin view Laporan lingkungan. Keep cost/method/source detail
 Sensor status: classify only fresh valid pollution indicators against explicit enabled sensor rules. Relatif bersih is relative to those rules, not a health guarantee. Waspada respects hysteresis; Bahaya requires a separate operator-configured danger_high threshold. Missing, partial or stale data must never appear clean. Public API AQI stays separate. AERO-BOT uses three generated pose variants plus its original mascot.
 
 Requested glass treatment: confine blur and translucent depth to metric surfaces, keep the cobalt hero, maintain readable white numerals, and show a single status heading followed by one practical recommendation. Sensor illustration is a stronger part of the composition. Demo node locations are fixed irregular synthetic points, never a regular grid or a change to real device coordinates.
+
+Font revision: replace Inter with self-hosted Maple Mono v7 variable WOFF2 from the official subframe7536/maple-font repository (OFL-1.1). Navigation, body, controls and form text use Maple Mono; Manrope remains the display and reading-number face. Disable programming ligatures in interface text. No Google Fonts request is required.

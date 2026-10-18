@@ -1,7 +1,8 @@
+@font-face { font-family:"Maple Mono"; src:url("/fonts/maple-mono/MapleMono-Variable.woff2") format("woff2"); font-style:normal; font-weight:100 800; font-display:swap; }
 @font-face { font-family:Manrope; src:url('/fonts/manrope/Manrope-Variable.ttf') format('truetype'); font-style:normal; font-weight:200 800; font-display:swap; }
 /* The blue shell and atmospheric panels share one type and control system. */
 :root { --ui-ink:#18344e; --ui-muted:#526a80; --ui-blue:#0967e9; --ui-line:#dce6ef; }
-body { font-weight:400; font-optical-sizing:auto; }
+body { font-weight:400; font-optical-sizing:auto; font-variant-ligatures:none; }
 button, input, select, textarea { font:inherit; }
 button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 :is(a,button,summary,input,select,textarea):focus-visible { outline:3px solid #4295ef; outline-offset:4px; }
@@ -159,7 +160,7 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
   border-radius:16px; color:#fff; box-shadow:inset 0 1px 0 #ffffff20,0 7px 18px -12px #053d8d66;
 }
 .app-shell .panel-metrics dt { color:#fff; font-size:12px; line-height:1.5; }
-.app-shell .panel-metrics dd { font-family:Manrope,Inter,sans-serif; font-weight:650; margin-top:10px; color:#fff; line-height:1.2; letter-spacing:-.03em; }
+.app-shell .panel-metrics dd { font-family:Manrope,"Maple Mono",sans-serif; font-weight:650; margin-top:10px; color:#fff; line-height:1.2; letter-spacing:-.03em; }
 .app-shell .panel-metrics dd small,.app-shell .panel-metrics > div > span { color:#fff; }
 .app-shell .sensor-panel-footer { color:#fff; font-size:11px; padding:16px 0 22px; gap:10px; }
 .app-shell .sensor-panel-footer > span { padding:7px 10px; border-radius:8px; background:#0755b5; }
@@ -221,7 +222,7 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .app-shell .sensor-hero.tone-pending .insight-status { color:#526779; }
 
 /* Display type stays expressive without changing the navigation or reading text. */
-.app-shell :is(.insights-heading h1,.insights-heading h2,.live-heading h1,.sensor-hero-copy h2,.insight-message h2,.assist-copy h2,.sensor-values p) { font-family:Manrope,Inter,sans-serif; }
+.app-shell :is(.insights-heading h1,.insights-heading h2,.live-heading h1,.sensor-hero-copy h2,.insight-message h2,.assist-copy h2,.sensor-values p) { font-family:Manrope,"Maple Mono",sans-serif; }
 .app-shell .sensor-hero-copy h2 { font-weight:650; letter-spacing:-.035em; }
 .app-shell .sensor-recommendation { display:flex; align-items:flex-start; gap:9px; max-width:37ch; color:#fff; line-height:1.7; margin:16px 0 20px; font-size:13px; }
 .sensor-recommendation > svg { flex-shrink:0; margin-top:3px; }
