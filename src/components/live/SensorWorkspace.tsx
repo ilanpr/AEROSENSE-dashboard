@@ -44,6 +44,7 @@ export function SensorWorkspace({
     mode === "report" ? (user ? "/v1/esg/report" : null) : `/v1/dashboard?account=${encodeURIComponent(user?.id || "guest")}`,
   );
   const [selected, setSelected] = useState("");
+  const [previewNode, setPreviewNode] = useState<string | null>(null);
   const [metric, setMetric] = useState("dust_ug_m3");
   const [notice, setNotice] = useState("");
   const [ackBusy, setAckBusy] = useState(false);
@@ -267,7 +268,7 @@ export function SensorWorkspace({
                   <div className="map-controls-main">
                     <div className="map-node-picker">
                       <MapPin size={17} aria-hidden="true" />
-                      <MonitoringSelect label="Titik acuan" value={node.id} onValueChange={setSelected}
+                      <MonitoringSelect label="Titik acuan" value={node.id} onValueChange={setSelected} onPreviewChange={setPreviewNode}
                         options={nodes.map(n => ({value:n.id,label:n.name}))} />
                     </div>
                     <div className="map-layer-picker" role="group" aria-label="Lapisan peta">
@@ -310,6 +311,7 @@ export function SensorWorkspace({
                   <LiveMap
                     nodes={nodes}
                     selected={node.id}
+                    previewed={previewNode}
                     onSelect={setSelected}
                     showNodes={mode!=="map"||mapLayer!=="events"}
                     events={mode==="map"&&mapLayer!=="sensors"?events:[]}

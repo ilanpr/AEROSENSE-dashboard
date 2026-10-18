@@ -13,6 +13,7 @@ import {
   Circle,
   Marker,
   Popup,
+  Tooltip,
   useMap,
 } from "react-leaflet";
 import { dateLabel, type EnvironmentEvent, type LiveNode } from "@/types/live.types";
@@ -51,9 +52,20 @@ function LocationFocus({ point, radiusKm }: { point: GeoPoint; radiusKm: number 
   }, [map, point.latitude, point.longitude, radiusKm]);
   return null;
 }
+function SelectionFocus({ node }: { node?: LiveNode }) {
+  const map = useMap();
+  const lastId = useRef(node?.id);
+  useEffect(() => {
+    if (!node || node.id === lastId.current) return;
+    lastId.current = node.id;
+    map.panInside([node.latitude, node.longitude], { padding: [56, 56], animate: false });
+  }, [map, node]);
+  return null;
+}
 export function LiveMap({
   nodes,
   selected,
+  previewed,
   onSelect,
   userLocation,
   radiusKm = 5,
@@ -63,6 +75,7 @@ export function LiveMap({
 }: {
   nodes: LiveNode[];
   selected: string;
+  previewed?: string | null;
   onSelect: (id: string) => void;
   userLocation?: GeoPoint;
   radiusKm?: number;
@@ -78,6 +91,7 @@ export function LiveMap({
       Math.abs(n.longitude) <= 180,
   );
   const active = valid.find((n) => n.id === selected) || valid[0];
+  const highlighted = valid.find((n) => n.id === (previewed || selected));
   const eventPoints=events.filter(e=>Number.isFinite(e.latitude)&&Number.isFinite(e.longitude)&&Math.abs(e.latitude)<=90&&Math.abs(e.longitude)<=180);
   if (!active && !userLocation)
     return <p className="live-notice">Koordinat node belum tersedia.</p>;
@@ -89,6 +103,7 @@ export function LiveMap({
         className="h-full w-full"
       >
         {userLocation ? <LocationFocus point={userLocation} radiusKm={radiusKm} /> : eventPoints.length ? <EventFocus nodes={showNodes?valid:[]} events={eventPoints} /> : <Focus node={active} nodes={valid} />}
+        {!userLocation && showNodes && <SelectionFocus node={highlighted} />}
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -102,11 +117,13 @@ export function LiveMap({
           <Marker
             key={n.id}
             position={[n.latitude, n.longitude]}
-            icon={mapIcon("sensor",sensorSummary(n).tone)}
+            icon={mapIcon("sensor",sensorSummary(n).tone,n.id === highlighted?.id)}
+            zIndexOffset={n.id === highlighted?.id ? 1000 : 0}
             title={n.name}
             alt={`Sensor ${n.name}`}
             eventHandlers={{ click: () => onSelect(n.id) }}
           >
+            {n.id === highlighted?.id && <Tooltip permanent direction="top" offset={[0,-20]} opacity={1} className="node-focus-tooltip">{n.name}</Tooltip>}
             <Popup minWidth={250} maxWidth={290} className="node-reading-popup">
               <strong className="node-popup-title">{n.name}</strong>
               <NodeStatus node={n} />
