@@ -71,7 +71,7 @@ Tiga pose AERO-BOT dibuat dengan ImageGen bawaan, memakai maskot asli sebagai re
 
 Build demo mempertahankan berkas JavaScript versi sebelumnya selama take agar tab yang sudah terbuka tetap bisa berpindah halaman. Bersihkan folder build hanya di antara sesi saat server demo berhenti. Jika tab masih menampilkan error dari build lama, tekan Muat ulang.
 
-Tampilan memakai font Manrope variabel yang disimpan lokal (Google Fonts, lisensi OFL), kartu metrik kaca biru transparan dengan angka putih, satu judul status dan rekomendasi singkat. Sebaran tidak beraturan hanya berlaku pada titik simulasi; koordinat perangkat produksi tidak diubah.
+Tampilan memakai font Sora variabel yang disimpan lokal (Google Fonts, lisensi OFL), kartu metrik kaca biru transparan dengan angka putih, satu judul status dan rekomendasi singkat. Sebaran tidak beraturan hanya berlaku pada titik simulasi; koordinat perangkat produksi tidak diubah.
 
 
-Font antarmuka: Manrope variabel lokal (`public/fonts/manrope/Manrope-Variable.ttf`, lisensi OFL). Judul dan angka 750, tombol 700, navigasi 600, teks pendukung 500.
+Font antarmuka: Sora variabel lokal (`public/fonts/sora/Sora-Variable.ttf`, lisensi OFL). Judul dan angka 750, tombol 700, navigasi 600, teks pendukung 450.
