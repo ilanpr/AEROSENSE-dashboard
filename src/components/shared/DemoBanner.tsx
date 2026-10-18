@@ -5,7 +5,7 @@ export function DemoBanner() {
   const {user}=useAuth();
   return <div className="demo-banner" role="note">
     <strong>DEMO · Surabaya · 16 node</strong>
-    <span>Data simulasi untuk video</span>
+    <span>Node simulasi · sumber publik terpisah</span>
     <Link to="/login">{user?.app_metadata.demo_role==="admin"?"Admin demo":user?"Warga demo":"Masuk"}</Link>
   </div>;
 }

@@ -2,6 +2,8 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { resolve, extname, sep } from 'node:path';
+import { publicPreview } from './public-preview.mjs';
+const readPublic=await publicPreview();
 const root=fileURLToPath(new URL('../dist-demo/',import.meta.url));
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.mp4':'video/mp4','.ico':'image/x-icon','.ttf':'font/ttf','.woff2':'font/woff2','.woff':'font/woff'};
 const server=http.createServer(async(req,res)=>{
@@ -9,6 +11,11 @@ const server=http.createServer(async(req,res)=>{
   res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');
   res.setHeader('Cache-Control','no-store');
   if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);res.end();return;}
+  const url=new URL(req.url,'http://localhost');
+  if(url.pathname.startsWith('/demo-public/')) {
+    try { const data=await readPublic(url);res.writeHead(data?200:404,{'Content-Type':'application/json'});res.end(req.method==='HEAD'?undefined:JSON.stringify(data||{error:'Not found'})); }
+    catch(e){res.writeHead(e.status||503,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Sumber publik belum tersedia'}));}return;
+  }
   let p;
   try { p=decodeURIComponent(new URL(req.url,'http://localhost').pathname); } catch {res.writeHead(400);res.end();return;}
   if(p.startsWith('/api/')||p.includes('\0')){res.writeHead(404);res.end();return;}

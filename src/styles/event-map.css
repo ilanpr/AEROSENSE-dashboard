@@ -1,0 +1,23 @@
+.aerosense-map-marker { background:none; border:0; }
+.map-pin { display:grid; place-items:center; width:34px; height:34px; border-radius:12px 12px 12px 3px; rotate:-45deg; background:var(--pin-color); border:2px solid white; box-shadow:0 4px 8px -3px #14395888; }
+.map-pin svg { width:22px; height:22px; color:white; rotate:45deg; }
+.pin-fire { border-radius:50% 50% 50% 3px; }
+.pin-earthquake { border-radius:8px; }
+.event-popup .leaflet-popup-content { font-family:var(--font-sans); color:#18344e; margin:20px; }
+.event-popup strong { font-size:15px; font-weight:750; }
+.event-popup p { font-size:11px; line-height:1.7; margin:10px 0; }
+.event-popup dl { display:grid; grid-template-columns:1fr 1.2fr; gap:8px 12px; font-size:10px; line-height:1.6; }
+.event-popup dt { color:#526a80; }
+.event-popup dd { font-weight:600; }
+.event-popup a { display:inline-flex; align-items:center; gap:4px; min-height:44px; color:#075bca; font-size:11px; font-weight:650; }
+.event-popup .event-stale { color:#8b510d; }
+.map-layer-picker { display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 14px; }
+.map-layer-picker button { display:inline-flex; align-items:center; gap:8px; min-height:44px; border:1px solid #d8e5f2; border-radius:12px; padding:10px 16px; color:#486880; background:#fff; font-size:12px; font-weight:600; cursor:pointer; }
+.map-layer-picker button[aria-pressed="true"] { background:#0967e9; border-color:#0967e9; color:#fff; }
+.map-event-legend { display:flex; align-items:center; flex-wrap:wrap; gap:10px 20px; margin:0 0 12px; }
+.map-event-legend > span { display:flex; align-items:center; gap:6px; color:#526a80; font-size:11px; }
+.map-event-legend .legend-fire svg { color:#bd4b12; }
+.map-event-legend .legend-earthquake svg { color:#6847bb; }
+.map-event-notice { color:#526a80; font-size:11px; line-height:1.7; margin:12px 0; }
+.map-event-link { margin-top:18px; }
+@media(max-width:600px) { .map-layer-picker { gap:6px; } .map-layer-picker button { flex:1; justify-content:center; padding:10px 8px; font-size:10px; gap:5px; } }

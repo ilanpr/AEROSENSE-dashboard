@@ -1,5 +1,48 @@
+// Ringkasan singkat dari fakta yang masih berlaku. Tidak memakai Gemini.
 /* oxlint-disable no-control-regex */
-// Shared by the API and the n8n Code node. No network calls or model tokens.
+function normalizeHazardEvents(provider, data, area, now = Date.now(), radiusKm = provider === "firms" ? 50 : 300) {
+  const clean = v => String(v ?? "").replace(/[<>\r\n\u0000-\u001f]/g, " ").trim().slice(0, 180);
+  const number = v => v == null || String(v).trim() === "" ? NaN : Number(String(v).trim().replace(",", "."));
+  const coordinate = (lat, lon) => Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
+  const distance = (lat, lon) => {
+    const rad = Math.PI / 180, h = Math.sin((lat-area.latitude)*rad/2)**2 + Math.cos(area.latitude*rad)*Math.cos(lat*rad)*Math.sin((lon-area.longitude)*rad/2)**2;
+    return 6371*2*Math.asin(Math.sqrt(Math.min(1,Math.max(0,h))));
+  };
+  if (!["firms", "bmkg_quake"].includes(provider) || !coordinate(area.latitude, area.longitude)) throw Error("Area kejadian tidak valid");
+  const fire = provider === "firms", maxAge = (fire ? 1 : 7)*86400000, limit = fire ? 200 : 30;
+  const rows = fire ? data : data?.Infogempa?.gempa;
+  if (!Array.isArray(rows)) throw Error("Skema kejadian berubah");
+  const byId = new Map();
+  for (const row of rows) {
+    const xy = fire ? [row.latitude, row.longitude] : String(row.Coordinates ?? "").split(",");
+    const latitude = number(xy[0]), longitude = number(xy[1]);
+    if (!coordinate(latitude, longitude)) continue;
+    const clock = String(row.acq_time ?? "").padStart(4,"0");
+    const observed = fire ? (/^\d{4}$/.test(clock) ? `${row.acq_date}T${clock.slice(0,2)}:${clock.slice(2)}:00Z` : "") : row.DateTime;
+    const time = Date.parse(observed);
+    if (!Number.isFinite(time) || time > now || time < now-maxAge) continue;
+    const distance_km = distance(latitude, longitude);
+    if (distance_km > radiusKm) continue;
+    const magnitude = number(row.Magnitude);
+    if (!fire && (!Number.isFinite(magnitude) || magnitude < 0 || magnitude > 10.5)) continue;
+    const observed_at = new Date(time).toISOString();
+    const satellite = fire ? clean(row.satellite) : null;
+    const id = `${provider}:${observed_at}:${latitude}:${longitude}:${satellite || ""}`;
+    const depth = number(String(row.Kedalaman ?? "").replace(/\s*km\s*$/i,""));
+    byId.set(id, {
+      id, area_id:area.id, provider, category:fire?"fire":"earthquake", latitude, longitude,
+      observed_at, fetched_at:new Date(now).toISOString(), fresh_until:new Date(now+7200000).toISOString(), distance_km,
+      title:fire?"Titik panas satelit":clean(row.Wilayah)||"Episenter gempa BMKG",
+      source:fire?"NASA FIRMS / VIIRS":"BMKG", source_url:fire?"https://firms.modaps.eosdis.nasa.gov/":"https://data.bmkg.go.id/gempabumi/",
+      coordinate_kind:fire?"satellite_pixel_center":"epicenter", data_origin:"external_api", role:"supplementary",
+      reference:{latitude:area.latitude,longitude:area.longitude},
+      ...(fire?{satellite,confidence:({l:"low",n:"nominal",h:"high",low:"low",nominal:"nominal",high:"high"})[String(row.confidence).toLowerCase()]||null}
+        :{magnitude,depth_km:Number.isFinite(depth)&&depth>=0?depth:null,felt:clean(row.Dirasakan)||null,potential:clean(row.Potensi)||null}),
+    });
+  }
+  const all = [...byId.values()].sort((a,b)=>Date.parse(b.observed_at)-Date.parse(a.observed_at)||a.distance_km-b.distance_km);
+  return {events:all.slice(0,limit),coverage:{radius_km:radiusKm,window_hours:fire?24:168,matched_count:all.length,returned_count:Math.min(all.length,limit),truncated:all.length>limit,feed:fire?"VIIRS 24 jam":"Daftar terakhir gempa M5+ BMKG; bukan seluruh gempa"}};
+}
 function summarizeEnvironment(facts, now = Date.now()) {
   const time = (f) => Date.parse(f.valid_at || f.fetched_at || "") || 0;
   const day = (t) => new Date(t + 7 * 3600000).toISOString().slice(0, 10);
@@ -211,7 +254,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
       "Belum ada estimasi tanah terbaru untuk area ini.",
       "Cek kondisi tanah langsung bila diperlukan.",
     );
-  const fire = match(current, "fire", /Jumlah titik panas/i);
+  const fire = match(current, "fire", /Jumlah (?:deteksi )?titik panas/i);
   if (fire)
     add(
       "fire",
@@ -282,8 +325,6 @@ function summarizeEnvironment(facts, now = Date.now()) {
     );
   return out;
 }
-
-
 function normalizeResponse(response, request, now = Date.now()) {
   const fetched_at=new Date(now).toISOString();
   const clean=v=>String(v??'').replace(/[<>\r\n\u0000-\u001f]/g,' ').trim().slice(0,180);
@@ -318,6 +359,7 @@ function normalizeResponse(response, request, now = Date.now()) {
     if(coordinate(d?.latitude,d?.longitude)){provider_coordinates={latitude:d.latitude,longitude:d.longitude,kind:'model_grid'};distance_km=distance(n.latitude,n.longitude,d.latitude,d.longitude);spatial_context+=`; pusat grid model ${d.latitude}, ${d.longitude}, sekitar ${distance_km.toFixed(1)} km dari acuan robot`;}
     const maxGridDistance={openmeteo_weather:50,openmeteo_air:100,openmeteo_flood:25}[request.provider];
     if(!error&&maxGridDistance&&(!provider_coordinates||distance_km>maxGridDistance))error='Grid penyedia tidak cocok dengan area acuan robot';
+    let events=[], event_coverage=null;
     const add=(key,category,label,value,unit,valid_at,kind,max_age=21600,extra={})=>{
       if(value===null||value===undefined||(typeof value==='number'&&!Number.isFinite(value)))return;
       if(!['string','number'].includes(typeof value))return;
@@ -364,22 +406,21 @@ function normalizeResponse(response, request, now = Date.now()) {
         if(!upcoming.length)throw Error('Prakiraan BMKG tidak tersedia');
         spatial_context=`Desa/kelurahan BMKG: ${clean(d.lokasi?.desa||'')} ${clean(d.lokasi?.kecamatan||'')}`;
         for(let i=0;i<upcoming.length;i++){const x=upcoming[i];add('weather'+i,'weather','Prakiraan kondisi cuaca BMKG',x.weather_desc,'',x.utc_datetime,'forecast',10800);add('temp'+i,'weather','Prakiraan suhu BMKG',x.t,'°C',x.utc_datetime,'forecast',10800);add('humidity'+i,'weather','Prakiraan kelembapan BMKG',x.hu,'%',x.utc_datetime,'forecast',10800);}
-      }else if(request.provider==='firms'){
-        const rows=d.map(x=>({...x,lat:Number(x.latitude),lon:Number(x.longitude),at:iso(x.acq_date+'T'+String(x.acq_time).padStart(4,'0').slice(0,2)+':'+String(x.acq_time).padStart(4,'0').slice(2)+':00Z')})).filter(x=>x.at&&now-Date.parse(x.at)<=86400000&&Date.parse(x.at)<=now&&Number.isFinite(x.lat)&&Number.isFinite(x.lon));
-        const nearby=rows.filter(x=>distance(n.latitude,n.longitude,x.lat,x.lon)<=request.radius_km).sort((a,b)=>Date.parse(b.at)-Date.parse(a.at));
-        spatial_context=`Dalam radius ${request.radius_km} km dari ${clean(n.name||n.id)}; feed satelit 24 jam`;
-        add('hotspots','fire','Jumlah titik panas yang tercantum pada feed satelit 24 jam, bukan jumlah kebakaran terkonfirmasi',nearby.length,'titik',null,'satellite',7200);
-        if(nearby[0]){const x=nearby[0];add('latest','fire','Titik panas satelit terbaru dalam hasil',`koordinat ${x.lat}, ${x.lon}; confidence ${clean(x.confidence)}; jarak ${distance(n.latitude,n.longitude,x.lat,x.lon).toFixed(1)} km`,'',x.at,'satellite',7200,{provider_coordinates:{latitude:x.lat,longitude:x.lon,kind:'satellite_detection'},provider_location_known:true,distance_km:distance(n.latitude,n.longitude,x.lat,x.lon)});}
-      }else if(request.provider==='bmkg_quake'){
-        const rows=d.Infogempa?.gempa;if(!Array.isArray(rows))throw Error('Data gempa kosong');
-        const mapped=rows.map(x=>{const[lat,lon]=String(x.Coordinates||'').split(',').map(Number);return {...x,distance_km:distance(n.latitude,n.longitude,lat,lon)};}).filter(x=>Number.isFinite(x.distance_km));
-        const near=mapped.filter(x=>x.distance_km<=request.radius_km).slice(0,2);
-        for(let i=0;i<near.length;i++){const x=near[i];add('quake'+i,'earthquake','Catatan BMKG dari daftar gempa M5+ sekitar lokasi',`${clean(x.Wilayah)}; magnitudo ${clean(x.Magnitude)}; kedalaman ${clean(x.Kedalaman)}; jarak sekitar ${x.distance_km.toFixed(0)} km; informasi potensi: ${clean(x.Potensi)}`,'',x.DateTime,'event',7200);}
-        if(!near.length)add('coverage','earthquake','Cakupan hasil gempa BMKG',`Tidak ada entri dalam radius ${request.radius_km} km pada daftar M5+ yang diambil; ini tidak mencakup semua gempa`,'',null,'event',7200);
+      }else if(request.provider==='firms'||request.provider==='bmkg_quake'){
+        const eventData=normalizeHazardEvents(request.provider,d,n,now,request.radius_km);
+        events=eventData.events; event_coverage=eventData.coverage;
+        spatial_context=`Dalam radius ${request.radius_km} km dari ${clean(n.name||n.id)}; ${event_coverage.feed}`;
+        if(request.provider==='firms'){
+          add('hotspots','fire','Jumlah deteksi titik panas satelit 24 jam, bukan kebakaran terkonfirmasi',event_coverage.matched_count,'titik',null,'satellite',7200);
+          if(events[0]){const x=events[0];add('latest','fire','Titik panas satelit terbaru dalam hasil',`koordinat ${x.latitude}, ${x.longitude}; confidence ${x.confidence||'tidak tersedia'}; jarak ${x.distance_km.toFixed(1)} km`,'',x.observed_at,'satellite',7200,{provider_coordinates:{latitude:x.latitude,longitude:x.longitude,kind:'satellite_detection'},provider_location_known:true,distance_km:x.distance_km});}
+        }else{
+          for(let i=0;i<Math.min(events.length,15);i++){const x=events[i];add('quake'+i,'earthquake','Catatan BMKG dari daftar gempa M5+ sekitar lokasi',`${clean(x.title)}; magnitudo ${x.magnitude}; kedalaman ${x.depth_km??'tidak tersedia'} km; jarak sekitar ${x.distance_km.toFixed(0)} km; informasi potensi: ${clean(x.potential)}`,'',x.observed_at,'event',7200,{provider_coordinates:{latitude:x.latitude,longitude:x.longitude,kind:'epicenter'},provider_location_known:true,distance_km:x.distance_km});}
+          if(!events.length)add('coverage','earthquake','Cakupan hasil gempa BMKG',`Tidak ada entri dalam radius ${request.radius_km} km pada daftar M5+ 7 hari terakhir yang diambil; ini tidak mencakup semua gempa`,'',null,'event',7200);
+        }
       }else throw Error('Provider tidak dikenal');
     }catch{error='Data provider kosong atau skemanya tidak sesuai';}
     const ok=!error&&facts.length>0;
-    entries.push({area_id:n.id,provider:request.provider,ok,request_latitude:n.latitude,request_longitude:n.longitude,payload:{reference,data_origin:'external_api',role:'supplementary',source:request.source,source_url:request.source_url,fetched_at,facts:ok?facts:[],insights:summarizeEnvironment(ok?facts:[],now).filter(i=>i.available),summary_method:'rules-v1',status:ok?'available':'unavailable'},refresh_after:new Date(now+(ok?request.ttl:3600)*1000).toISOString(),last_error:ok?null:error||'Tidak ada nilai yang tersedia untuk koordinat ini'});
+    entries.push({area_id:n.id,provider:request.provider,ok,request_latitude:n.latitude,request_longitude:n.longitude,payload:{reference,data_origin:'external_api',role:'supplementary',source:request.source,source_url:request.source_url,fetched_at,facts:ok?facts:[],events:ok?events:[],event_coverage,insights:summarizeEnvironment(ok?facts:[],now).filter(i=>i.available),summary_method:'rules-v1',status:ok?'available':'unavailable'},refresh_after:new Date(now+(ok?request.ttl:3600)*1000).toISOString(),last_error:ok?null:error||'Tidak ada nilai yang tersedia untuk koordinat ini'});
   }
   return {json:{entries}};
 }

@@ -34,7 +34,7 @@ Tombol Akun warga/Admin pada form login mengisi email dan password. Tekan Masuk 
 - Tiap node mempunyai 96 sampel berjarak 15 menit, mendekati 24 jam. Suhu, kelembapan, TVOC, eCO2 dan debu optik bervariasi secara halus antarwaktu dan titik.
 - Garis GRU adalah ilustrasi, dengan versi `demo-illustration-not-inference`; bukan hasil inferensi atau bukti peningkatan akurasi.
 - Ambang debu 40 (waspada) dan 60 (bahaya) adalah aturan skenario, bukan baku mutu/kategori kesehatan. Dua node memiliki skenario debu lebih tinggi; data sintetis ini bukan bukti polusi di lokasi sebenarnya. Ada contoh peringatan dan status ditinjau. Sumber pencemar tidak ditetapkan.
-- Hub lingkungan memakai nilai contoh Surabaya pada koordinat node pilihan: cuaca, udara wilayah, tanah, titik panas, sungai dan cakupan gempa. Label penyedia memakai “simulasi”; tidak ada fetch API publik langsung.
+- Cuaca, udara, tanah dan sungai memakai nilai contoh di koordinat node simulasi Surabaya. Titik panas FIRMS, gempa BMKG dan berita ANTARA/GDACS diambil dari feed publik; waktu dan sumber ditampilkan terpisah.
 - Berita bencana tidak diisi dengan kejadian rekaan. Kanal PMI/BNPB tetap menuju sumber resminya.
 - AERO-BOT menyediakan jawaban contoh untuk cuaca, udara, sensor, tanah, karhutla dan ESG. Tidak memanggil Gemini atau n8n. Pertanyaan di luar contoh mendapat penjelasan cakupan demo.
 - Perubahan status/percakapan hanya tersimpan pada sesi browser, bukan database produksi. Banner data simulasi tetap terlihat saat direkam.
@@ -76,4 +76,4 @@ Tampilan memakai font Sora variabel yang disimpan lokal (Google Fonts, lisensi O
 
 Font antarmuka: Sora variabel lokal (`public/fonts/sora/Sora-Variable.ttf`, lisensi OFL). Judul dan angka 750, tombol 700, navigasi 600, teks pendukung 450.
 
-Peringatan `/alerts`: demo dimulai dari titik contoh Surabaya berlabel simulasi. Radius 5 km memperlihatkan dua node bahaya dan dua waspada pada skenario ini; 2,5 km memperlihatkan satu node bahaya. Tombol **Gunakan lokasi saya** meminta geolokasi browser dan menghitung ulang jarak dari perangkat, bukan dari pilihan node. Popup peta memuat tiga pembacaan dan waktu data. Berita demo tetap tidak berisi kejadian rekaan dan sekarang menjelaskan bahwa sumber live belum disambungkan.
+Peringatan `/alerts`: demo dimulai dari titik contoh Surabaya berlabel simulasi. Radius 5 km memperlihatkan dua node bahaya dan dua waspada pada skenario ini; 2,5 km memperlihatkan satu node bahaya. Tombol **Gunakan lokasi saya** meminta geolokasi browser dan menghitung ulang jarak dari perangkat, bukan dari pilihan node. Popup peta memuat tiga pembacaan dan waktu data. Berita demo mengambil feed publik langsung melalui server preview; kegagalan sumber dijelaskan dan tidak diisi dengan kejadian rekaan.

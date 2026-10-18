@@ -1,8 +1,8 @@
 import { NodeStatus } from "./NodeStatus";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { lazy, Suspense, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { RefreshCw, Download, MapPin, ArrowUpRight } from "lucide-react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { RefreshCw, Download, MapPin, ArrowUpRight, RadioTower, Layers, Flame, Activity } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import { useAuth } from "@/hooks/useAuth";
 import { DataState } from "@/components/shared/DataState";
@@ -12,6 +12,7 @@ import {
   type LiveNode,
   type Reading,
   type Alert,
+  type EnvironmentResponse,
 } from "@/types/live.types";
 const LiveMap = lazy(() =>
   import("./LiveMap").then((m) => ({ default: m.LiveMap })),
@@ -34,6 +35,9 @@ export function SensorWorkspace({
 }) {
   const { user, isLoading } = useAuth();
   const { id } = useParams();
+  const [mapParams,setMapParams]=useSearchParams();
+  const mapLayer=["mixed","events"].includes(mapParams.get("layer")||"")?mapParams.get("layer")!:"sensors";
+  const eventType=["fire","earthquake"].includes(mapParams.get("event_type")||"")?mapParams.get("event_type")!:"all";
   const dashboard = useLiveData<{ nodes: LiveNode[]; refreshed_at: string; report_scope?: Record<string, unknown> }>(
     mode === "report" ? (user ? "/v1/esg/report" : null) : `/v1/dashboard?account=${encodeURIComponent(user?.id || "guest")}`,
   );
@@ -46,7 +50,7 @@ export function SensorWorkspace({
   }, [id]);
   const nodes = dashboard.data?.nodes || [];
   const node =
-    nodes.find((n) => n.id === (id || selected)) ||
+    nodes.find((n) => n.id === (id || selected || (mode==="map"?mapParams.get("node_id"):null))) ||
     (!id ? nodes[0] : undefined);
   const nodeQuery = node ? "?node_id=" + encodeURIComponent(node.id) : "";
   const history = useLiveData<{ readings: Reading[] }>(
@@ -61,6 +65,8 @@ export function SensorWorkspace({
       : null,
   );
   const readings = history.data?.readings || [];
+  const environment = useLiveData<EnvironmentResponse>(node && mode==="map" ? `/v1/environment?node_id=${encodeURIComponent(node.id)}&account=${encodeURIComponent(user?.id||"guest")}` : null,60000);
+  const events=(environment.data?.events||[]).filter(e=>eventType==="all"||e.category===eventType);
   const title = {
     overview: "Kondisi sensor",
     map: "Peta sensor",
@@ -200,6 +206,7 @@ export function SensorWorkspace({
           <p>
             {mode === "report"
               ? "Riwayat sensor untuk pemeriksaan kondisi udara."
+              : mode === "map" ? "Sensor AEROSENSE dan kejadian dari sumber publik."
               : "Pembacaan node dan hasil model, terpisah dari informasi wilayah."}
           </p>
         </div>
@@ -210,6 +217,7 @@ export function SensorWorkspace({
             dashboard.refresh();
             history.refresh();
             alerts.refresh();
+            environment.refresh();
           }}
         >
           <RefreshCw size={17} />
@@ -228,7 +236,7 @@ export function SensorWorkspace({
         <>
           <div className="sensor-toolbar">
             <label>
-              Node
+              {mode==="map"?"Titik acuan":"Node"}
               <MonitoringSelect label="Pilih node" value={node?.id || ""} disabled={!!id}
                 onValueChange={setSelected} options={nodes.map(n => ({value:n.id,label:n.name}))} />
             </label>
@@ -244,13 +252,27 @@ export function SensorWorkspace({
                 <NodeStatus node={node} />
               </div>
               {["map", "nodes", "overview"].includes(mode) && (
+                <>
+                {mode==="map"&&<>
+                  <div className="map-layer-picker" role="group" aria-label="Lapisan peta">
+                    {([{id:"sensors",label:"Sensor saja",Icon:RadioTower},{id:"mixed",label:"Sensor & kejadian",Icon:Layers},{id:"events",label:"Kejadian publik",Icon:Flame}]).map(({id:layer,label,Icon})=><button key={layer} aria-pressed={mapLayer===layer} onClick={()=>{const next=new URLSearchParams(mapParams);next.set("layer",layer);setMapParams(next);}}><Icon size={16} aria-hidden="true" />{label}</button>)}
+                  </div>
+                  {mapLayer!=="sensors"&&<>
+                    <div className="map-event-legend">{mapLayer!=="events"&&<span><RadioTower size={15} />Node AEROSENSE</span>}<span className="legend-fire"><Flame size={15} />Titik panas satelit</span><span className="legend-earthquake"><Activity size={15} />Episenter gempa BMKG</span></div>
+                    <div className="map-layer-picker" role="group" aria-label="Jenis kejadian">{[{id:"all",label:"Semua"},{id:"fire",label:"Titik panas"},{id:"earthquake",label:"Gempa"}].map(type=><button key={type.id} aria-pressed={eventType===type.id} onClick={()=>{const next=new URLSearchParams(mapParams);next.set("event_type",type.id);setMapParams(next);}}>{type.label}</button>)}</div>
+                    <p className="map-event-notice" role="status">{environment.loading&&!environment.data?"Memuat lokasi kejadian…":environment.error||!environment.data?.event_layers?.length?"Lokasi kejadian dari sumber publik belum tersedia.":`${events.length} titik dalam cakupan feed. Titik panas: 24 jam / 50 km. Gempa: daftar M5+ / 7 hari / 300 km dari titik acuan.`}{environment.data?.event_layers?.some(l=>l.last_error||!l.available)?" Sebagian sumber belum berhasil diperbarui.":""}</p>
+                  </>}
+                </>}
                 <Suspense fallback={<DataState loading />}>
                   <LiveMap
                     nodes={nodes}
                     selected={node.id}
                     onSelect={setSelected}
+                    showNodes={mode!=="map"||mapLayer!=="events"}
+                    events={mode==="map"&&mapLayer!=="sensors"?events:[]}
                   />
                 </Suspense>
+                </>
               )}
               {["overview", "detail", "analytics"].includes(mode) && (
                 <>

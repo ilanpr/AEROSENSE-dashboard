@@ -218,6 +218,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             )}
 
           </article>
+          {!compact&&node&&["fire","earthquake"].includes(category)&&<Link className="insight-text-link map-event-link" to={`/sensor-map?layer=events&event_type=${category}&node_id=${encodeURIComponent(node.id)}`}><MapPin size={16} />Lihat lokasi di peta <ArrowUpRight size={15} /></Link>}
           {compact && (
             <div className="insight-glances" aria-label="Sekilas lingkungan">
               {glances.map((i) => {

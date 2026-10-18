@@ -1,5 +1,6 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { summarizeEnvironment } from "../api/environment-insights.mjs";
+import { normalizeHazardEvents } from "../api/environment-events.mjs";
 const [source, target] = process.argv.slice(2);
 if (!source || !target)
   throw new Error(
@@ -7,15 +8,16 @@ if (!source || !target)
   );
 const original = await readFile(source, "utf8");
 const marker = "facts:ok?facts:[],status:";
-if (!original.includes(marker))
+if (!original.includes("function normalizeResponse("))
   throw new Error(
     "Normalizer layout changed. Inspect the live Code node before applying.",
   );
 const output =
   "// Ringkasan singkat dari fakta yang masih berlaku. Tidak memakai Gemini.\n/* oxlint-disable no-control-regex */\n" +
+  normalizeHazardEvents.toString() + "\n" +
   summarizeEnvironment.toString() +
   "\n" +
-  original
+  original.slice(original.indexOf("function normalizeResponse("))
     .replace(
       "const labels={temperature_2m:",
       "const labels={weather_code:['Kode kondisi cuaca (WMO)',''],temperature_2m:",

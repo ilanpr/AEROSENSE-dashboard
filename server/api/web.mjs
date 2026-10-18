@@ -1,3 +1,4 @@
+import { readEventLayers } from "./environment-events.mjs";
 import {
   summarizeEnvironment,
   orderEnvironmentFacts,
@@ -162,5 +163,5 @@ export async function readEnvironment({db, one, node}, now = Date.now()) {
       ? (Array.isArray(c.payload?.facts) ? c.payload.facts : []).filter(f => categoriesAllowed.has(f.category) && f.area_id === area.id && f.reference?.latitude === area.latitude && f.reference?.longitude === area.longitude).map(f => ({...f,stale:!Number.isFinite(Date.parse(f.fresh_until)) || Date.parse(f.fresh_until) < now})) : [],now),
   }));
   const facts = orderEnvironmentFacts(providers.flatMap(p=>p.facts),now);
-  return {area,node:{id:node.id,name:node.name},providers,facts,insights:summarizeEnvironment(facts,now),summary_method:"rules-v1",fetched_at:new Date(now).toISOString()};
+  return {area,node:{id:node.id,name:node.name},providers,facts,...readEventLayers(rows,area,now),insights:summarizeEnvironment(facts,now),summary_method:"rules-v1",fetched_at:new Date(now).toISOString()};
 }

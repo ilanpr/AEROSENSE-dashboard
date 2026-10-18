@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ArrowUpRight, ChevronDown, Flame, Waves, Activity, HeartHandshake, RefreshCw } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import { dateLabel } from "@/types/live.types";
-import { DEMO_MODE } from "@/lib/demo-mode";
 
 interface DisasterItem {
   id: string; title: string; url: string; source: string; original_title: string;
@@ -11,6 +10,7 @@ interface DisasterItem {
   metrics: { value: number; unit: string; label: string }[];
 }
 interface DisasterResponse {
+  status?:string;
   items: DisasterItem[];
   sources: { name: string; last_success_at: string | null; error: string | null }[];
   help: { title: string; text: string; url: string }[];
@@ -23,7 +23,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
   const shown = items.slice(0, expanded ? 24 : compact ? 2 : 3);
   return <section className="disaster-section" id="kabar-bencana" aria-labelledby="disaster-heading">
     <header className="disaster-heading">
-      <div><h2 id="disaster-heading">Kabar bencana Indonesia</h2><p>{DEMO_MODE ? "Berita live tidak dimuat dalam demo" : "Pembaruan 7 hari terakhir"}</p></div>
+      <div><h2 id="disaster-heading">Kabar bencana Indonesia</h2><p>Pembaruan 7 hari terakhir · sumber publik</p></div>
       <button className="live-icon-button" aria-label="Perbarui kabar bencana" disabled={loading} onClick={refresh}><RefreshCw size={17} className={loading ? "refreshing" : ""} /></button>
     </header>
     {!compact && <div className="disaster-filters" role="group" aria-label="Filter kabar bencana">
@@ -46,7 +46,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
               {(item.kind === "monitoring" || item.stale) && <small className="disaster-note">{item.stale ? "Pembaruan sumber tertunda. " : ""}{item.kind === "monitoring" ? "Pantauan model, belum konfirmasi lapangan." : ""}</small>}
             </article>;
           })}
-        </div> : <p className="disaster-empty">{DEMO_MODE ? "Bagian berita menunggu sambungan ke sumber live. Ini bukan berarti tidak ada kejadian bencana." : `Belum ada pembaruan ${filter === "Semua" ? "bencana Indonesia" : filter.toLowerCase()} dalam feed yang dipantau.`}</p>}
+        </div> : <p className="disaster-empty">{data.status === "unavailable" ? "Sumber berita belum berhasil diperbarui. Coba lagi nanti." : `Belum ada pembaruan ${filter === "Semua" ? "bencana Indonesia" : filter.toLowerCase()} dalam feed yang dipantau.`}</p>}
         {items.length > shown.length && <button className="disaster-more" onClick={() => setExpanded(true)}>Lihat kabar lainnya <ChevronDown size={16} /></button>}
       </>}
     <div className="disaster-help"><HeartHandshake size={21} aria-hidden="true" /><strong>Ingin membantu?</strong>

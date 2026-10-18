@@ -210,7 +210,7 @@ export function summarizeEnvironment(facts, now = Date.now()) {
       "Belum ada estimasi tanah terbaru untuk area ini.",
       "Cek kondisi tanah langsung bila diperlukan.",
     );
-  const fire = match(current, "fire", /Jumlah titik panas/i);
+  const fire = match(current, "fire", /Jumlah (?:deteksi )?titik panas/i);
   if (fire)
     add(
       "fire",

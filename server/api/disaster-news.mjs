@@ -17,7 +17,7 @@ const array = x => Array.isArray(x) ? x : x ? [x] : [];
 const text = x => String(typeof x === "object" ? x?.["#text"] || "" : x || "")
   .replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim().slice(0, 240);
 const recent = (t, now) => Number.isFinite(Date.parse(t)) && Date.parse(t) <= now + 30 * MINUTE && Date.parse(t) >= now - 7 * DAY;
-const retainRecent = (items, now) => array(items).filter(item => recent(item?.published_at, now)).slice(0, 40);
+const retainRecent = (items, now) => array(items).filter(item => recent(item?.published_at, now)).sort((a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at)).slice(0, 40);
 function safeLink(value, provider) {
   try {
     const u = new URL(text(value));
@@ -25,7 +25,7 @@ function safeLink(value, provider) {
     return u.protocol === "https:" && hosts.includes(u.hostname) && !u.username && !u.password ? u.href : null;
   } catch { return null; }
 }
-const domestic = /\b(indonesia|aceh|sumat(?:e)?ra|sumut|sumbar|sumsel|riau|jambi|bengkulu|lampung|bangka|belitung|jakarta|banten|jawa|jatim|jateng|jabar|yogyakarta|kalimantan|kaltim|kalteng|kalbar|kalsel|kaltara|sulawesi|sulsel|sulteng|sulut|sultra|sulbar|gorontalo|bali|nusa tenggara|ntb|ntt|maluku|papua|surabaya|semarang|bandung|bogor|bekasi|depok|tangerang|medan|padang|palembang|pekanbaru|pontianak|palangkaraya|palangka raya|samarinda|balikpapan|banjarmasin|makassar|manado|palu|kendari|denpasar|mataram|kupang|ambon|ternate|jayapura|merauke|banda aceh|solok|agam|lumajang|malang|jember|banyuwangi|banyumas|cilacap|garut|sukabumi|cianjur|buleleng|lombok|sumbawa|flores|sikka|pesisir selatan|tanah datar|kapuas|ketapang|kubu raya|mempawah|sambas|sintang|sanggau|kotawaringin|seruyan|pulang pisau|barito|berau|kutai|penajam|bengkalis|pelalawan|siak|indragiri|rokan|dumai)\b/i;
+const domestic = /\b(indonesia|aceh|sumat(?:e)?ra|sumut|sumbar|sumsel|riau|jambi|bengkulu|lampung|bangka|belitung|jakarta|banten|jawa|jatim|jateng|jabar|yogyakarta|kalimantan|kaltim|kalteng|kalbar|kalsel|kaltara|sulawesi|sulsel|sulteng|sulut|sultra|sulbar|gorontalo|bali|nusa tenggara|ntb|ntt|maluku|papua|surabaya|semarang|bandung|bogor|bekasi|depok|tangerang|medan|padang|palembang|pekanbaru|pontianak|palangkaraya|palangka raya|samarinda|balikpapan|banjarmasin|makassar|manado|palu|kendari|denpasar|mataram|kupang|ambon|ternate|jayapura|merauke|banda aceh|solok|agam|lumajang|malang|jember|banyuwangi|banyumas|cilacap|garut|sukabumi|cianjur|buleleng|lombok|sumbawa|flores|sikka|pesisir selatan|tanah datar|kapuas|ketapang|kubu raya|mempawah|sambas|sintang|sanggau|kotawaringin|seruyan|pulang pisau|barito|berau|kutai|penajam|bengkalis|pelalawan|siak|indragiri|rokan|dumai|hulu sungai selatan|hulu sungai tengah|hulu sungai utara|lawu|merapi|bromo)\b/i;
 const foreign = /\b(amerika|china|tiongkok|filipina|thailand|vietnam|myanmar|jepang|australia|india|pakistan|nepal|bangladesh|turki|rusia|ukraina|portugal|spanyol|yunani|kanada|malaysia|singapura|kamboja|taiwan|korea|sri lanka)\b/i;
 function typeOf(title) {
   if (/karhutla|kebakaran hutan|kebakaran lahan|forest fire/i.test(title)) return "Karhutla";
@@ -101,7 +101,8 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
         if (Date.parse(old?.refresh_after) > clock()) return;
         let items = retainRecent(old?.items, clock()), error = null, success = old?.last_success_at || null;
         try {
-          items = parseDisasterFeed(await download(source, fetcher), source, clock());
+          const incoming = parseDisasterFeed(await download(source, fetcher), source, clock());
+          items = retainRecent([...new Map([...items,...incoming].map(i=>[i.url,i])).values()],clock());
           success = new Date(clock()).toISOString();
         } catch { error = "Sumber belum berhasil diperbarui"; }
         await db("ae_disaster_news_cache", "on_conflict=provider", "POST", {
@@ -114,7 +115,7 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
   }
   async function read() {
     let rows = await db("ae_disaster_news_cache");
-    if (!rows.length) { await refresh(); rows = await db("ae_disaster_news_cache"); }
+    if (NEWS_SOURCES.some(s=>!rows.some(r=>r.provider===s.id && Date.parse(r.refresh_after)>clock()))) { await refresh(); rows = await db("ae_disaster_news_cache"); }
     const byUrl = new Map();
     for (const row of rows.filter(r => NEWS_SOURCES.some(s => s.id === r.provider))) {
       for (const item of row.items || []) {
@@ -125,7 +126,8 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
     }
     return {
       scope: "Indonesia", items: [...byUrl.values()].sort((a,b) => Number(a.kind === "monitoring") - Number(b.kind === "monitoring") || Date.parse(b.published_at) - Date.parse(a.published_at)).slice(0, 24),
-      sources: rows.map(r => ({ name: NEWS_SOURCES.find(s=>s.id===r.provider)?.name || r.provider, last_success_at: r.last_success_at, error: r.last_error })),
+      status: byUrl.size ? "available" : rows.some(r=>r.last_success_at && !r.last_error) ? "no_recent_items" : "unavailable",
+      sources: NEWS_SOURCES.map(s=>{const r=rows.find(r=>r.provider===s.id);return {name:s.name,provider:s.id,last_attempt_at:r?.last_attempt_at||null,last_success_at:r?.last_success_at||null,error:r?.last_error||(!r?"Sumber belum diperbarui":null)};}),
       help: HELP_LINKS, fetched_at: new Date(clock()).toISOString(),
     };
   }

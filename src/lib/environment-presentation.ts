@@ -99,7 +99,7 @@ export function environmentHighlights(
       [/kadar air tanah/i, "Air tanah permukaan"],
       [/suhu tanah/i, "Suhu tanah"],
     ],
-    fire: [[/Jumlah titik panas/i, "Deteksi dalam feed 24 jam"]],
+    fire: [[/Jumlah (?:deteksi )?titik panas/i, "Deteksi dalam feed 24 jam"]],
   };
   const picks = byCategory[insight.category] || [];
   if (insight.category === "flood") {

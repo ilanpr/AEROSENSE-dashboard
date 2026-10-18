@@ -25,6 +25,21 @@ test("ANTARA rejects foreign, ambiguous and unrelated headlines", () => {
   assert.equal(result[0].location,"Surabaya");
 });
 
+test("recognized Indonesian regional fire headlines are not dropped",()=>{
+  const title="BPBD Hulu Sungai Selatan Tangani Karhutla di Lahan Warga";
+  const result=parseDisasterFeed(rss(`<item><title>${title}</title><pubDate>${at}</pubDate><link>https://www.antaranews.com/berita/1</link></item>`),NEWS_SOURCES[2],now);
+  assert.equal(result.length,1);assert.equal(result[0].type,"Karhutla");
+});
+
+test("successful short RSS updates retain recent cached reports and outages remain explicit",async()=>{
+  let rows=[],time=now,empty=false,offline=false;
+  const news=disasterNews({clock:()=>time,db:async(_t,_q,method,body)=>{if(method==="POST"){rows=rows.filter(r=>r.provider!==body.provider).concat(body);return;}return structuredClone(rows);},fetcher:async url=>{if(offline)throw Error("offline");return new Response(rss(!empty&&url.includes("gdacs")?item():""));}});
+  await news.refresh();empty=true;time+=20*60000;await news.refresh();
+  assert.equal((await news.read()).items.length,1);
+  time+=8*86400000;offline=true;
+  const unavailable=await news.read();assert.equal(unavailable.status,"unavailable");assert.equal(unavailable.items.length,0);assert(unavailable.sources.every(s=>s.error));
+});
+
 test("shared refresh coalesces visitors, deduplicates links and keeps last success during outages", async () => {
   let rows=[], calls=0, time=now, fail=false;
   const db=async (_table,_q,method,body)=>{
