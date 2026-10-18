@@ -206,7 +206,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             {highlights.length > 0 && (
               <dl className="panel-metrics">
                 {highlights.map((h) => (
-                  <div key={h.label}>
+                  <div key={h.label} style={{ backdropFilter: "var(--metric-backdrop)" }}>
                     <dt>{h.label}</dt>
                     <dd>
                       {h.value}

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowUpRight,
+  ArrowRight,
   ChevronDown,
   MapPin,
   RefreshCw,
@@ -36,6 +37,10 @@ export function SensorOverview() {
   );
   const summary = sensorSummary(node, rules.data?.rules || node?.rules);
   const pose = summary.tone === "danger" ? "alert" : summary.tone === "warning" || summary.tone === "pending" ? "watch" : "calm";
+  const recommendation = summary.tone === "danger" ? "Minta pengelola memeriksa lokasi dan sensor."
+    : summary.tone === "warning" ? "Cek titik terdekat dan perubahan di lokasi."
+    : summary.tone === "pending" ? "Periksa koneksi node dan tunggu pembacaan baru."
+    : "Pantau lagi jika kondisi sekitar berubah.";
   const fresh = !!node?.latest?.reading_id && !node.latest.stale;
   const keys = [
     node?.pm25_validated ? "pm25_ug_m3" : "dust_ug_m3",
@@ -72,15 +77,15 @@ export function SensorOverview() {
           <article className={`sensor-hero tone-${summary.tone}`}>
             <Atmosphere />
             <div className="sensor-hero-copy">
-              <span
+              {summary.tone !== "calm" && <span
                 className={`insight-status ${fresh ? "" : "status-pending"}`}
               >
                 <span />
                 {summary.label}
-              </span>
+              </span>}
               <h2>{summary.title}</h2>
-              <p>
-                {!nodes.length ? "Belum ada node publik yang tersedia." : summary.body}
+              <p className="sensor-recommendation"><ArrowRight size={17} aria-hidden="true" />
+                <span>{!nodes.length ? "Belum ada node publik yang tersedia." : recommendation}</span>
               </p>
               {nodes.length > 0 && (
                 <label className="sensor-select">
@@ -109,7 +114,7 @@ export function SensorOverview() {
               {keys.map((key) => {
                 const value = fresh ? node?.latest?.metrics[key] : null;
                 return (
-                  <div key={key}>
+                  <div key={key} style={{ backdropFilter: "var(--metric-backdrop)" }}>
                     <dt>{metricLabels[key][0]}</dt>
                     <dd>
                       {typeof value === "number" && Number.isFinite(value)

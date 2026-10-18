@@ -29,7 +29,7 @@ Tombol Akun warga/Admin pada form login mengisi email dan password. Tekan Masuk 
 
 ## Skenario
 
-- 16 titik simulasi dalam grid 4 × 4 di Surabaya, sekitar 2,5 km antarbaris/kolom bertetangga. Jarak ke titik diagonal atau terjauh lebih besar, bukan semua pasangan berjarak 2,5 km. Titik tidak mewakili pemasangan atau industri tertentu.
+- 16 titik simulasi tersebar tidak beraturan di kawasan urban Surabaya, dengan jarak antartitik bervariasi. Koordinat tetap saat halaman diperbarui dan konteks lingkungan mengikuti titik terpilih. Titik tidak mewakili pemasangan atau industri tertentu.
 - 15 node menampilkan contoh data baru, satu node menampilkan keterlambatan 45 menit. Waktu skenario disusun terhadap waktu perangkat saat membuka demo; ini bukan waktu pengukuran nyata.
 - Tiap node mempunyai 96 sampel berjarak 15 menit, mendekati 24 jam. Suhu, kelembapan, TVOC, eCO2 dan debu optik bervariasi secara halus antarwaktu dan titik.
 - Garis GRU adalah ilustrasi, dengan versi `demo-illustration-not-inference`; bukan hasil inferensi atau bukti peningkatan akurasi.
@@ -70,3 +70,5 @@ Untuk backend produksi, terapkan `server/supabase/008_node_status_bands.sql` seb
 Tiga pose AERO-BOT dibuat dengan ImageGen bawaan, memakai maskot asli sebagai referensi: memberi saran (`calm.png`), memeriksa data (`watch.png`), dan memberi perhatian (`alert.png`). File final berada di `public/assets/aerobot/`. Prompt: pertahankan tubuh putih-biru, layar wajah navy, mata cyan, sirip telinga dan emblem angin; ilustrasi 2D transparan seluruh tubuh; ubah pose sesuai status; tanpa teks atau latar. Ketiganya ditampilkan pada kartu saran sesuai pembacaan node; pose memeriksa data juga ada di halaman AERO-BOT.
 
 Build demo mempertahankan berkas JavaScript versi sebelumnya selama take agar tab yang sudah terbuka tetap bisa berpindah halaman. Bersihkan folder build hanya di antara sesi saat server demo berhenti. Jika tab masih menampilkan error dari build lama, tekan Muat ulang.
+
+Tampilan memakai font Manrope variabel yang disimpan lokal (Google Fonts, lisensi OFL), kartu metrik kaca biru transparan dengan angka putih, satu judul status dan rekomendasi singkat. Sebaran tidak beraturan hanya berlaku pada titik simulasi; koordinat perangkat produksi tidak diubah.

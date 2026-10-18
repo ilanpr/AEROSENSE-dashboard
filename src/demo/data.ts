@@ -1,12 +1,17 @@
 import type { LiveNode, Reading, EnvironmentFact, EnvironmentResponse, Alert } from "../types/live.types";
 
 export const DEMO_NOTICE = "Data simulasi untuk pengambilan video, bukan hasil pengukuran lapangan atau kondisi terkini Surabaya.";
-// A 4 × 4 grid in Surabaya. Neighboring rows/columns are approximately 2.5 km apart.
-export const DEMO_POINTS = Array.from({length:16}, (_,i) => ({
+// Fixed synthetic deployment points across urban Surabaya, with irregular spacing.
+const demoCoordinates = [
+  [-7.2309,112.7227],[-7.2518,112.7083],[-7.2374,112.7486],[-7.2472,112.7802],
+  [-7.2677,112.7282],[-7.2729,112.7541],[-7.2594,112.7705],[-7.2824,112.7896],
+  [-7.2891,112.7148],[-7.3048,112.7366],[-7.2926,112.7642],[-7.3144,112.7861],
+  [-7.3222,112.7162],[-7.3273,112.7549],[-7.2713,112.6901],[-7.3351,112.7798],
+];
+export const DEMO_POINTS = demoCoordinates.map(([latitude,longitude],i) => ({
   id:`demo-sby-${String(i+1).padStart(2,"0")}`,
   name:`Surabaya ${String(i+1).padStart(2,"0")}`,
-  latitude:Number((-7.2393 - Math.floor(i/4)*0.02248).toFixed(5)),
-  longitude:Number((112.7160 + (i%4)*0.02267).toFixed(5)),
+  latitude,longitude,
 }));
 const round = (v:number, places=1) => Number(v.toFixed(places));
 const iso = (v:number) => new Date(v).toISOString();
