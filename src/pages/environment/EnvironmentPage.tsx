@@ -1,3 +1,4 @@
+import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   CloudSun,
@@ -48,7 +49,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
   const Heading = compact ? "h2" : "h1";
   const { user, isLoading: authLoading } = useAuth();
   const dashboard = useLiveData<{ nodes: LiveNode[] }>(
-    user ? "/v1/dashboard" : null,
+    `/v1/dashboard?account=${encodeURIComponent(user?.id || "guest")}`,
     60000,
   );
   const nodes = dashboard.data?.nodes || [];
@@ -114,19 +115,11 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             <label className="sensor-select sensor-select--light">
               <MapPin size={15} aria-hidden="true" />
               <span className="sr-only">Pilih titik robot</span>
-              <select
-                aria-label="Pilih titik robot"
-                value={node?.id || ""}
-                onChange={(event) => {
-                  const next = new URLSearchParams(params);
-                  next.set("node_id", event.target.value);
-                  setParams(next);
-                }}
-              >
-                {nodes.map((item) => (
-                  <option key={item.id} value={item.id}>{item.name}</option>
-                ))}
-              </select>
+              <MonitoringSelect label="Pilih titik robot" value={node?.id || ""}
+                options={nodes.map(n => ({value:n.id,label:n.name}))}
+                onValueChange={(value) => {
+                  const next = new URLSearchParams(params); next.set("node_id", value); setParams(next);
+                }} />
             </label>
           )}
           {compact && (

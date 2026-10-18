@@ -2,6 +2,7 @@ import {
   summarizeEnvironment,
   orderEnvironmentFacts,
 } from "./environment-insights.mjs";
+import { publicMonitoring } from "./public-monitoring.mjs";
 const reportScope = {
   type: "ambient_monitoring",
   assurance_status: "not_assured",
@@ -13,6 +14,7 @@ const reportScope = {
 export function webRoutes({ db, one, user, member, send, filter, env }) {
   return async (req, res, url) => {
     const path = url.pathname;
+    if (await publicMonitoring({ db, one, send, filter, readEnvironment }, req, res, url)) return true;
     if (req.method !== "GET") return false;
     if (path === "/v1/config") {
       send(res, 200, {

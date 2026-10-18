@@ -14,12 +14,13 @@ export async function demoRequest(endpoint:string, options:RequestInit={}, accou
     help:[{title:"Bantu lewat PMI",text:"Kanal resmi",url:"https://donasi.pmi.or.id/donation/monetary/donate-now"},
       {title:"Arahan BNPB",text:"Informasi resmi",url:"https://www.bnpb.go.id/"}],
   };
-  if(!account)throw new Error("Masuk memakai akun warga atau admin demo.");
-  const role=account.app_metadata.demo_role==="admin"?"admin":"viewer";
+  const publicReads = new Set(["/v1/dashboard","/v1/nodes","/v1/history","/v1/rules","/v1/alerts","/v1/environment"]);
+  if(!account && (post || !publicReads.has(p)))throw new Error("Masuk memakai akun warga atau admin demo.");
+  const role=account?.app_metadata.demo_role==="admin"?"admin":"viewer";
   const index=DEMO_POINTS.findIndex(n=>n.id===(url.searchParams.get("node_id")||body.node_id));
   const nodes=demoNodes(role);
   if(p==="/v1/access")return {can_audit_esg:role==="admin"};
-  if(p==="/v1/dashboard"||p==="/v1/nodes")return {nodes,refreshed_at:new Date().toISOString()};
+  if((p==="/v1/dashboard"||p==="/v1/nodes") && !post)return {nodes,refreshed_at:new Date().toISOString()};
   if(p==="/v1/esg/report"){
     if(role!=="admin")throw new Error("Laporan lingkungan hanya tersedia untuk admin demo.");
     const report_scope={type:"synthetic_demo",assurance_status:"not_assured",source_attribution:"not_determined",max_readings_per_node:288,note:DEMO_NOTICE};

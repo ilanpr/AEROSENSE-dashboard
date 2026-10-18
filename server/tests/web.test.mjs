@@ -43,6 +43,8 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
   ];
   const node = {
     id: "n1",
+    public_read: true,
+    gateway_id: "private-gateway",
     name: "Sensor asli",
     latitude: -7.1,
     longitude: 112.1,
@@ -158,6 +160,15 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     );
     assert.equal((await fetch(base + "/v1/environment?node_id=n1")).status, 401);
     assert.equal((await fetch(base + "/v1/dashboard")).status, 401);
+    const guestDash = await (await fetch(base + "/v1/public/dashboard")).json();
+    assert.equal(guestDash.nodes[0].id,"n1");
+    assert.equal(guestDash.nodes[0].role,"guest");
+    assert.equal(guestDash.nodes[0].gateway_id,undefined);
+    const guestHub = await fetch(base + "/v1/public/environment?node_id=n1");
+    assert.equal(guestHub.status,200);
+    assert.equal((await guestHub.json()).node.id,"n1");
+    assert.equal((await fetch(base + "/v1/public/alerts/ack", {method:"POST"})).status,404);
+
     const dash = await (await fetch(base + "/v1/dashboard", auth)).json();
     assert.equal(dash.nodes[0].latitude, -7.1);
     assert.equal(dash.nodes[0].role, "viewer");

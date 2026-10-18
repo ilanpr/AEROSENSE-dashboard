@@ -1,3 +1,4 @@
+import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -21,7 +22,7 @@ import "@/styles/insights.css";
 export function SensorOverview() {
   const { user, isLoading } = useAuth();
   const dashboard = useLiveData<{ nodes: LiveNode[] }>(
-    user ? `/v1/dashboard?account=${encodeURIComponent(user.id)}` : null,
+    `/v1/dashboard?account=${encodeURIComponent(user?.id || "guest")}`,
   );
   const [params, setParams] = useSearchParams();
   const [selected, setSelected] = useState("");
@@ -75,45 +76,27 @@ export function SensorOverview() {
               </span>
               <h2>{summary.title}</h2>
               <p>
-                {!user
-                  ? "Masuk untuk melihat sensor Anda."
-                  : !nodes.length
-                    ? "Minta pengelola menambahkan akses node."
-                    : summary.body}
+                {!nodes.length ? "Belum ada node publik yang tersedia." : summary.body}
               </p>
               {nodes.length > 0 && (
                 <label className="sensor-select">
                   <MapPin size={15} aria-hidden="true" />
                   <span className="sr-only">Pilih node AEROSENSE</span>
-                  <select
-                    aria-label="Pilih node AEROSENSE"
-                    value={node?.id || ""}
-                    onChange={(e) => {
-                      setSelected(e.target.value);
-                      const next = new URLSearchParams(params);
-                      next.set("node_id", e.target.value);
-                      setParams(next);
-                    }}
-                  >
-                    {nodes.map((n) => (
-                      <option key={n.id} value={n.id}>
-                        {n.name}
-                      </option>
-                    ))}
-                  </select>
+                  <MonitoringSelect label="Pilih node AEROSENSE" value={node?.id || ""}
+                    options={nodes.map(n => ({value:n.id,label:n.name}))}
+                    onValueChange={(value) => {
+                      setSelected(value);
+                      const next = new URLSearchParams(params); next.set("node_id", value); setParams(next);
+                    }} />
                 </label>
               )}
               <Link
                 className="panel-link"
                 to={
-                  user
-                    ? node
-                      ? `/nodes/${encodeURIComponent(node.id)}`
-                      : "/nodes"
-                    : "/login"
+                  node ? `/nodes/${encodeURIComponent(node.id)}` : "/nodes"
                 }
               >
-                {user ? "Lihat detail sensor" : "Masuk ke akun"}
+                Lihat detail sensor
                 <ArrowUpRight size={16} />
               </Link>
             </div>
@@ -132,9 +115,6 @@ export function SensorOverview() {
                         : "—"}
                       <small>{metricLabels[key][1]}</small>
                     </dd>
-                    {key === "dust_ug_m3" && (
-                      <span>Debu optik</span>
-                    )}
                     {key === "eco2_ppm" && (
                       <span>Estimasi eCO₂</span>
                     )}

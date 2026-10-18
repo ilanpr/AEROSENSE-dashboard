@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
 import { NAV_ITEMS, ROUTES } from "@/lib/constants";
 import { Menu, ChevronRight, Bell } from "lucide-react";
@@ -7,6 +9,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ onMenuClick }: TopbarProps) {
+  const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -21,7 +24,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         : "Workspace";
 
   return (
-    <header className="h-[72px] bg-white/90 border-b border-[#e9f0f8] flex items-center justify-between px-6 sm:px-9 sticky top-0 z-20 backdrop-blur-md">
+    <header className="app-topbar h-[72px] bg-white/90 border-b border-[#e9f0f8] flex items-center justify-between px-6 sm:px-9 sticky top-0 z-20 backdrop-blur-md">
       {/* Left: Mobile hamburger & Breadcrumb */}
       <div className="flex items-center gap-3 min-w-0">
         <button
@@ -56,10 +59,9 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <Bell className="w-4 h-4" />
         </button>
 
-        {/* User avatar */}
-        <div className="w-8 h-8 rounded-lg bg-[#d9ecff] border-2 border-white text-[#0470ed] text-[10px] font-black grid place-items-center shadow-2xs select-none">
-          AS
-        </div>
+        <Link className="account-link" to={user ? ROUTES.SYSTEM : ROUTES.LOGIN}>
+          {user ? "Akun saya" : "Masuk"}<ChevronRight size={15} />
+        </Link>
       </div>
     </header>
   );

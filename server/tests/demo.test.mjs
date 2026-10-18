@@ -35,7 +35,12 @@ test('demo citizen cannot open admin reports, and no fallback reaches production
   await assert.rejects(demoRequest('/v1/esg/report',{},citizen),/admin/);
   assert.equal((await demoRequest('/v1/esg/report',{},demoUser('admin'))).nodes.length,16);
   await assert.rejects(demoRequest('/v1/private-unknown',{},citizen),/produksi/);
-  await assert.rejects(demoRequest('/v1/dashboard',{},null),/Masuk/);
+  assert.equal((await demoRequest('/v1/dashboard',{},null)).nodes.length,16);
+  assert.equal((await demoRequest('/v1/history?node_id=demo-sby-01',{},null)).readings.length,96);
+  assert.equal((await demoRequest('/v1/environment?node_id=demo-sby-01',{},null)).area.latitude,DEMO_POINTS[0].latitude);
+  await assert.rejects(demoRequest('/v1/esg/report',{},null),/Masuk/);
+  await assert.rejects(demoRequest('/v1/alerts/ack',{method:'POST',body:'{"id":"x"}'},null),/Masuk/);
+  await assert.rejects(demoRequest('/v1/chat',{method:'POST',body:'{"text":"cuaca"}'},null),/Masuk/);
   const job=await demoRequest('/v1/chat',{method:'POST',body:JSON.stringify({text:'cuaca Surabaya'})},citizen);
   assert.match((await demoRequest('/v1/jobs?id='+job.id,{},citizen)).result.text,/contoh/);
 });

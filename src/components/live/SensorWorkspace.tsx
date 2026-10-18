@@ -1,3 +1,4 @@
+import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { RefreshCw, Download, MapPin, ArrowUpRight } from "lucide-react";
@@ -30,10 +31,10 @@ export function SensorWorkspace({
     | "alerts"
     | "report";
 }) {
-  const { user, isLoading, error: authError } = useAuth();
+  const { user, isLoading } = useAuth();
   const { id } = useParams();
   const dashboard = useLiveData<{ nodes: LiveNode[]; refreshed_at: string; report_scope?: Record<string, unknown> }>(
-    user ? (mode === "report" ? "/v1/esg/report" : "/v1/dashboard") : null,
+    mode === "report" ? (user ? "/v1/esg/report" : null) : `/v1/dashboard?account=${encodeURIComponent(user?.id || "guest")}`,
   );
   const [selected, setSelected] = useState("");
   const [metric, setMetric] = useState("dust_ug_m3");
@@ -49,13 +50,13 @@ export function SensorWorkspace({
   const nodeQuery = node ? "?node_id=" + encodeURIComponent(node.id) : "";
   const history = useLiveData<{ readings: Reading[] }>(
     node && ["analytics", "detail", "report"].includes(mode)
-      ? (mode === "report" ? "/v1/esg/report" : "/v1/history") + nodeQuery
+      ? (mode === "report" ? "/v1/esg/report" : "/v1/history") + nodeQuery + "&account=" + encodeURIComponent(user?.id || "guest")
       : null,
     60000,
   );
   const alerts = useLiveData<{ alerts: Alert[] }>(
     node && ["overview", "alerts", "detail"].includes(mode)
-      ? "/v1/alerts" + nodeQuery
+      ? "/v1/alerts" + nodeQuery + "&account=" + encodeURIComponent(user?.id || "guest")
       : null,
   );
   const readings = history.data?.readings || [];
@@ -64,7 +65,7 @@ export function SensorWorkspace({
     map: "Peta sensor",
     nodes: "Monitoring node",
     detail: node?.name || "Detail node",
-    analytics: "Pembacaan dan model GRU",
+    analytics: "Riwayat sensor",
     alerts: "Peringatan sensor",
     report: "Laporan lingkungan",
   }[mode];
@@ -126,10 +127,8 @@ export function SensorWorkspace({
             Lihat perangkat <ArrowUpRight size={16} />
           </Link>
         </header>
-        {isLoading || (user && dashboard.loading && !dashboard.data) ? (
+        {isLoading || (dashboard.loading && !dashboard.data) ? (
           <DataState loading />
-        ) : !user ? (
-          <DataState empty="Masuk untuk melihat sensor yang terhubung ke akun Anda." />
         ) : dashboard.error ? (
           <DataState error={dashboard.error} retry={dashboard.refresh} />
         ) : (
@@ -218,35 +217,19 @@ export function SensorWorkspace({
       {mode === "report" && <MonitoringScope report />}
       {isLoading ? (
         <DataState loading />
-      ) : !user ? (
-        <DataState
-          error={
-            authError ||
-            "Masuk untuk melihat lokasi dan pembacaan sensor yang dapat Anda akses."
-          }
-        />
       ) : dashboard.error ? (
         <DataState error={dashboard.error} retry={dashboard.refresh} />
       ) : dashboard.loading && !dashboard.data ? (
         <DataState loading />
       ) : !nodes.length ? (
-        <DataState empty="Belum ada node yang terhubung ke akun Anda. Minta pengelola menambahkan akses lokasi." />
+        <DataState empty="Belum ada node yang tersedia." />
       ) : (
         <>
           <div className="sensor-toolbar">
             <label>
               Node
-              <select
-                value={node?.id || ""}
-                onChange={(e) => setSelected(e.target.value)}
-                disabled={!!id}
-              >
-                {nodes.map((n) => (
-                  <option key={n.id} value={n.id}>
-                    {n.name}
-                  </option>
-                ))}
-              </select>
+              <MonitoringSelect label="Pilih node" value={node?.id || ""} disabled={!!id}
+                onValueChange={setSelected} options={nodes.map(n => ({value:n.id,label:n.name}))} />
             </label>
             <span>Diperiksa {dateLabel(dashboard.data?.refreshed_at)}</span>
           </div>
@@ -354,7 +337,8 @@ export function SensorWorkspace({
                     <button
                       className="live-button secondary"
                       onClick={exportReadings}
-                      disabled={!readings.length || history.loading || !!history.error}
+                      disabled={!user || !readings.length || history.loading || !!history.error}
+                      title={!user ? "Masuk untuk mengekspor data" : undefined}
                     >
                       <Download size={15} />
                       Ekspor JSON
@@ -370,21 +354,9 @@ export function SensorWorkspace({
                     <>
                       <label className="metric-picker">
                         Parameter
-                        <select
-                          value={metric}
-                          onChange={(e) => setMetric(e.target.value)}
-                        >
-                          {Object.entries(metricLabels)
-                            .filter(
-                              ([k]) =>
-                                k !== "pm25_ug_m3" || node.pm25_validated,
-                            )
-                            .map(([k, [label]]) => (
-                              <option value={k} key={k}>
-                                {label}
-                              </option>
-                            ))}
-                        </select>
+                        <MonitoringSelect label="Pilih parameter" value={metric} onValueChange={setMetric}
+                          options={Object.entries(metricLabels).filter(([k]) => k !== "pm25_ug_m3" || node.pm25_validated)
+                            .map(([value,[label]]) => ({value,label}))} />
                       </label>
                       <Suspense fallback={<DataState loading />}>
                         <ReadingChart data={chart} />

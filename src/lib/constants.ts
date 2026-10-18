@@ -38,19 +38,19 @@ export interface NavItemConfig {
 
 /** Navigation items for citizen-centric sidebar */
 export const NAV_ITEMS: readonly NavItemConfig[] = [
-  { label: "Hub lingkungan", path: ROUTES.ENVIRONMENT, icon: "Leaf" },
   {
     label: "Beranda",
     path: ROUTES.DASHBOARD,
     icon: "LayoutGrid",
   },
+  { label: "Hub lingkungan", path: ROUTES.ENVIRONMENT, icon: "Leaf" },
   {
     label: "Peta sensor",
     path: ROUTES.SENSOR_MAP,
     icon: "Map",
   },
   {
-    label: "Analitik AI",
+    label: "Riwayat & model",
     path: ROUTES.ANALYTICS,
     icon: "LineChart",
   },

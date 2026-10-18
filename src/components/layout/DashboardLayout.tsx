@@ -35,7 +35,7 @@ function DashboardShell() {
   }, []);
 
   return (
-    <div className={`flex min-h-screen bg-[#f3f8ff] text-[#11223D] ${DEMO_MODE ? "demo-shell" : ""}`}>
+    <div className={`app-shell flex min-h-screen bg-[#f3f8ff] text-[#11223D] ${DEMO_MODE ? "demo-shell" : ""}`}>
       {DEMO_MODE && <DemoBanner />}
       {/* Desktop Sidebar */}
       <div className="hidden md:block">

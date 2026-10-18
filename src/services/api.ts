@@ -12,14 +12,20 @@ export async function apiRequest<T>(
     return await demoRequest(endpoint, options) as T;
   }
   const headers = new Headers(options.headers);
+  const publicRead = (!options.method || options.method === "GET") &&
+    /^\/v1\/(dashboard|nodes|history|rules|alerts|environment)(\?|$)/.test(endpoint);
   if (options.body) headers.set("Content-Type", "application/json");
   if (authenticated) {
-    const { data, error } = await (await getSupabase()).auth.getSession();
-    if (error || !data.session)
+    const session = await getSupabase().then(client => client.auth.getSession()).catch(() => null);
+    if (session?.data.session && !session.error) {
+      headers.set("Authorization", `Bearer ${session.data.session.access_token}`);
+    } else if (publicRead) {
+      endpoint = endpoint.replace("/v1/", "/v1/public/");
+    } else {
       throw new Error(
-        "Masuk terlebih dahulu untuk mengakses data sensor dan AERO-BOT.",
+        "Masuk terlebih dahulu untuk menggunakan fitur ini.",
       );
-    headers.set("Authorization", `Bearer ${data.session.access_token}`);
+    }
   }
   const response = await fetch(`${API_CONFIG.baseUrl}${endpoint}`, {
     ...options,

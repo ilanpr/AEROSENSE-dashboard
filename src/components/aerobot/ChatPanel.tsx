@@ -1,3 +1,4 @@
+import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowUp, Loader2, RefreshCw } from "lucide-react";
@@ -173,19 +174,9 @@ export function ChatPanel() {
       </header>
       <label className="chat-scope">
         Sensor
-        <select
-          aria-label="Sumber sensor percakapan"
-          value={nodeId}
-          onChange={(e) => setNodeId(e.target.value)}
-          disabled={!!robotId || busy || !!pending}
-        >
-          <option value="">Tanpa sensor</option>
-          {nodes.data?.nodes.map((n) => (
-            <option key={n.id} value={n.id}>
-              {n.name}
-            </option>
-          ))}
-        </select>
+        <MonitoringSelect label="Sumber sensor percakapan" value={nodeId || "__no_sensor__"}
+          onValueChange={value=>setNodeId(value==="__no_sensor__"?"":value)} disabled={!!robotId || busy || !!pending}
+          options={[{value:"__no_sensor__",label:"Tanpa sensor"},...(nodes.data?.nodes || []).map(n=>({value:n.id,label:n.name}))]} />
       </label>
       {nodes.error && <p className="live-notice">{nodes.error}</p>}
       <div className="live-messages" role="log" aria-live="polite">

@@ -12,6 +12,12 @@ pnpm.cmd demo:serve
 
 Buka `http://127.0.0.1:4174`. Server hanya menyajikan folder `dist-demo`, terikat pada loopback. Jangan menaruh berkas pribadi atau rahasia dalam folder tersebut.
 
+## Akses tamu
+
+Beranda, node, peta, riwayat, peringatan dan hub lingkungan dapat dibuka tanpa login. Akun diperlukan untuk AERO-BOT, ekspor data, pengaturan dan tindakan pada peringatan. Laporan lingkungan khusus admin. Build demo tidak membuka data produksi.
+
+Untuk produksi, jalankan `server/supabase/007_public_monitoring.sql` dan publikasikan hanya node yang memang ingin ditampilkan melalui `ae_nodes.public_read = true`. Koordinat node yang dipublikasikan akan terlihat oleh pengunjung. Endpoint `/v1/public/*` hanya menerima GET dan membatasi kolom keluaran; data pengguna, gateway, kontak dan metadata proses tidak disertakan. Node lama tetap privat hingga dipilih operator. Migrasi ini belum diterapkan ke server produksi dari sesi ini.
+
 ## Akun demo
 
 | Peran | Email | Kata sandi |
@@ -19,7 +25,7 @@ Buka `http://127.0.0.1:4174`. Server hanya menyajikan folder `dist-demo`, terika
 | Warga | warga@demo.aerosense.test | WargaDemo2026! |
 | Admin | admin@demo.aerosense.test | AdminDemo2026! |
 
-Tombol Akun warga/Admin pada form login mengisi email dan password. Tekan Masuk ke Dashboard sesudahnya. Akun demo hanya untuk data simulasi di build demo. Warga dapat melihat sensor, peta, analitik, peringatan dan AERO-BOT. Halaman laporan lingkungan tetap khusus admin demo. Pendaftaran dan pengiriman WhatsApp tidak dijalankan.
+Tombol Akun warga/Admin pada form login mengisi email dan password. Tekan Masuk sesudahnya. Akun demo hanya untuk data simulasi di build demo. Warga dapat melihat sensor, peta, analitik, peringatan dan AERO-BOT. Halaman laporan lingkungan tetap khusus admin demo. Pendaftaran dan pengiriman WhatsApp tidak dijalankan.
 
 ## Skenario
 
@@ -47,9 +53,9 @@ Rujukan: https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/
 
 ## Urutan rekaman singkat
 
-1. Masuk akun warga, buka Beranda dan pilih beberapa node.
+1. Buka Beranda tanpa login dan pilih beberapa node. Masuk akun warga saat merekam fitur AERO-BOT.
 2. Buka Peta sensor untuk memperlihatkan sebaran 16 titik.
-3. Buka Analitik AI, ganti parameter/node, dan sorot input mentah serta ilustrasi GRU.
+3. Buka Riwayat & model, ganti parameter/node, dan sorot input mentah serta ilustrasi GRU.
 4. Buka Peringatan pada node bernilai tinggi, lalu hub lingkungan dan sumbernya.
 5. Tanya “Cuaca di Surabaya?” atau “Bagaimana kondisi udara node ini?” di AERO-BOT.
 6. Untuk rekaman laporan, masuk akun admin pada browser/sesi terpisah. Jangan menyajikan demo sebagai hasil pengujian alat atau respons instansi nyata.

@@ -1,3 +1,4 @@
+import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,16 +77,8 @@ export function SystemPage() {
               <>
                 <label>
                   Node
-                  <select
-                    value={node.id}
-                    onChange={(e) => setSelected(e.target.value)}
-                  >
-                    {nodes.data?.nodes.map((n) => (
-                      <option value={n.id} key={n.id}>
-                        {n.name}
-                      </option>
-                    ))}
-                  </select>
+                  <MonitoringSelect label="Node untuk aturan" value={node.id} onValueChange={setSelected}
+                    options={(nodes.data?.nodes || []).map(n=>({value:n.id,label:n.name}))} />
                 </label>
                 {rules.error && <p role="alert">{rules.error}</p>}
                 <ul className="rule-list">
@@ -131,20 +124,8 @@ export function SystemPage() {
                   >
                     <label>
                       Parameter
-                      <select
-                        value={metric}
-                        onChange={(e) => setMetric(e.target.value)}
-                      >
-                        {Object.entries(metricLabels)
-                          .filter(
-                            ([k]) => k !== "pm25_ug_m3" || node.pm25_validated,
-                          )
-                          .map(([key, [label]]) => (
-                            <option key={key} value={key}>
-                              {label}
-                            </option>
-                          ))}
-                      </select>
+                      <MonitoringSelect label="Parameter aturan" value={metric} onValueChange={setMetric}
+                        options={Object.entries(metricLabels).filter(([k])=>k!=="pm25_ug_m3"||node.pm25_validated).map(([value,[label]])=>({value,label}))} />
                     </label>
                     <label>
                       Ambang atas
