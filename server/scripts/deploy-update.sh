@@ -19,13 +19,14 @@ source_dir="$staging/AEROSENSE-dashboard-$revision/server"
 test -f "$source_dir/api/environment-events.mjs"
 backup="$HOME/aerosense-api-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
 backup_paths=(.env api)
-for path in scripts Dockerfile .dockerignore package.json package-lock.json; do
+for path in scripts Dockerfile .dockerignore package.json package-lock.json compose.gowa.yaml; do
   if [[ -e "$target/$path" ]]; then backup_paths+=("$path"); fi
 done
 tar -czf "$backup" -C "$target" "${backup_paths[@]}"
 cp -a "$source_dir/api/." "$target/api/"
 cp -a "$source_dir/scripts/." "$target/scripts/"
 cp "$source_dir/Dockerfile" "$source_dir/.dockerignore" "$source_dir/package.json" "$source_dir/package-lock.json" "$target/"
+if [[ -f "$source_dir/compose.gowa.yaml" ]]; then cp "$source_dir/compose.gowa.yaml" "$target/"; fi
 printf '{"commit":"%s"}\n' "$revision" > "$target/api/deployment-revision.json"
 cd "$target"
 # Keep the existing Compose network, ports, credentials and volumes.

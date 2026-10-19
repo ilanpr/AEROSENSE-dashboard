@@ -1,6 +1,7 @@
 import http from "node:http";
 import { webRoutes } from "./web.mjs";
 import { disasterNews } from "./disaster-news.mjs";
+import { normalizeGowa, sendGowa } from "./gowa.mjs";
 import { randomUUID, randomBytes } from "node:crypto";
 import {
   REFUSAL,
@@ -388,6 +389,7 @@ function send(res, status, data, headers = {}) {
   res.end(JSON.stringify(data));
 }
 async function whatsapp(raw, signature) {
+  if (e.WHATSAPP_PROVIDER === "gowa") throw new Error("Meta transport disabled");
   if (
     !e.WHATSAPP_APP_SECRET ||
     !verifyMeta(raw, signature, e.WHATSAPP_APP_SECRET)
@@ -397,6 +399,22 @@ async function whatsapp(raw, signature) {
     });
   const payload = JSON.parse(raw);
   return acceptWhatsapp(payload);
+}
+async function gowaWebhook(raw, signature) {
+  if (e.WHATSAPP_PROVIDER !== "gowa" || !e.GOWA_WEBHOOK_SECRET ||
+      !verifyMeta(raw, signature, e.GOWA_WEBHOOK_SECRET))
+    throw Object.assign(new Error("Invalid GOWA webhook signature"), { status: 401 });
+  const event = JSON.parse(raw);
+  const normalized = normalizeGowa(event, e);
+  if (!normalized) return;
+  if (normalized.type === "message") {
+    await enqueue("wa_inbox", "gowa:" + event.device_id + ":" + normalized.message.id,
+      { phone: normalized.phone, message: normalized.message, provider: "gowa" });
+  } else {
+    for (const id of normalized.ids) await rpc("gowa_receipt", {
+      p_device: e.GOWA_DEVICE_JID, p_id: id, p_phone: normalized.phone, p_status: normalized.status,
+    });
+  }
 }
 async function acceptWhatsapp(payload) {
   if (payload.object !== "whatsapp_business_account") return;
@@ -524,6 +542,7 @@ async function waSend(j) {
     );
     if (!s) return finish(j, { skipped: "Opt-out" });
     const n = await one("ae_nodes", "id=eq." + filter(b.node_id));
+    if (!n?.enabled) return finish(j, { skipped: "Node disabled or missing" });
     if (
       !(await one(
         "ae_members",
@@ -531,6 +550,32 @@ async function waSend(j) {
       ))
     )
       return finish(j, { skipped: "Membership revoked" });
+  }
+  if (e.WHATSAPP_PROVIDER === "gowa") {
+    let id = j.stage.provider_id;
+    const uncertain = async () => {
+      const rows = await db("ae_jobs", "id=eq." + filter(j.id) + "&status=eq.running&lease_token=eq." + filter(j.lease_token) + "&lease_until=gt." + filter(new Date().toISOString()), "PATCH", {
+        status: "failed", last_error: "GOWA delivery unknown; inspect gateway before manual retry",
+        result: { provider: "gowa", delivery_unknown: true }, lease_token: null, lease_until: null, updated_at: new Date().toISOString(),
+      });
+      if (!rows?.length) throw new Error("Lost job lease");
+      return { id: j.id, status: "failed", delivery_unknown: true };
+    };
+    if (!id) {
+      if (j.stage.gowa_attempt) return uncertain();
+      await stage(j, { gowa_attempt: new Date().toISOString() });
+      try { id = await sendGowa(b, e); }
+      catch (error) {
+        if (error.definitive) {
+          await stage(j, { gowa_attempt: null });
+          throw error;
+        }
+        return uncertain();
+      }
+      await stage(j, { provider_id: id });
+    }
+    await rpc("gowa_receipt", { p_device: e.GOWA_DEVICE_JID, p_id: id, p_phone: b.phone, p_status: "sent" });
+    return finish(j, { provider: "gowa", provider_id: id, accepted: true });
   }
   if (j.stage.provider_id)
     return finish(j, { provider_id: j.stage.provider_id });
@@ -749,6 +794,7 @@ async function internal(path, p) {
     });
   }
   if (path === "/internal/whatsapp/native-event") {
+    if (e.WHATSAPP_PROVIDER === "gowa") throw new Error("Meta transport disabled");
     const v = p.event?.entry
       ? p.event
       : {
@@ -766,6 +812,8 @@ async function internal(path, p) {
       }),
     };
   if (path === "/internal/maintenance") {
+    if (e.WHATSAPP_PROVIDER === "gowa") await db("ae_wa_receipts",
+      "updated_at=lt." + filter(new Date(Date.now() - 30 * 86400000).toISOString()), "DELETE");
     const commands = await db(
       "ae_commands",
       "created_at=lt." +
@@ -815,8 +863,14 @@ async function internal(path, p) {
       if (path === "/internal/chat/native-deliver")
         return await deliver(j, p.audio_response ?? {});
     }
-    if (path === "/internal/whatsapp/native-send" && j.kind === "wa_send")
+    if (path === "/internal/whatsapp/native-send" && j.kind === "wa_send") {
+      if (e.WHATSAPP_PROVIDER === "gowa") throw new Error("Use GOWA send endpoint");
       return await nativeSend(j, p);
+    }
+    if (path === "/internal/whatsapp/gowa-send" && j.kind === "wa_send") {
+      if (e.WHATSAPP_PROVIDER !== "gowa") throw new Error("GOWA transport disabled");
+      return await waSend(j);
+    }
     if (
       path === "/internal/chat/prepare" &&
       ["web_chat", "wa_chat", "robot_chat"].includes(j.kind)
@@ -894,6 +948,10 @@ const server = http.createServer(async (req, res) => {
     }
     if (path === "/webhooks/whatsapp" && req.method === "POST") {
       await whatsapp(await rawBody(req), req.headers["x-hub-signature-256"]);
+      return send(res, 200, { received: true });
+    }
+    if (path === "/webhooks/gowa" && req.method === "POST") {
+      await gowaWebhook(await rawBody(req), req.headers["x-hub-signature-256"]);
       return send(res, 200, { received: true });
     }
     if (path.startsWith("/internal/") && req.method === "POST") {
