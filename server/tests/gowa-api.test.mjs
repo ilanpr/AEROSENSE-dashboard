@@ -25,6 +25,8 @@ test("GOWA signed inbox deduplicates; sender enforces opt-out and does not retry
         if(jobs.some(j=>j.dedupe_key===p.dedupe_key)) result=[];
         else {const j={id:"inbox-"+jobs.length,...p};jobs.push(j);result=[j];}
       } else if(req.method==="PATCH") {rows.forEach(j=>Object.assign(j,p));result=rows;}
+      else if (url.searchParams.get("kind")==="eq.wa_send") result=rows.filter(j=>j.kind==="wa_send"&&j.status==="done"&&j.result?.provider==="gowa"&&
+        "eq."+j.body.phone===url.searchParams.get("body->>phone")).slice(-1);
       else result=rows;
     }
     if (url.pathname === "/rest/v1/rpc/ae_stage") {Object.assign(jobs.find(j=>j.id===p.p_id).stage,p.p_stage);result=true;}
@@ -53,6 +55,14 @@ test("GOWA signed inbox deduplicates; sender enforces opt-out and does not retry
     assert.equal((await post("/webhooks/gowa",inbound)).status,401);
     for(let i=0;i<2;i++) assert.equal((await post("/webhooks/gowa",inbound,signed(inbound))).status,200);
     assert.equal(jobs.length,1);assert.equal(jobs[0].body.message.text.body,"STOP");
+    const greet={...inbound,payload:{...inbound.payload,id:"HELLO1",body:"Halo"}};
+    assert.equal((await post("/webhooks/gowa",greet,signed(greet))).status,200);
+    assert.equal(jobs.at(-1).body.message.interactive.list_reply.id,"ae:menu");
+    jobs.push({id:"previous-menu",kind:"wa_send",status:"done",body:{phone:"628222222222",interactive:{action:{buttons:[{reply:{id:"ae:node:n1",title:"Node satu"}}]}}},result:{provider:"gowa"}});
+    jobs.push({id:"someone-else-menu",kind:"wa_send",status:"done",body:{phone:"628999999999",interactive:{action:{buttons:[{reply:{id:"ae:node:private-other",title:"Other"}}]}}},result:{provider:"gowa"}});
+    const number={...inbound,payload:{...inbound.payload,id:"NUMBER1",body:"1"}};
+    assert.equal((await post("/webhooks/gowa",number,signed(number))).status,200);
+    assert.equal(jobs.at(-1).body.message.interactive.list_reply.id,"ae:node:n1");
     const good=await post("/internal/whatsapp/gowa-send",job("good"),auth);
     assert.equal((await good.json()).result.provider_id,"GOWA-1");assert.equal(sends,1);assert.equal(receipts[0].p_status,"sent");
     active=false;

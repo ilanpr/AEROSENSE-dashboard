@@ -5,6 +5,8 @@ export function phoneFromJid(jid) {
 }
 const validId = (id) => typeof id === "string" && /^[A-Za-z0-9:_-]{1,160}$/.test(id);
 const commands = { menu: "menu", latest: "kondisi", nodes: "lokasi", history: "riwayat", chart: "grafik", summary: "ringkasan", chat: "tanya aerobot", settings: "notifikasi", enable: "notifikasi aktif", disable: "notifikasi nonaktif" };
+const mainChoices = ["latest", "nodes", "history", "chart", "summary", "chat", "settings"].map(id => "ae:" + id);
+const mainTitles = ["Udara sekarang", "Pilih lokasi", "Riwayat", "Grafik", "Ringkasan hari ini", "Tanya AERO-BOT", "Notifikasi"];
 function command(id) {
   const value = id?.replace(/^ae:/, "");
   if (commands[value]) return commands[value];
@@ -12,21 +14,31 @@ function command(id) {
   if (/^nodes:\d{1,4}$/.test(value || "")) return "lokasi " + (Number(value.split(":")[1]) + 1);
   return null;
 }
-export function gowaText(body) {
+function choiceRows(body) {
   const interactive = body.interactive;
   const rows = interactive?.action?.sections?.flatMap(s => s.rows || []) ||
     interactive?.action?.buttons?.map(b => b.reply) || [];
-  const choices = rows.map(r => {
-    const c = command(r.id);
-    return c ? `${r.title}: ${c}` : null;
-  }).filter(Boolean);
-  const text = body.text || interactive?.body?.text || "";
-  const result = [text, choices.length ? "Ketik:\n" + choices.join("\n") : ""].filter(Boolean).join("\n\n");
-  if (!result.trim() || result.length > 12000) throw new Error("Invalid GOWA message text");
+  return rows.filter(r => r && command(r.id) && typeof r.title === "string").slice(0, 12);
+}
+export const gowaChoiceIds = body => choiceRows(body || {}).map(r => r.id);
+export function gowaText(body) {
+  const rows = choiceRows(body);
+  const main = rows.length === mainChoices.length && rows.every((r, i) => r.id === mainChoices[i]);
+  const text = main ? "*AEROSENSE*\nPilih yang ingin Anda cek." : body.text || body.interactive?.body?.text || "";
+  const choices = rows.map((r, i) => `*${i + 1}*  ${main ? mainTitles[i] : r.title}`);
+  const range = choices.length === 1 ? "1" : `1–${choices.length}`;
+  const footer = choices.length ? `Balas angka *${range}* untuk memilih.\n*0* untuk menu.` : body.alert_id ? "" : "Ketik *0* untuk menu.";
+  const result = [text, choices.join("\n"), footer].filter(Boolean).join("\n\n");
+  if (!text.trim() || result.length > 12000) throw Object.assign(new Error("Invalid GOWA message text"), { definitive: true });
   return result;
 }
-function menuReply(text) {
+function menuReply(text, choices) {
   const t = text.trim().toLowerCase();
+  if (/^(?:halo|hallo|hai|hi|hello|mulai|start|menu|\/start|\/menu|tes|test|ping|permisi|p|selamat (?:pagi|siang|sore|malam)|assalamualaikum)(?:[\s,!.-]+(?:aerosense|aero[ -]?bot))?[\s!.,]*$/i.test(t)) return "ae:menu";
+  if (/^\d{1,2}$/.test(t)) {
+    if (Number(t) === 0) return "ae:menu";
+    return (choices.length ? choices : mainChoices)[Number(t) - 1] || "ae:menu";
+  }
   if (t === "notifikasi aktif") return "ae:enable";
   if (t === "notifikasi nonaktif") return "ae:disable";
   const node = /^node ([a-z0-9_-]{1,40})$/i.exec(text.trim());
@@ -35,7 +47,7 @@ function menuReply(text) {
   if (page) return "ae:nodes:" + (Number(page[1]) - 1);
   return null;
 }
-export function normalizeGowa(event, env, now = Date.now()) {
+export function normalizeGowa(event, env, now = Date.now(), choices = []) {
   if (!phoneFromJid(env.GOWA_DEVICE_JID) || event?.device_id !== env.GOWA_DEVICE_JID ||
       (event.session_id && event.session_id !== env.GOWA_DEVICE_ID)) return null;
   const p = event.payload;
@@ -55,7 +67,7 @@ export function normalizeGowa(event, env, now = Date.now()) {
       !Number.isFinite(timestamp) || timestamp < now - 86400000 || timestamp > now + 300000 ||
       typeof p.body !== "string" || p.body.length > 12000 ||
       (p.from !== p.chat_id && !/^\d{8,20}@lid$/.test(p.from || ""))) return null;
-  const reply = menuReply(p.body);
+  const reply = menuReply(p.body, choices);
   const message = { id: p.id, from: phone, timestamp: String(Math.floor(timestamp / 1000)),
     type: reply ? "interactive" : "text", text: { body: p.body } };
   if (reply) message.interactive = { type: "list_reply", list_reply: { id: reply } };

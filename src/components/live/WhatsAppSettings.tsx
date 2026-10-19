@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
 import { api } from "@/services/api";
 import type { LiveNode } from "@/types/live.types";
+import { WhatsAppEntry } from "./WhatsAppEntry";
 export function WhatsAppSettings() {
   const { user } = useAuth();
   const nodes = useLiveData<{ nodes: LiveNode[] }>(
@@ -55,10 +56,10 @@ export function WhatsAppSettings() {
         </button>
       </div>
       {command && (
-        <p className="pair-code">
-          Kirim <code>{command}</code> ke nomor WhatsApp AEROSENSE. Kode berlaku
-          10 menit.
-        </p>
+        <div className="wa-pair-actions">
+          <WhatsAppEntry command={command} label="Hubungkan WhatsApp" />
+          <details><summary>Lihat kode manual · berlaku 10 menit</summary><code>{command}</code></details>
+        </div>
       )}
       {error && <p role="alert">{error}</p>}
       {subscriptions.error && <p role="alert">{subscriptions.error}</p>}

@@ -1,7 +1,7 @@
 import http from "node:http";
 import { webRoutes } from "./web.mjs";
 import { disasterNews } from "./disaster-news.mjs";
-import { normalizeGowa, sendGowa } from "./gowa.mjs";
+import { normalizeGowa, sendGowa, gowaChoiceIds } from "./gowa.mjs";
 import { randomUUID, randomBytes } from "node:crypto";
 import {
   REFUSAL,
@@ -405,9 +405,15 @@ async function gowaWebhook(raw, signature) {
       !verifyMeta(raw, signature, e.GOWA_WEBHOOK_SECRET))
     throw Object.assign(new Error("Invalid GOWA webhook signature"), { status: 401 });
   const event = JSON.parse(raw);
-  const normalized = normalizeGowa(event, e);
+  const receivedAt = Date.now();
+  let normalized = normalizeGowa(event, e, receivedAt);
   if (!normalized) return;
   if (normalized.type === "message") {
+    if (/^[1-9]\d?$/.test(normalized.message.text.body.trim())) {
+      const previous = await one("ae_jobs", "kind=eq.wa_send&status=eq.done&body->>phone=eq." + filter(normalized.phone) +
+        "&result->>provider=eq.gowa&created_at=gte." + filter(new Date(receivedAt - 86400000).toISOString()) + "&order=created_at.desc&select=body");
+      normalized = normalizeGowa(event, e, receivedAt, gowaChoiceIds(previous?.body));
+    }
     await enqueue("wa_inbox", "gowa:" + event.device_id + ":" + normalized.message.id,
       { phone: normalized.phone, message: normalized.message, provider: "gowa" });
   } else {

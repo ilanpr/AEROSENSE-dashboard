@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizeGowa, sendGowa, gowaText, phoneFromJid } from "../api/gowa.mjs";
+import { normalizeGowa, sendGowa, gowaText, gowaChoiceIds, phoneFromJid } from "../api/gowa.mjs";
 const env = { GOWA_DEVICE_JID: "628111111111@s.whatsapp.net", GOWA_DEVICE_ID: "aerosense", GOWA_BASIC_AUTH: "aerosense:testing", GOWA_BASE_URL: "http://gowa:3000" };
 const message = (body = "kondisi") => ({ event: "message", device_id: env.GOWA_DEVICE_JID, session_id: "aerosense", payload: {
   id: "3EB123", chat_id: "628222222222@s.whatsapp.net", from: "628222222222@s.whatsapp.net",
@@ -23,7 +23,26 @@ test("Pairing and STOP remain text; typed menu options reach existing n8n handle
   }
   for (const [text,id] of [["node Surabaya-01","ae:node:Surabaya-01"],["notifikasi nonaktif","ae:disable"],["lokasi 2","ae:nodes:1"]])
     assert.equal(normalizeGowa(message(text),env).message.interactive.list_reply.id,id);
-  assert.equal(gowaText({text:"Pilih node",interactive:{action:{sections:[{rows:[{id:"ae:node:n1",title:"Node satu"}]}]}}}),"Pilih node\n\nKetik:\nNode satu: node n1");
+  assert.equal(gowaText({text:"Pilih node",interactive:{action:{sections:[{rows:[{id:"ae:node:n1",title:"Node satu"}]}]}}}),"Pilih node\n\n*1*  Node satu\n\nBalas angka *1* untuk memilih.\n*0* untuk menu.");
+});
+test("Greetings discover the menu without a keyword; numbers follow the last shown menu", () => {
+  for (const text of ["Halo", "Hai AERO-BOT!", "Selamat pagi", "Mulai", "0", "99"])
+    assert.equal(normalizeGowa(message(text),env).message.interactive.list_reply.id,"ae:menu");
+  assert.equal(normalizeGowa(message("1"),env).message.interactive.list_reply.id,"ae:latest");
+  const body={text:"Pilih lokasi",interactive:{action:{sections:[{rows:[{id:"ae:node:n1",title:"Surabaya 01"},{id:"ae:node:n2",title:"Surabaya 02"}]}]}}};
+  const ids=gowaChoiceIds(body);
+  assert.equal(normalizeGowa(message("2"),env,Date.now(),ids).message.interactive.list_reply.id,"ae:node:n2");
+  assert.equal(normalizeGowa(message("3"),env,Date.now(),ids).message.interactive.list_reply.id,"ae:menu");
+  assert.equal(normalizeGowa(message("Apa penyebab polusi udara?"),env).message.type,"text");
+  assert.deepEqual(gowaChoiceIds({interactive:{action:{buttons:[{reply:{id:"not-a-command",title:"Bad"}}]}}}),[]);
+});
+test("Main menu is compact, numbered and includes a way back; alerts keep their original text", () => {
+  const ids=["latest","nodes","history","chart","summary","chat","settings"];
+  const body={text:"Old verbose welcome",interactive:{action:{sections:[{rows:ids.map(id=>({id:"ae:"+id,title:id}))}]}}};
+  const text=gowaText(body);
+  assert.match(text,/^\*AEROSENSE\*/);assert.match(text,/\*7\*  Notifikasi/);assert.doesNotMatch(text,/Old verbose|Ketik:|kondisi: kondisi/);
+  assert.equal(text.split("\n").length,13);
+  assert.equal(gowaText({text:"Sensor waspada",alert_id:"a1"}),"Sensor waspada");
 });
 test("GOWA receipts reject groups/unknown states and cap batches", () => {
   const ack = {...message(),event:"message.ack",payload:{chat_id:message().payload.chat_id,ids:["3EB123"],receipt_type:"read"}};
@@ -43,7 +62,7 @@ test("GOWA uses Basic auth and device header; ambiguous sends are not definitive
     assert.equal(url.pathname,"/send/message"); assert.equal(options.redirect,"error");
     assert.equal(options.headers["X-Device-Id"],"aerosense");
     assert.equal(options.headers.Authorization,"Basic " + Buffer.from(env.GOWA_BASIC_AUTH).toString("base64"));
-    assert.deepEqual(JSON.parse(options.body),{phone:"628222222222@s.whatsapp.net",message:"Uji"});
+    assert.deepEqual(JSON.parse(options.body),{phone:"628222222222@s.whatsapp.net",message:"Uji\n\nKetik *0* untuk menu."});
     return new Response(JSON.stringify({code:"SUCCESS",results:{message_id:"3EB456"}}));
   });
   assert.equal(id,"3EB456");

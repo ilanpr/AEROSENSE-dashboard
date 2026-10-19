@@ -10,7 +10,13 @@ Transport prototipe menggunakan [GOWA v9.6.0](https://github.com/aldinokemal/go-
 4. `wa_send` diperiksa ulang terhadap kontak, persetujuan notifikasi, node aktif dan membership sebelum backend memanggil GOWA.
 5. ID kirim disimpan sebelum job diselesaikan. Webhook delivered/read/played disimpan secara monotonic di `ae_wa_receipts` dan tidak turun oleh callback terlambat.
 
-Menu memakai teks: `menu`, `kondisi`, `lokasi`, `riwayat`, `grafik`, `ringkasan`, `tanya aerobot`, `notifikasi`. Pilihan tambahan menyertakan perintah yang dapat disalin seperti `node node-01`, `lokasi 2`, `notifikasi aktif`, atau `notifikasi nonaktif`. Ini tidak mengirim objek interactive khusus Graph API ke GOWA.
+Menu memakai pilihan angka yang ditampilkan pada pesan. `0` selalu membuka menu. Angka mengikuti menu balasan terakhir untuk nomor pengirim yang sama (maksimal 24 jam); nomor lokasi atau pilihan notifikasi tidak tertukar dengan nomor menu utama. Perintah lama seperti `kondisi`, `lokasi`, `riwayat`, `grafik`, `ringkasan`, `tanya aerobot`, `notifikasi`, `node node-01`, dan `BERHENTI` tetap diterima.
+
+Sapaan `Halo`, `Hai`, `Mulai`, `Selamat pagi` dan `Assalamualaikum` langsung membuka menu melalui aturan lokal, tanpa Gemini. Pertanyaan biasa tetap masuk jalur AERO-BOT dan balasannya memuat cara kembali ke menu. Persetujuan langganan tetap terpisah: membuka chat atau memilih menu tidak membuat subscription.
+
+Web menyediakan tombol **Chat lewat WhatsApp** pada AERO-BOT dan Peringatan, juga untuk guest. Popup menjelaskan bahwa pesan `Mulai` sudah terisi dan pengguna harus menekan Kirim di WhatsApp. Kode pairing memiliki tombol pembuka chat tersendiri dengan persetujuan notifikasi yang terlihat sebelum keluar dari web. `VITE_WHATSAPP_NUMBER` mengatur nomor publik, dengan kontak AEROSENSE dari brief sebagai default. Pratinjau demo menjelaskan bahwa chat WhatsApp nyata sedangkan data web tetap simulasi.
+
+Popup ini berada di web. GOWA v9.6.0 tidak menyediakan endpoint menu persisten/Reply Keyboard seperti Telegram; teks bernomor tidak diklaim sebagai tombol native WhatsApp. Format font dan bubble tetap mengikuti aplikasi WhatsApp. Klik [tautan wa.me](https://faq.whatsapp.com/5913398998672934) mengisi pesan, bukan mengirim otomatis.
 
 ## Yang sudah diverifikasi pada 19 Oktober 2026
 
