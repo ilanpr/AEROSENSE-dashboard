@@ -40,7 +40,10 @@ export function normalizeGowa(event, env, now = Date.now()) {
       (event.session_id && event.session_id !== env.GOWA_DEVICE_ID)) return null;
   const p = event.payload;
   if (!p || typeof p !== "object") return null;
-  const phone = phoneFromJid(p.chat_id);
+  // GOWA v9.6 resolves a receipt sender to PN, but leaves its chat_id as LID.
+  // Accept that resolved sender only for a private-chat receipt; never parse a LID as a phone.
+  const phone = phoneFromJid(p.chat_id) || (event.event === "message.ack" &&
+    /^\d{8,20}@lid$/.test(p.chat_id || "") ? phoneFromJid(p.from) : null);
   if (!phone) return null; // No group, broadcast or unresolved LID identifiers.
   if (event.event === "message.ack") {
     if (!["delivered", "read", "played"].includes(p.receipt_type) ||

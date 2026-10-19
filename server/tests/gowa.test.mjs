@@ -31,6 +31,13 @@ test("GOWA receipts reject groups/unknown states and cap batches", () => {
   for (const patch of [{receipt_type:"sent"},{ids:Array(101).fill("3EB123")},{chat_id:"123@g.us"}])
     assert.equal(normalizeGowa({...ack,payload:{...ack.payload,...patch}},env),null);
 });
+test("Private LID receipts use GOWA's resolved phone sender without accepting groups or unresolved LIDs", () => {
+  const ack = {...message(),event:"message.ack",payload:{chat_id:"123456789012345@lid",from:"628222222222@s.whatsapp.net",ids:["3EB123"],receipt_type:"delivered"}};
+  assert.equal(normalizeGowa(ack,env).phone,"628222222222");
+  for (const patch of [{chat_id:"123456789@g.us"},{from:"123456789012345@lid"},{from:null}])
+    assert.equal(normalizeGowa({...ack,payload:{...ack.payload,...patch}},env),null);
+  assert.equal(normalizeGowa({...ack,event:"message",payload:{...ack.payload,...message().payload,chat_id:ack.payload.chat_id}},env),null);
+});
 test("GOWA uses Basic auth and device header; ambiguous sends are not definitive failures", async () => {
   const id = await sendGowa({phone:"628222222222",text:"Uji"},env,async(url,options)=>{
     assert.equal(url.pathname,"/send/message"); assert.equal(options.redirect,"error");

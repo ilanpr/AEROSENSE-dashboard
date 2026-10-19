@@ -18,8 +18,10 @@ Menu memakai teks: `menu`, `kondisi`, `lokasi`, `riwayat`, `grafik`, `ringkasan`
 - 38 pengujian backend lulus, termasuk verifikasi signature, deduplikasi inbox, opt-out, menu, pemulihan stage dan respons pengiriman ambigu.
 - Compose lolos pemeriksaan konfigurasi; Bash pemasangan lolos pemeriksaan sintaks.
 - Migrasi `010_gowa_receipts.sql` sudah diterapkan pada Supabase AEROSENSE `kuprcqvnyayrbsckiqrm`. Uji read lalu sent mempertahankan read, RLS aktif, anon/authenticated tidak bisa menjalankan RPC, service_role bisa. Transaksi uji di-rollback, tidak menyisakan baris.
-- Draft workflow `AEROSENSE | WhatsApp` tersimpan di n8n, ID `ddNDGrNx3Pi4SrZ2`, dengan 28 node. ID workflow tetap sehingga referensi Control Center tetap dapat digunakan. Belum dipublikasikan atau diuji dengan nomor fisik.
-- Nomor baru sudah terdaftar di aplikasi WhatsApp Business menurut pengguna. GOWA di Ubuntu dan QR belum diverifikasi; SSH otomatis ditolak autentikasi.
+- Workflow `AEROSENSE | WhatsApp`, ID `ddNDGrNx3Pi4SrZ2`, sudah dipublikasikan dengan 28 node. Control Center, Data udara, Jawaban website dan AERO-BOT juga sudah dipublikasikan; versi n8n ini mensyaratkan semua child workflow yang dirujuk dipublikasikan sebelum dispatcher dapat aktif.
+- Pengguna mengonfirmasi hasil bind: provider gowa, linked/bound/receipt_schema_ready semuanya true. SSH otomatis masih ditolak autentikasi, sehingga pemasangan dijalankan pengguna melalui terminal sendiri.
+- Uji `menu` langsung pada 19 Oktober pukul 19.30 WIB menghasilkan satu `wa_inbox` done dan satu `wa_send` done tanpa last_error; masing-masing satu percobaan. Eksekusi n8n inbox dan kirim berhasil. Receipt yang saat diperiksa tersimpan adalah sent, belum menjadi bukti delivered/read atau penerimaan di HP.
+- Adapter receipt sudah diperbaiki untuk chat_id LID dengan pengirim PN yang sudah diurai oleh GOWA. Nomor hanya diambil dari field from yang valid pada receipt chat privat; LID tidak diubah menjadi nomor dan grup tetap ditolak. Perubahan ini memerlukan pembaruan backend; receipt yang sebelumnya terlewat tidak dijamin dikirim ulang oleh gateway.
 
 ## Pasang di Ubuntu
 
@@ -68,7 +70,7 @@ Hasil yang diharapkan: `provider=gowa`, `linked=true`, `bound=true`, `receipt_sc
 
 Setelah pemeriksaan di atas berhasil:
 
-1. Publikasikan draft WhatsApp di n8n, lalu jalankan/publikasikan dispatcher Control Center sesuai jadwal yang digunakan. Jadwal Control Center masih belum aktif pada audit terakhir; tanpa worker, webhook hanya masuk antrean.
+1. Pastikan WhatsApp dan Control Center published. Keduanya sudah diaktifkan pada 19 Oktober 2026; audit sebelum integrasi GOWA tidak lagi menggambarkan status aktivasi saat ini. Dispatcher menerima event Supabase dan memiliki jadwal pemulihan antrean.
 2. Dari nomor lain yang Anda kendalikan, kirim `menu` ke nomor WhatsApp Business baru. Pastikan `wa_inbox` diproses, `wa_send` selesai dan balasannya terlihat di HP.
 3. Hubungkan pengguna melalui kode `DAFTAR <kode>` dari web agar akses node dan persetujuan notifikasinya sah. Kode berlaku 10 menit. Menu tidak membuka node privat tanpa membership.
 4. Uji `kondisi`, pilihan node dan `BERHENTI`; pastikan subscription menjadi tidak aktif dan alert berikutnya tidak terkirim. Uji alert hanya dengan node/aturan uji dan penerima yang menyetujui.
