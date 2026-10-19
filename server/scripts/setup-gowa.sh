@@ -3,8 +3,8 @@ set -euo pipefail
 umask 077
 cd "$HOME/aerosense-api"
 mode="${1:-}"
-if [[ "$mode" != install && "$mode" != bind && "$mode" != check ]]; then
-  echo 'Usage: bash scripts/setup-gowa.sh install|bind|check' >&2; exit 1
+if [[ "$mode" != install && "$mode" != resume && "$mode" != bind && "$mode" != check ]]; then
+  echo 'Usage: bash scripts/setup-gowa.sh install|resume|bind|check' >&2; exit 1
 fi
 test -f .env
 test -f compose.gowa.yaml
@@ -30,18 +30,19 @@ if [[ "$mode" == install ]]; then
   put_env GOWA_DEVICE_ID aerosense
   docker compose --env-file .env.gowa -f compose.gowa.yaml -p aerosense-gowa up -d
   docker compose up -d --force-recreate aerosense-api
+fi
+if [[ "$mode" == install || "$mode" == resume ]]; then
+  bash scripts/wait-api.sh
+  auth="$(sed -n 's/^GOWA_BASIC_AUTH=//p' .env.gowa)"
+  [[ "$auth" =~ ^aerosense:[a-f0-9]{48}$ ]] || { echo 'Invalid generated GOWA credentials' >&2; exit 1; }
   ready=false
   for attempt in {1..30}; do
     if curl --fail --silent --user "$auth" http://127.0.0.1:3001/devices > /dev/null; then ready=true; break; fi
     sleep 2
   done
   [[ "$ready" == true ]] || { echo 'GOWA is starting; check docker logs before retrying' >&2; exit 1; }
-  # Existing device slots are retained. Creation is only needed on the first run.
-  code="$(curl --silent --output /dev/null --write-out '%{http_code}' --user "$auth" http://127.0.0.1:3001/devices/aerosense)"
-  if [[ "$code" == 404 ]]; then
-    curl --fail --silent --show-error --user "$auth" -H 'Content-Type: application/json' \
-      --data '{"device_id":"aerosense"}' http://127.0.0.1:3001/devices > /dev/null
-  elif [[ "$code" != 200 ]]; then echo "Device lookup failed: HTTP $code" >&2; exit 1; fi
+  # Read the host script through stdin so recovery does not require rebuilding the image.
+  docker compose exec -T aerosense-api node --input-type=module < scripts/ensure-gowa-device.mjs
   printf '\nGOWA ready on Ubuntu loopback port 3001. Credentials are in ~/aerosense-api/.env.gowa.\n'
   printf 'Open through SSH port forwarding, select device aerosense and scan its QR. Then run: bash scripts/setup-gowa.sh bind\n'
 elif [[ "$mode" == bind ]]; then
@@ -52,7 +53,8 @@ elif [[ "$mode" == bind ]]; then
   put_env GOWA_DEVICE_JID "$jid"
   put_env WHATSAPP_PROVIDER gowa
   docker compose up -d --force-recreate aerosense-api
-  echo 'GOWA transport bound. Check status after the API finishes starting.'
+  bash scripts/wait-api.sh
+  docker compose exec -T aerosense-api node scripts/check-gowa.mjs
 else
   docker compose exec -T aerosense-api node scripts/check-gowa.mjs
 fi

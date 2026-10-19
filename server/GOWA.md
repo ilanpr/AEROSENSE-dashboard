@@ -34,6 +34,8 @@ bash scripts/setup-gowa.sh install
 
 Installer membuat `.env.gowa` dengan kredensial acak, menyalinnya ke `.env` backend, membuat slot perangkat `aerosense`, dan menjalankan GOWA. File `.env` dicadangkan sebelum perubahan. Transport baru diaktifkan setelah langkah bind, bukan saat instalasi awal. `.env.gowa` jangan dimasukkan Git atau dikirim ke chat.
 
+Jika pemasangan versi awal berhenti dengan `Device lookup failed: HTTP 500`, perbarui skrip `setup-gowa.sh`, `ensure-gowa-device.mjs`, dan `wait-api.sh` dari commit perbaikan, lalu jalankan `bash scripts/setup-gowa.sh resume`. Mode resume memakai container dan kredensial yang sudah ada. GOWA v9.6.0 mengembalikan error generik untuk pencarian slot yang belum dibuat; skrip sekarang memeriksa daftar perangkat, termasuk respons `results: null`, sebelum membuat slot. Pemeriksaan API juga menunggu JSON health yang valid ketika koneksi awal masih reset.
+
 ### Buka dashboard dan tautkan HP
 
 Di PowerShell laptop buka terminal terpisah:

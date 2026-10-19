@@ -31,8 +31,7 @@ printf '{"commit":"%s"}\n' "$revision" > "$target/api/deployment-revision.json"
 cd "$target"
 # Keep the existing Compose network, ports, credentials and volumes.
 docker compose up -d --build aerosense-api
-curl --retry 15 --retry-connrefused --retry-delay 2 --fail --show-error http://127.0.0.1:8080/health
-printf '\n'
+bash scripts/wait-api.sh
 docker compose exec -T aerosense-api node scripts/check-db.mjs
 docker compose exec -T aerosense-api node scripts/check-environment.mjs
 printf '\nBackup lokal: %s\n' "$backup"
