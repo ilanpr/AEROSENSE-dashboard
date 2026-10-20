@@ -1,5 +1,6 @@
 import http from "node:http";
 import { webRoutes } from "./web.mjs";
+import { browserVoiceRoutes } from "./browser-voice.mjs";
 import { disasterNews } from "./disaster-news.mjs";
 import { normalizeGowa, sendGowa, gowaChoiceIds } from "./gowa.mjs";
 import { randomUUID, randomBytes } from "node:crypto";
@@ -124,7 +125,7 @@ async function leased(p) {
   return j;
 }
 async function gemini(system, input, extra = {}) {
-  if (!e.GEMINI_API_KEY || !e.GEMINI_TEXT_MODEL)
+  if (!e.GEMINI_API_KEY)
     throw new Error("Gemini not configured");
   return request(
     "https://generativelanguage.googleapis.com/v1beta/interactions",
@@ -135,7 +136,7 @@ async function gemini(system, input, extra = {}) {
         "x-goog-api-key": e.GEMINI_API_KEY,
       },
       body: JSON.stringify({
-        model: e.GEMINI_TEXT_MODEL,
+        model: e.GEMINI_TEXT_MODEL || "gemini-3.1-flash-lite",
         system_instruction: system,
         input,
         store: false,
@@ -912,6 +913,7 @@ async function internal(path, p) {
 }
 
 const news = disasterNews({ db });
+const voiceRoutes = browserVoiceRoutes({ env: e, user, one, member, rate, rawBody, send, gemini });
 const browserRoutes = webRoutes({
   db,
   one,
@@ -940,6 +942,7 @@ const server = http.createServer(async (req, res) => {
     if (path.startsWith("/v1/")) res.setHeader("Cache-Control", "no-store");
     if (path === "/v1/disasters" && req.method === "GET")
       return send(res, 200, await news.read());
+    if (await voiceRoutes(req, res, url)) return;
     if (await browserRoutes(req, res, url)) return;
     if (path === "/webhooks/whatsapp" && req.method === "GET") {
       if (

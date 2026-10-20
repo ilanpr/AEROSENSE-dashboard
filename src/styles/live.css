@@ -605,6 +605,13 @@ select,
   line-height: 1.6;
   padding: 0.5rem 1rem 1rem;
 }
+.chat-voice-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px 16px; color:#426384; }
+.chat-voice-toolbar > span { flex-basis:100%; font-size:11px; line-height:1.6; }
+.chat-voice-button,.chat-listen { display:inline-flex; align-items:center; gap:7px; min-height:44px; border-radius:999px; padding:10px 14px; color:#0759bc; background:#edf5ff; font-size:12px; font-weight:650; cursor:pointer; transition:background .18s,color .18s; }
+.chat-voice-button:hover,.chat-listen:hover { background:#dcecff; }
+.chat-voice-button:disabled,.chat-listen:disabled { opacity:.6; cursor:not-allowed; }
+.chat-voice-button.is-recording { background:#fde9ec; color:#a62d42; }
+.chat-listen { display:flex; width:fit-content; margin-top:10px; background:#fff; white-space:normal; }
 .environment-hub :focus-visible,
 .sensor-workspace :focus-visible,
 .live-chat :focus-visible,

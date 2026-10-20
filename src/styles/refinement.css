@@ -58,6 +58,7 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .environment-reference button[aria-pressed="true"] { color:#075fc9; background:#fff; box-shadow:0 5px 15px -10px #174d84; }
 .environment-reference button:disabled { opacity:.65; cursor:wait; }
 .insights-heading .environment-location-error { color:#a63a43; font-weight:600; }
+.environment-sync { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin:-8px 0 18px; color:#526c87; font-size:11px; line-height:1.6; }
 .app-shell .sensor-toolbar { align-items:center; gap:18px; margin-bottom:22px; }
 .app-shell .sensor-toolbar label,.app-shell .metric-picker { display:flex; align-items:center; gap:13px; font-size:12px; font-weight:550; color:#526a80; }
 .app-shell .sensor-toolbar > span { font-size:11px; color:#61788b; }

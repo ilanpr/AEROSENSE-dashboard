@@ -6,6 +6,7 @@ export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {},
   authenticated = true,
+  responseType: "json" | "blob" = "json",
 ): Promise<T> {
   if (DEMO_MODE) {
     const { demoRequest } = await import("@/demo/api");
@@ -32,13 +33,17 @@ export async function apiRequest<T>(
     headers,
     signal: options.signal ?? AbortSignal.timeout(20000),
   });
-  const body = await response.json().catch(() => null);
-  if (!response.ok)
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
     throw new Error(
       body?.error ||
         body?.message ||
         `Layanan belum dapat diakses (${response.status}).`,
     );
+  }
+  if (responseType === "blob") return await response.blob() as T;
+  const body = await response.json().catch(() => null);
+  if (body === null) throw new Error("API belum mengembalikan data JSON. Periksa koneksi backend.");
   return body as T;
 }
 export const api = {

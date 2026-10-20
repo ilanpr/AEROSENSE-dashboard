@@ -136,6 +136,10 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     assert.equal(config.supabase_publishable_key, "public-test");
     assert(!JSON.stringify(config).includes("private-test"));
     assert(!JSON.stringify(config).includes("internal-test"));
+    assert.equal((await fetch(base + "/v1/voice/config")).status, 401);
+    const voiceConfig = await (await fetch(base + "/v1/voice/config", auth)).json();
+    assert.equal(voiceConfig.configured, false);
+    assert(!JSON.stringify(voiceConfig).includes("private-test"));
     const publicResponse = await fetch(base + "/v1/environment?node_id=n1", auth);
     assert.equal(publicResponse.status, 200);
     assert.equal(publicResponse.headers.get("cache-control"), "no-store");

@@ -2,7 +2,8 @@ function planRequests(input, settings, now = Date.now()) {
   const nodes = (input.areas || []).filter(n => n.enabled === true && n.coordinate_source === 'robot_node' && typeof n.source_node_id === 'string' && n.id === `node_${n.source_node_id}` && Number.isFinite(n.latitude) && Number.isFinite(n.longitude) && Math.abs(n.latitude) <= 90 && Math.abs(n.longitude) <= 180);
   const cache = input.cache || [];
   const planned = [];
-  const due = (provider, n) => !cache.some(c => c.provider === provider && c.area_id === n.id && Date.parse(c.refresh_after) > now && c.request_latitude === n.latitude && c.request_longitude === n.longitude);
+  // The hourly trigger can run seconds before the previous fetch's TTL ends.
+  const due = (provider, n) => !cache.some(c => c.provider === provider && c.area_id === n.id && Date.parse(c.refresh_after) > now + 60000 && c.request_latitude === n.latitude && c.request_longitude === n.longitude);
   const put = (provider, source, source_url, ttl, targets, url, extra = {}) => {
     if (targets.length) planned.push({json:{provider,source,source_url,ttl,targets,url,...extra}});
   };

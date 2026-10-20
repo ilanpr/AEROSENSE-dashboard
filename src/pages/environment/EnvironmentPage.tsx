@@ -250,12 +250,17 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           ))}
         </div>
       )}
+      {!compact && data && <p className="environment-sync" role="status">
+        <RefreshCw size={13} aria-hidden="true" /> Diperiksa {dateLabel(data.fetched_at)} · otomatis tiap 60 detik
+      </p>}
       {pageLoading && !data ? (
         <DataState loading />
       ) : (dashboard.error || error) && !data ? (
         <DataState error={dashboard.error || error} retry={() => { dashboard.refresh(); refresh(); }} />
       ) : !nodes.length ? (
-        <DataState empty="Belum ada titik robot yang bisa dipantau." />
+        <div><DataState empty={user ? "Belum ada titik robot yang diberikan kepada akun ini." : "Belum ada titik robot publik yang bisa dipantau."} />
+          {!user && <Link className="insight-text-link" to="/login">Masuk untuk melihat node akun <ArrowUpRight size={16} /></Link>}
+        </div>
       ) : !selected ? (
         <DataState empty="Ringkasan belum siap. Coba perbarui beberapa saat lagi." />
       ) : (
@@ -447,6 +452,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             </summary>
             <div className="insight-detail-body">
               <p>Data publik mengikuti koordinat node acuan. Jika Anda memakai lokasi perangkat, browser memilih node AEROSENSE terdekat; koordinat perangkat tidak dikirim ke server atau disimpan. Sumber dan waktu pembaruan tercantum di tiap data. Kategori udara memakai US AQI, bukan ISPU.</p>
+              <p>Web memeriksa data tiap 60 detik. Pengambilan sumber mengikuti jadwal Hub: cuaca dan titik panas per jam, udara tiap 3 jam, dan debit sungai harian. Waktu data mengikuti penyedia.</p>
               <ul className="insight-source-list">
                 {data?.providers.map((p) => {
                   const f = p.facts[0];
@@ -471,9 +477,11 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                               ? "Terhubung ke sumber"
                               : "Belum ada data yang sesuai")}
                         </small>
+                        <small>{p.facts.some(f => f.stale) ? "Sebagian data melewati masa berlaku" : p.facts.length ? "Data masih dalam masa berlaku sumber" : "Belum ada fakta yang tersedia"}</small>
                       </div>
                       <span>
                         Terakhir dicoba {dateLabel(p.last_attempt_at)}
+                        <small>Jadwal berikutnya {dateLabel(p.refresh_after)}</small>
                       </span>
                     </li>
                   );

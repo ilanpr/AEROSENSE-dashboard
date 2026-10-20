@@ -37,4 +37,5 @@ test("Hub planner only polls active robot-node points and skips fresh provider c
   assert(jobs.every(j=>!['gbif','soilgrids'].includes(j.json.provider)));
   assert(jobs.every(j=>j.json.targets.every(a=>a.id===area.id&&a.latitude===area.latitude)));
   assert.equal(run({areas:[area],cache:jobs.map(j=>({area_id:area.id,provider:j.json.provider,request_latitude:area.latitude,request_longitude:area.longitude,refresh_after:new Date(Date.now()+86400000).toISOString()}))}).length,0);
+  assert.equal(run({areas:[area],cache:jobs.map(j=>({area_id:area.id,provider:j.json.provider,request_latitude:area.latitude,request_longitude:area.longitude,refresh_after:new Date(Date.now()+15000).toISOString()}))}).length,5);
 });

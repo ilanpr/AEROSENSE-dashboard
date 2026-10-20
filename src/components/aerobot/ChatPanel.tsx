@@ -1,11 +1,13 @@
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowUp, Loader2, RefreshCw } from "lucide-react";
+import { ArrowUp, Loader2, RefreshCw, Mic, Square, Volume2 } from "lucide-react";
 import { chatService } from "@/services/chat.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
 import type { LiveNode } from "@/types/live.types";
+import { useChatVoice } from "@/hooks/useChatVoice";
+import { DEMO_MODE } from "@/lib/demo-mode";
 
 interface Message {
   id: string;
@@ -35,6 +37,7 @@ export function ChatPanel() {
     },
   ]);
   const [input, setInput] = useState(params.get("question") || "");
+  const voice = useChatVoice(userId, setInput);
   const [pending, setPending] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -127,7 +130,8 @@ export function ChatPanel() {
     };
   }, [pending, userId, pollRun]);
   async function send(text = input) {
-    if (!text.trim() || sending.current || pending || !user) return;
+    if (!text.trim() || sending.current || pending || !user || voice.recording || voice.transcribing) return;
+    voice.stopSpeaker();
     sending.current = true;
     setBusy(true);
     setError("");
@@ -183,6 +187,12 @@ export function ChatPanel() {
         {messages.map((m) => (
           <div className={"live-message " + m.sender} key={m.id}>
             {m.text}
+            {m.sender === "bot" && m.id !== "welcome" && voice.configured && (
+              <button className="chat-listen" type="button" onClick={() => void voice.speak(m.id)} disabled={voice.recording || voice.transcribing}>
+                {voice.speaking === m.id ? <Square size={14} /> : <Volume2 size={15} />}
+                {voice.speaking === m.id ? "Hentikan suara" : "Dengarkan"}
+              </button>
+            )}
           </div>
         ))}
         {busy && (
@@ -215,6 +225,23 @@ export function ChatPanel() {
           </button>
         ))}
       </div>
+      <div className="chat-voice-toolbar">
+        <button className={`chat-voice-button ${voice.recording ? "is-recording" : ""}`} type="button"
+          onClick={() => void voice.toggleRecording()}
+          disabled={!user || !voice.configured || !voice.supported || voice.transcribing || busy || !!pending}
+          aria-pressed={voice.recording}>
+          {voice.recording ? <Square size={16} /> : voice.transcribing ? <Loader2 size={16} className="animate-spin" /> : <Mic size={16} />}
+          {voice.recording ? "Selesai rekam" : voice.transcribing ? "Menyalin suara…" : "Rekam pertanyaan"}
+        </button>
+        <button className="chat-voice-button" type="button" disabled={!user || !voice.configured || voice.recording || voice.transcribing}
+          onClick={() => void voice.speak()}>
+          <Volume2 size={16} />{voice.speaking === "test" ? "Hentikan tes" : "Tes speaker"}
+        </button>
+        <span role="status">{voice.recording ? "Merekam · maksimal 20 detik" : voice.transcribing ? "Gemini sedang menyalin rekaman" : "Suara Gemini · mic dan speaker perangkat ini"}</span>
+      </div>
+      {voice.error && <p className="live-notice" role="alert">{voice.error}</p>}
+      {user && !voice.configured && !voice.error && <p className="chat-note">{DEMO_MODE ? "Uji suara tersedia pada web yang terhubung ke backend produksi." : "Suara belum diaktifkan pengelola."}</p>}
+      {voice.configured && !voice.supported && <p className="chat-note">Untuk merekam, buka situs HTTPS ini di Chrome atau Edge dan izinkan mikrofon.</p>}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -229,17 +256,18 @@ export function ChatPanel() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           maxLength={2000}
-          disabled={!user || busy || !!pending}
+          disabled={!user || busy || !!pending || voice.recording || voice.transcribing}
           placeholder="Tanyakan tentang lingkungan…"
           autoComplete="off"
         />
         <button
           aria-label="Kirim pesan"
-          disabled={!user || !input.trim() || busy || !!pending}
+          disabled={!user || !input.trim() || busy || !!pending || voice.recording || voice.transcribing}
         >
           <ArrowUp size={18} />
         </button>
       </form>
+      {voice.configured && <p className="chat-note">Rekam, periksa teks, lalu kirim. Rekaman dikirim ke Gemini untuk transkripsi dan tidak disimpan AEROSENSE. Klik Dengarkan pada jawaban untuk memutar suara.</p>}
     </section>
   );
 }
