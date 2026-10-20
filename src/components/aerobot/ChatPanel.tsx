@@ -179,7 +179,12 @@ export function ChatPanel() {
     return () => window.removeEventListener("keydown", onKey);
   }, [handsFreeControls]);
   // Returns the job id so voice questions can be answered aloud automatically.
+  // Voice users cannot easily pick a sensor, so voice questions fall back to the first node.
+  // The node gives Gemini the sensor readings and the public environment data (weather, air, fire, flood).
+  const voiceNode = nodeId || nodes.data?.nodes?.[0]?.id || "";
+  const voiceNodeName = nodes.data?.nodes?.find(n => n.id === voiceNode)?.name;
   async function send(text = input, fromVoice = false): Promise<string | null> {
+    const targetNode = fromVoice && !robotId ? voiceNode : nodeId;
     if (!text.trim() || sending.current || pending || !user) return null;
     if (!fromVoice && (voice.recording || voice.transcribing)) return null;
     voice.stopSpeaker();
@@ -187,14 +192,14 @@ export function ChatPanel() {
     setBusy(true);
     setError("");
     const sender = user.id;
-    const scope = JSON.stringify([sender, text.trim(), nodeId, robotId]);
+    const scope = JSON.stringify([sender, text.trim(), targetNode, robotId]);
     if (submission.current?.scope !== scope)
       submission.current = { scope, key: crypto.randomUUID() };
     try {
       const job = await chatService.send(
         text.trim(),
         submission.current!.key,
-        nodeId,
+        targetNode,
         robotId,
       );
       if (!active.current || owner.current !== sender) return null;
@@ -294,6 +299,11 @@ export function ChatPanel() {
               <small>{handsFree.notice || handsFreeHint}</small>
             </span>
           </div>
+          {handsFree.active && !robotId && (
+            <p className="chat-note">{voiceNodeName
+              ? `Data sensor dan lingkungan diambil dari titik ${voiceNodeName}. Ubah lewat pilihan Sensor di atas.`
+              : "Belum ada titik sensor, jadi AERO-BOT menjawab tanpa data lingkungan setempat."}</p>
+          )}
           {handsFree.heard && handsFree.active && <p className="handsfree-heard">Terdengar: “{handsFree.heard}”</p>}
           {handsFree.phase === "speaking" && (
             <button className="chat-voice-button" type="button" onClick={() => handsFreeControls.stopSpeaking()}>
