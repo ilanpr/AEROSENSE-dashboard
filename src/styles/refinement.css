@@ -267,8 +267,17 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .app-shell .sensor-hero .sensor-key-metrics > div > span { margin-top:2px; }
 .app-shell .sensor-hero .sensor-panel-footer { padding:14px 0 20px; }
 .app-shell .sensor-hero .sensor-panel-footer > span { min-width:0; max-width:100%; overflow-wrap:anywhere; }
-/* A short decorative movement needs no persistent playback control. */
-.app-shell .sensor-hero .scene-sensor:not(.scene-muted) img { animation-duration:4s; animation-iteration-count:1; }
+/* Keep the hero robot visibly alive while the sensor summary is on screen. */
+.app-shell .sensor-hero .scene-sensor:not(.scene-muted) img {
+  animation:sensor-robot-float 4.8s ease-in-out infinite;
+  transform-origin:50% 72%;
+  will-change:translate,rotate;
+}
+@keyframes sensor-robot-float {
+  0%,100% { translate:0 0; rotate:-1.4deg; }
+  45% { translate:0 -13px; rotate:1.5deg; }
+  58% { translate:0 -10px; rotate:.5deg; }
+}
 @keyframes aerobot-float {
   0%,100% { transform:translate3d(0,0,0) rotate(-1.5deg); }
   46% { transform:translate3d(0,-10px,0) rotate(1.5deg); }
