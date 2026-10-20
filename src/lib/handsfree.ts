@@ -191,7 +191,7 @@ export function speechChunks(text: string, max = 180): string[] {
 // Spoken version of an answer: keeps the reply and each data value, drops the
 // "· source · time" details that are useful to read but tiring to hear.
 export function speechText(text: string): string {
-  return text.split("\n").map(line => line.trim()).filter(Boolean)
+  return text.split("\n").map(line => line.trim()).filter(line => line && !/^Sumber:/i.test(line))
     .map(line => line.replace(/^•\s*/, "").split(" · ")[0].trim())
     .map(line => /[.!?…:]$/.test(line) ? line : line + ".")
     .join(" ");

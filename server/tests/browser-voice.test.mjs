@@ -109,6 +109,7 @@ test("spoken text keeps values and drops source and time details", async () => {
   const { speechText, answerChunks } = await import("../api/browser-voice.mjs");
   const answer = "Udara cukup bersih.\n\nData sensor:\n• Lab Robot: Debu 12.4 µg/m³ · 20 Okt, 17.21 WIB\n\nBerita nasional:\n• Karhutla: Pemadaman di Kalteng · ANTARA · 20 Okt, 17.31 WIB";
   assert.equal(speechText(answer), "Udara cukup bersih. Data sensor: Lab Robot: Debu 12.4 µg/m³. Berita nasional: Karhutla: Pemadaman di Kalteng.");
+  assert.equal(speechText("Udara cukup bersih.\n\nSumber: ANTARA (20 Okt, 14.31 WIB)."), "Udara cukup bersih.");
   let browser;
   try { browser = await import("../../src/lib/handsfree.ts"); } catch { return; }
   assert.deepEqual(browser.answerChunks(answer), answerChunks(answer));

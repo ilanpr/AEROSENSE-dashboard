@@ -9,7 +9,7 @@ const transcribePrompt = "Transcribe the spoken words in Indonesian exactly. Do 
 // Keep identical to answerChunks in src/lib/handsfree.ts: the browser asks for part N.
 // Keep identical to speechText in src/lib/handsfree.ts.
 export function speechText(text) {
-  return text.split("\n").map(line => line.trim()).filter(Boolean)
+  return text.split("\n").map(line => line.trim()).filter(line => line && !/^Sumber:/i.test(line))
     .map(line => line.replace(/^•\s*/, "").split(" · ")[0].trim())
     .map(line => /[.!?…:]$/.test(line) ? line : line + ".")
     .join(" ");

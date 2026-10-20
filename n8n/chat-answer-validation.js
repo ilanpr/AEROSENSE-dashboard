@@ -28,10 +28,10 @@ try{
  if(!p||Array.isArray(p)||Object.keys(p).sort().join(",")!=="answer,decision,environment_refs,readings,topic"||!["allow","deny"].includes(p.decision)||typeof p.answer!=="string"||!Array.isArray(p.readings)||p.readings.length>8||!Array.isArray(p.environment_refs)||p.environment_refs.length>4)throw new Error("Format jawaban tidak valid");
  if(p.decision==="allow"){
   if(!topics.includes(p.topic)||!p.answer.trim()||p.answer.length>1000||/[0-9]|https?:|www\./i.test(p.answer))throw new Error("Isi jawaban tidak valid");
-  // Short, readable lines: value, source name and time only. No links; sources are named.
-  const sensorLines=[],envLines=[],newsLines=[];const seen=new Set();
-  const short=s=>{const t=String(s||"").replace(/[\r\n<>]/g," ").replace(/\s+/g," ").trim();return t.length>90?t.slice(0,87).trim()+"…":t;};
+  // Only list where the information came from and when. No values, labels or links.
+  const sources=new Map();const seen=new Set();
   const when=v=>{const d=Date.parse(v);return Number.isFinite(d)?new Date(d).toLocaleString("id-ID",{timeZone:"Asia/Jakarta",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+" WIB":"";};
+  const addSource=(name,time,stale)=>{const key=clean(name);if(!key)return;const t=Date.parse(time);const old=sources.get(key);if(!old||(Number.isFinite(t)&&t>old.t))sources.set(key,{t:Number.isFinite(t)?t:-1,label:when(time),stale:!!stale});};
   for(const ref of p.readings){
    if(!ref||Object.keys(ref).sort().join(",")!=="metric,node_id,source"||!Object.hasOwn(allowed,ref.metric)||!["measured","gru"].includes(ref.source))throw new Error("Referensi tidak valid");
    const s=context.find(s=>s.node_id===ref.node_id);
@@ -39,10 +39,8 @@ try{
    const key=ref.node_id+":"+ref.metric+":"+ref.source;if(seen.has(key))throw new Error("Referensi duplikat");seen.add(key);
    const value=ref.source==="gru"?(s.gru?.target===ref.metric?s.gru.value:null):s.metrics?.[ref.metric];
    if(!Number.isFinite(value))throw new Error("Nilai sensor tidak tersedia");
-   const name=allowed[ref.metric][0]+(ref.source==="gru"?" (perkiraan GRU)":"");
-   sensorLines.push("• "+clean(s.name||s.node_id)+": "+name+" "+value+" "+allowed[ref.metric][1]+" · "+(when(s.observed_at)||"waktu belum tersedia")+(s.stale?" (data lama)":""));
+   addSource("Sensor AEROSENSE "+(s.name||s.node_id),s.observed_at,s.stale);
   }
-  const kinds={monitoring_notification:"pantauan model",model:"model",forecast:"prakiraan",satellite:"satelit",static_model:"perkiraan"};
   for(const id of p.environment_refs){
    if(typeof id!=="string"||seen.has(id))throw new Error("Referensi lingkungan tidak valid");
    const f=hub.environment.find(f=>f.id===id);
@@ -50,16 +48,11 @@ try{
    if(!f||(!national&&f.area_id!==hub.environment_area?.id)||f.data_origin!=="external_api"||f.role!=="supplementary"||!Number.isFinite(Date.parse(f.fresh_until))||Date.parse(f.fresh_until)<=Date.now())throw new Error("Fakta lingkungan tidak tersedia");
    if(!(typeof f.value==="string"&&f.value.length>0)&&!Number.isFinite(f.value))throw new Error("Nilai lingkungan kosong");
    seen.add(id);
-   const label=short(String(f.label||"").replace(/^Kabar bencana Indonesia\s*·\s*/i,""));
-   const source=[clean(f.source),kinds[f.kind]].filter(Boolean).join(", ");
-   const meta=[source,when(f.valid_at)].filter(Boolean).join(" · ");
-   (national?newsLines:envLines).push("• "+(label?label+": ":"")+short(f.value)+(f.unit?" "+clean(f.unit):"")+(meta?" · "+meta:""));
+   addSource(f.source||"Sumber eksternal",f.valid_at,false);
   }
   const lines=[];
-  if(sensorLines.length)lines.push("","Data sensor:",...sensorLines);
-  if(envLines.length)lines.push("","Data lingkungan"+(hub.environment_area?.name?" sekitar "+clean(hub.environment_area.name):"")+":",...envLines);
-  if(newsLines.length)lines.push("","Berita nasional:",...newsLines);
-  if(!lines.length&&p.topic==="air_quality")lines.push("",context.some(s=>s.quality?.invalid===true)?"Pembacaan tersedia tetapi ditandai tidak valid. Periksa sensor.":context.length?"Pembacaan lengkap tersedia di dashboard.":"Data sensor belum tersedia.");
+  if(sources.size)lines.push("","Sumber: "+[...sources].map(([name,v])=>name+(v.label?" ("+v.label+(v.stale?", data lama":"")+")":"")).join("; ")+".");
+  else if(p.topic==="air_quality")lines.push("",context.some(s=>s.quality?.invalid===true)?"Pembacaan sensor ditandai tidak valid. Periksa sensor.":context.length?"Pembacaan lengkap tersedia di dashboard.":"Data sensor belum tersedia.");
   const answer=[p.answer.trim(),...lines].join("\n");
   if(answer.length>2000)throw new Error("Jawaban terlalu panjang");
   result={answer,decision:"allow",provider_error:false};
