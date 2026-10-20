@@ -35,9 +35,9 @@ export function useHandsFreeVoice(options: {
         });
         return result.text;
       },
-      fetchSpeech(jobId, signal) {
+      fetchSpeech(jobId, part, signal) {
         return apiRequest<Blob>("/v1/voice/speak", {
-          method: "POST", body: JSON.stringify({ job_id: jobId }),
+          method: "POST", body: JSON.stringify({ job_id: jobId, part }),
           signal: AbortSignal.any([signal, AbortSignal.timeout(65000)]),
         }, true, "blob");
       },

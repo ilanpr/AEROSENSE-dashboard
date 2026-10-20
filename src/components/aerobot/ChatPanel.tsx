@@ -150,7 +150,8 @@ export function ChatPanel() {
             "Jawaban masih diproses. Tekan Cek jawaban untuk melanjutkan tanpa mengirim pertanyaan baru.",
           );
         }
-        timer = setTimeout(poll, 2000);
+        // Voice users hear nothing while waiting, so check their answers more often.
+        timer = setTimeout(poll, spoken ? 700 : 2000);
       } catch (e) {
         if (!controller.signal.aborted) {
           setBusy(false);

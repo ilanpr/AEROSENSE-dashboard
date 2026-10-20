@@ -92,3 +92,15 @@ test("hands-free wake phrase, voice activity and WAV helpers", async t => {
   assert.equal(Buffer.from(wav.subarray(0, 4)).toString(), "RIFF");
   assert.equal(wav.length, 44 + 320);
 });
+
+test("spoken answers are split into a short first part and match the browser split", async () => {
+  const { answerChunks } = await import("../api/browser-voice.mjs");
+  const answer = "Kualitas udara di titik ini relatif bersih. Debu terukur 12 µg/m³ pada pukul 16.00. Tetap buka jendela pada pagi hari. Kurangi pembakaran sampah di sekitar rumah. Gunakan masker bila berkendara di jalan padat. Pantau kembali dalam satu jam.";
+  const parts = answerChunks(answer);
+  assert(parts.length >= 2);
+  assert(parts[0].length <= 140);
+  assert.equal(parts.join(" "), answer.normalize("NFKC"));
+  let browser;
+  try { browser = await import("../../src/lib/handsfree.ts"); } catch { return; }
+  assert.deepEqual(browser.answerChunks(answer), parts);
+});

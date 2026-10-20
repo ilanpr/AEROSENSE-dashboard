@@ -2,7 +2,7 @@
 // sends the question automatically and plays the answer without any button press.
 // Audio stays in memory. Only the spoken question segment is sent for transcription.
 import {
-  concatFrames, createVad, detectWakePhrase, downsample, encodeWav, hasQuestion, rms, speechChunks, toBase64,
+  answerChunks, concatFrames, createVad, detectWakePhrase, downsample, encodeWav, hasQuestion, rms, speechChunks, toBase64,
 } from "./handsfree";
 
 export type HandsFreePhase = "off" | "starting" | "blocked" | "waiting" | "listening" | "transcribing" | "thinking" | "speaking";
@@ -20,7 +20,7 @@ export interface HandsFreeState {
 
 export interface HandsFreeCallbacks {
   transcribe(mimeType: string, base64: string): Promise<string>;
-  fetchSpeech(jobId: string, signal: AbortSignal): Promise<Blob>;
+  fetchSpeech(jobId: string, part: number, signal: AbortSignal): Promise<Blob>;
   onQuestion(text: string): Promise<boolean>;
   onState(state: HandsFreeState): void;
 }
@@ -112,6 +112,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
   let player: HTMLAudioElement | null = null;
   let playerUrl: string | null = null;
   let finishSpeech: (() => void) | null = null;
+  let thinkingTimer: ReturnType<typeof setInterval> | undefined;
 
   const now = () => performance.now();
   function set(patch: Partial<HandsFreeState>) {
@@ -131,6 +132,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
 
   function enterWaiting(notice = "") {
     clearTimeout(listenTimer);
+    clearInterval(thinkingTimer);
     clearSegment();
     wakeLatched = false;
     browserRemainder = "";
@@ -151,9 +153,10 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     }, timeout);
   }
 
-  function earcon(kind: "wake" | "sent" | "timeout") {
+  function earcon(kind: "wake" | "sent" | "timeout" | "tick") {
     if (!context || context.state !== "running") return;
-    const tones = kind === "wake" ? [660, 880] : kind === "sent" ? [740] : [520, 390];
+    const tones = kind === "wake" ? [660, 880] : kind === "sent" ? [740] : kind === "tick" ? [600] : [520, 390];
+    const volume = kind === "tick" ? 0.05 : 0.18;
     const start = context.currentTime + 0.02;
     tones.forEach((frequency, index) => {
       const oscillator = context!.createOscillator();
@@ -162,7 +165,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
       oscillator.type = "sine";
       const at = start + index * 0.13;
       gain.gain.setValueAtTime(0.0001, at);
-      gain.gain.exponentialRampToValueAtTime(0.18, at + 0.02);
+      gain.gain.exponentialRampToValueAtTime(volume, at + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.11);
       oscillator.connect(gain).connect(context!.destination);
       oscillator.start(at);
@@ -300,6 +303,13 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     clearTimeout(listenTimer);
     set({ phase: "thinking", heard: question, error: "", notice: "" });
     earcon("sent");
+    // Short spoken acknowledgement plus a soft tick so silence never feels like a hang.
+    void say("Baik, sebentar ya.", true);
+    clearInterval(thinkingTimer);
+    thinkingTimer = setInterval(() => {
+      if (token !== run || state.phase !== "thinking") { clearInterval(thinkingTimer); return; }
+      earcon("tick");
+    }, 2500);
     let sent = false;
     try { sent = await callbacks.onQuestion(question); } catch { sent = false; }
     if (token !== run) return;
@@ -450,11 +460,11 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     finish?.();
   }
 
-  function say(text: string): Promise<void> {
+  function say(text: string, quiet = false): Promise<void> {
     if (typeof speechSynthesis === "undefined" || !text.trim()) return Promise.resolve();
     return new Promise(resolve => {
       const previous = state.phase;
-      set({ phase: "speaking" });
+      if (!quiet) set({ phase: "speaking" });
       let done = false;
       const finish = () => {
         if (done) return;
@@ -478,38 +488,55 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     });
   }
 
+  function playBlob(blob: Blob, controller: AbortController): Promise<void> {
+    if (!blob.type.startsWith("audio/")) return Promise.reject(new Error("Respons suara tidak valid."));
+    if (playerUrl) URL.revokeObjectURL(playerUrl);
+    playerUrl = URL.createObjectURL(blob);
+    const audio = new Audio(playerUrl);
+    player = audio;
+    return new Promise<void>((resolve, reject) => {
+      finishSpeech = () => { controller.abort(); resolve(); };
+      audio.onended = () => resolve();
+      audio.onerror = () => reject(new Error("Speaker gagal memutar suara."));
+      audio.play().catch(reject);
+    });
+  }
+
+  // Plays the answer part by part: part 0 is short, so speech starts after one short
+  // TTS call while later parts are generated in the background.
   async function speakAnswer(jobId: string, text: string) {
     if (state.phase === "off" || state.phase === "starting") return;
     const token = run;
+    clearInterval(thinkingTimer);
     releaseSpeech();
     clearTimeout(listenTimer);
     set({ phase: "speaking", notice: "" });
     const controller = new AbortController();
     speechController = controller;
-    let played = false;
+    const parts = answerChunks(text);
+    const fetchPart = (index: number) => {
+      const request = callbacks.fetchSpeech(jobId, index, controller.signal);
+      request.catch(() => undefined);
+      return request;
+    };
+    let spoken = 0;
     try {
-      const blob = await callbacks.fetchSpeech(jobId, controller.signal);
-      if (controller.signal.aborted || token !== run) return;
-      if (!blob.type.startsWith("audio/")) throw new Error("Respons suara tidak valid.");
-      playerUrl = URL.createObjectURL(blob);
-      const audio = new Audio(playerUrl);
-      player = audio;
-      await new Promise<void>((resolve, reject) => {
-        finishSpeech = resolve;
-        audio.onended = () => resolve();
-        audio.onerror = () => reject(new Error("Speaker gagal memutar suara."));
-        audio.play().then(() => { played = true; }, reject);
-      });
-    } catch {
-      if (controller.signal.aborted || token !== run) {
-        if (token === run && state.phase === "speaking") enterListening(FOLLOW_UP_MS, true);
-        return;
+      let next = fetchPart(0);
+      for (let index = 0; index < parts.length; index++) {
+        const blob = await next;
+        if (controller.signal.aborted || token !== run) break;
+        if (index + 1 < parts.length) next = fetchPart(index + 1);
+        await playBlob(blob, controller);
+        spoken = index + 1;
+        if (controller.signal.aborted || token !== run) break;
       }
-      // Gemini TTS unavailable: read the answer with the device voice so the user still hears it.
-      if (!played) await say(text);
+    } catch {
+      // Gemini TTS unavailable: read the remaining parts with the device voice.
+      if (!controller.signal.aborted && token === run) await say(parts.slice(spoken).join(" ") || text);
     } finally {
       if (speechController === controller) speechController = null;
       finishSpeech = null;
+      player?.pause();
       player = null;
       if (playerUrl) URL.revokeObjectURL(playerUrl);
       playerUrl = null;
@@ -521,6 +548,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
   async function announce(text: string) {
     if (state.phase === "off" || state.phase === "starting") return;
     const token = run;
+    clearInterval(thinkingTimer);
     await say(text);
     if (token === run) enterWaiting();
   }
@@ -531,6 +559,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
 
   function stop() {
     ++run;
+    clearInterval(thinkingTimer);
     recognitionWanted = false;
     try { recognition?.abort(); } catch { /* ignore */ }
     recognition = null;

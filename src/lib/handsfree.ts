@@ -185,3 +185,18 @@ export function speechChunks(text: string, max = 180): string[] {
   if (current.trim()) chunks.push(current.trim());
   return chunks;
 }
+
+// Splits an answer into parts for Gemini TTS. The first part is short so playback can
+// start quickly while the next parts are generated. Keep identical to server/api/browser-voice.mjs.
+export function answerChunks(text: string, first = 140, rest = 280): string[] {
+  const sentences = text.normalize("NFKC").replace(/\s+/g, " ").trim().split(/(?<=[.!?…])\s+/).filter(Boolean);
+  const chunks: string[] = [];
+  let current = "";
+  for (const sentence of sentences) {
+    const limit = chunks.length === 0 ? first : rest;
+    if (current && (current + " " + sentence).length > limit) { chunks.push(current); current = sentence; }
+    else current = current ? current + " " + sentence : sentence;
+  }
+  if (current) chunks.push(current);
+  return chunks.slice(0, 12);
+}
