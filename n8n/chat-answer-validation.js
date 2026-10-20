@@ -28,7 +28,10 @@ try{
  if(!p||Array.isArray(p)||Object.keys(p).sort().join(",")!=="answer,decision,environment_refs,readings,topic"||!["allow","deny"].includes(p.decision)||typeof p.answer!=="string"||!Array.isArray(p.readings)||p.readings.length>8||!Array.isArray(p.environment_refs)||p.environment_refs.length>4)throw new Error("Format jawaban tidak valid");
  if(p.decision==="allow"){
   if(!topics.includes(p.topic)||!p.answer.trim()||p.answer.length>1000||/[0-9]|https?:|www\./i.test(p.answer))throw new Error("Isi jawaban tidak valid");
-  const lines=[];const seen=new Set();
+  // Short, readable lines: value, source name and time only. No links; sources are named.
+  const sensorLines=[],envLines=[],newsLines=[];const seen=new Set();
+  const short=s=>{const t=String(s||"").replace(/[\r\n<>]/g," ").replace(/\s+/g," ").trim();return t.length>90?t.slice(0,87).trim()+"…":t;};
+  const when=v=>{const d=Date.parse(v);return Number.isFinite(d)?new Date(d).toLocaleString("id-ID",{timeZone:"Asia/Jakarta",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+" WIB":"";};
   for(const ref of p.readings){
    if(!ref||Object.keys(ref).sort().join(",")!=="metric,node_id,source"||!Object.hasOwn(allowed,ref.metric)||!["measured","gru"].includes(ref.source))throw new Error("Referensi tidak valid");
    const s=context.find(s=>s.node_id===ref.node_id);
@@ -36,11 +39,10 @@ try{
    const key=ref.node_id+":"+ref.metric+":"+ref.source;if(seen.has(key))throw new Error("Referensi duplikat");seen.add(key);
    const value=ref.source==="gru"?(s.gru?.target===ref.metric?s.gru.value:null):s.metrics?.[ref.metric];
    if(!Number.isFinite(value))throw new Error("Nilai sensor tidak tersedia");
-   const when=Date.parse(s.observed_at);const stamp=Number.isFinite(when)?new Date(when).toLocaleString("id-ID",{timeZone:"Asia/Jakarta"}):"waktu belum tersedia";
-   const prediction=ref.source==="gru"?"Estimasi GRU ":"";
-   lines.push(clean(s.name||s.node_id)+": "+prediction+allowed[ref.metric][0]+" "+value+" "+allowed[ref.metric][1]+". Waktu "+stamp+" WIB"+(s.stale?" (data lama)":"")+(ref.source==="gru"&&Number.isFinite(s.gru.horizon_seconds)?". Horizon "+s.gru.horizon_seconds+" detik":"")+".");
+   const name=allowed[ref.metric][0]+(ref.source==="gru"?" (perkiraan GRU)":"");
+   sensorLines.push("• "+clean(s.name||s.node_id)+": "+name+" "+value+" "+allowed[ref.metric][1]+" · "+(when(s.observed_at)||"waktu belum tersedia")+(s.stale?" (data lama)":""));
   }
-
+  const kinds={monitoring_notification:"pantauan model",model:"model",forecast:"prakiraan",satellite:"satelit",static_model:"perkiraan"};
   for(const id of p.environment_refs){
    if(typeof id!=="string"||seen.has(id))throw new Error("Referensi lingkungan tidak valid");
    const f=hub.environment.find(f=>f.id===id);
@@ -48,13 +50,16 @@ try{
    if(!f||(!national&&f.area_id!==hub.environment_area?.id)||f.data_origin!=="external_api"||f.role!=="supplementary"||!Number.isFinite(Date.parse(f.fresh_until))||Date.parse(f.fresh_until)<=Date.now())throw new Error("Fakta lingkungan tidak tersedia");
    if(!(typeof f.value==="string"&&f.value.length>0)&&!Number.isFinite(f.value))throw new Error("Nilai lingkungan kosong");
    seen.add(id);
-   const area=national?{name:"Indonesia"}:hub.environment_area;
-   const kinds={news:"berita sumber",monitoring_notification:"notifikasi model, belum konfirmasi lapangan",model:"hasil model",forecast:"prakiraan",satellite:"data satelit",static_model:"perkiraan profil tanah",regional:"data wilayah",event:"catatan kejadian",historical:"catatan historis"};
-   const date=Date.parse(f.valid_at);
-   const stamp=Number.isFinite(date)?new Date(date).toLocaleString("id-ID",{timeZone:"Asia/Jakarta"})+" WIB":"waktu pengamatan tidak tersedia";
-   lines.push(clean(area?.name||f.area_id)+": "+clean(f.label)+" "+clean(f.value)+(f.unit?" "+clean(f.unit):"")+". "+clean(kinds[f.kind]||"data eksternal")+", "+clean(f.source)+". Waktu "+stamp+". "+clean(f.spatial_context||"")+(national?". Sumber: "+f.source_url:""));
+   const label=short(String(f.label||"").replace(/^Kabar bencana Indonesia\s*·\s*/i,""));
+   const source=[clean(f.source),kinds[f.kind]].filter(Boolean).join(", ");
+   const meta=[source,when(f.valid_at)].filter(Boolean).join(" · ");
+   (national?newsLines:envLines).push("• "+(label?label+": ":"")+short(f.value)+(f.unit?" "+clean(f.unit):"")+(meta?" · "+meta:""));
   }
-  if(!lines.length&&p.topic==="air_quality")lines.push(context.some(s=>s.quality?.invalid===true)?"Pembacaan tersedia tetapi ditandai tidak valid. Periksa sensor.":context.length?"Nilai yang dapat ditampilkan belum dipilih. Pembacaan lengkap tersedia di dashboard.":"Data sensor belum tersedia.");
+  const lines=[];
+  if(sensorLines.length)lines.push("","Data sensor:",...sensorLines);
+  if(envLines.length)lines.push("","Data lingkungan"+(hub.environment_area?.name?" sekitar "+clean(hub.environment_area.name):"")+":",...envLines);
+  if(newsLines.length)lines.push("","Berita nasional:",...newsLines);
+  if(!lines.length&&p.topic==="air_quality")lines.push("",context.some(s=>s.quality?.invalid===true)?"Pembacaan tersedia tetapi ditandai tidak valid. Periksa sensor.":context.length?"Pembacaan lengkap tersedia di dashboard.":"Data sensor belum tersedia.");
   const answer=[p.answer.trim(),...lines].join("\n");
   if(answer.length>2000)throw new Error("Jawaban terlalu panjang");
   result={answer,decision:"allow",provider_error:false};

@@ -188,8 +188,17 @@ export function speechChunks(text: string, max = 180): string[] {
 
 // Splits an answer into parts for Gemini TTS. The first part is short so playback can
 // start quickly while the next parts are generated. Keep identical to server/api/browser-voice.mjs.
+// Spoken version of an answer: keeps the reply and each data value, drops the
+// "· source · time" details that are useful to read but tiring to hear.
+export function speechText(text: string): string {
+  return text.split("\n").map(line => line.trim()).filter(Boolean)
+    .map(line => line.replace(/^•\s*/, "").split(" · ")[0].trim())
+    .map(line => /[.!?…:]$/.test(line) ? line : line + ".")
+    .join(" ");
+}
+
 export function answerChunks(text: string, first = 140, rest = 280): string[] {
-  const sentences = text.normalize("NFKC").replace(/\s+/g, " ").trim().split(/(?<=[.!?…])\s+/).filter(Boolean);
+  const sentences = speechText(text.normalize("NFKC")).replace(/\s+/g, " ").trim().split(/(?<=[.!?…])\s+/).filter(Boolean);
   const chunks: string[] = [];
   let current = "";
   for (const sentence of sentences) {

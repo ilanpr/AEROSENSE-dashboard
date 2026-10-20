@@ -21,8 +21,9 @@ test("worker context follows an authorized robot node and keeps national news se
   const lookup=name=>({first:()=>({json:name==="Siapkan konteks hub Web"?result:{direct_route:false}})});
   const answer=new Function("$json","$",validation)(model,lookup).json;
   assert.equal(answer.decision,"allow");
-  assert.match(answer.answer,/Indonesia:/);
-  assert.match(answer.answer,/antaranews.com/);
+  assert.match(answer.answer,/Berita nasional:/);
+  assert.match(answer.answer,/ANTARA/);
+  assert.doesNotMatch(answer.answer,/https?:|antaranews\.com/);
   const forged={...result,disaster_news:[]};
   const deny=new Function("$json","$",validation)(model,name=>({first:()=>({json:name==="Siapkan konteks hub Web"?forged:{direct_route:false}})})).json;
   assert.equal(deny.decision,"deny");
