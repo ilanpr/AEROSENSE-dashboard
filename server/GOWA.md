@@ -18,6 +18,20 @@ Web menyediakan tombol **Chat lewat WhatsApp** pada AERO-BOT dan Peringatan, jug
 
 Popup ini berada di web. GOWA v9.6.0 tidak menyediakan endpoint menu persisten/Reply Keyboard seperti Telegram; teks bernomor tidak diklaim sebagai tombol native WhatsApp. Format font dan bubble tetap mengikuti aplikasi WhatsApp. Klik [tautan wa.me](https://faq.whatsapp.com/5913398998672934) mengisi pesan, bukan mengirim otomatis.
 
+## Respons AI cepat (20 Oktober 2026)
+
+Worker WhatsApp memakai `models/gemini-3.1-flash-lite` untuk satu respons JSON, dengan validator sensor dan sumber yang sama. Sebelum memanggil model, query `n8n/whatsapp-conversation.sql` mengantrekan **Pertanyaan sedang diproses.** melalui jalur `wa_send` yang sudah ada. Kunci `progress:<job_id>` mencegah duplikasi saat retry. Job lama lebih dari dua menit dan job yang sudah memiliki balasan akhir tidak membuat pesan proses baru. Notifikasi ini bukan persetujuan berlangganan dan tidak membuka akses node.
+
+Untuk mereproduksi konfigurasi dari ekspor operator terbaru:
+
+```bash
+node scripts/build-whatsapp-fast.mjs whatsapp-export.json whatsapp-fast.json
+```
+
+Hasil ekspor dibuat tidak aktif; periksa dan publikasikan melalui n8n. Simpan ekspor yang berisi referensi kredensial di luar Git. Tidak membutuhkan perubahan skema, pembaruan container API, atau pairing ulang GOWA.
+
+Pengujian model melalui n8n dengan tiga input sintetis (tips polusi, referensi suhu/eCO2, dan penolakan instruksi meretas) lolos validator yang sama. Uji penuh ulang selesai 4,410 detik, dengan tahap Gemini 3,786 detik untuk tiga item. Ini pengukuran uji terisolasi, bukan jaminan latensi WhatsApp produksi. Query diperiksa menggunakan PostgreSQL EXPLAIN tanpa menjalankan perubahan datanya. Layanan model, antrean, dan pengiriman WhatsApp tetap dapat menambah waktu tunggu.
+
 ## Yang sudah diverifikasi pada 19 Oktober 2026
 
 - Image tag v9.6.0 tersedia di GHCR; kontrak payload diperiksa terhadap dokumentasi versi tersebut.
