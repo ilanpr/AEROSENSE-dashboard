@@ -32,6 +32,8 @@ Hasil ekspor dibuat tidak aktif; periksa dan publikasikan melalui n8n. Simpan ek
 
 Pengujian model melalui n8n dengan tiga input sintetis (tips polusi, referensi suhu/eCO2, dan penolakan instruksi meretas) lolos validator yang sama. Uji penuh ulang selesai 4,410 detik, dengan tahap Gemini 3,786 detik untuk tiga item. Ini pengukuran uji terisolasi, bukan jaminan latensi WhatsApp produksi. Query diperiksa menggunakan PostgreSQL EXPLAIN tanpa menjalankan perubahan datanya. Layanan model, antrean, dan pengiriman WhatsApp tetap dapat menambah waktu tunggu.
 
+Koreksi produksi: gunakan pilihan model tetap (`mode: list`), bukan editor ekspresi. Ekspor produksi versi `23ce7cc3-6c3e-40af-9d60-6c4cb6618048` sudah diperiksa: nilai model persis `models/gemini-3.1-flash-lite` dan query pesan proses terpasang. Uji WhatsApp nyata pukul 09.52 WIB, 20 Oktober 2026, menghasilkan jawaban sah pada log n8n pukul 09.52: tahap percakapan selesai 4,245 detik, lalu GOWA menerima balasan akhir dalam 1,019 detik. Penerimaan GOWA tidak membuktikan delivered/read pada HP.
+
 ## Yang sudah diverifikasi pada 19 Oktober 2026
 
 - Image tag v9.6.0 tersedia di GHCR; kontrak payload diperiksa terhadap dokumentasi versi tersebut.

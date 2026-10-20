@@ -6,7 +6,7 @@ const workflow = JSON.parse(fs.readFileSync(input, "utf8").replace(/^\uFEFF/, ""
 const model = workflow.nodes.find(n => n.name === "Gemini jawab dan periksa WhatsApp");
 const scope = workflow.nodes.find(n => n.name === "Supabase lokasi percakapan");
 if (!model || !scope) throw new Error("Expected WhatsApp nodes missing; inspect current export");
-model.parameters.modelId = { __rl: true, mode: "id", value: '={{ "models/gemini-3.1-flash-lite" }}' };
+model.parameters.modelId = { __rl: true, mode: "list", value: "models/gemini-3.1-flash-lite", cachedResultName: "models/gemini-3.1-flash-lite" };
 model.retryOnFail = false;
 scope.parameters.query = fs.readFileSync(new URL("../n8n/whatsapp-conversation.sql", import.meta.url), "utf8");
 workflow.active = false;
