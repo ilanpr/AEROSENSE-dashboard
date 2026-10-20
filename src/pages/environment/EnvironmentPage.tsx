@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -14,6 +15,7 @@ import {
   ShieldCheck,
   ChevronDown,
   Clock3,
+  LocateFixed,
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,6 +31,12 @@ import {
   conditionScene,
   environmentHighlights,
 } from "@/lib/environment-presentation";
+import {
+  distanceKm,
+  distanceLabel,
+  validPoint,
+  type GeoPoint,
+} from "@/lib/nearby-nodes";
 
 const categories = [
   { id: "weather", label: "Cuaca", icon: CloudSun },
@@ -54,7 +62,21 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
   );
   const nodes = dashboard.data?.nodes || [];
   const [params, setParams] = useSearchParams();
-  const node = nodes.find((n) => n.id === params.get("node_id")) || nodes[0];
+  const [locationMode, setLocationMode] = useState<"node" | "device">("node");
+  const [userPoint, setUserPoint] = useState<GeoPoint | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const selectedNode = nodes.find((n) => n.id === params.get("node_id")) || nodes[0];
+  const nearest = userPoint && nodes.length
+    ? nodes
+        .filter(validPoint)
+        .map((candidate) => ({
+          node: candidate,
+          distance: distanceKm(userPoint, candidate),
+        }))
+        .sort((a, b) => a.distance - b.distance)[0]
+    : null;
+  const node = locationMode === "device" && nearest ? nearest.node : selectedNode;
   const { data, error, loading, refresh } = useLiveData<EnvironmentResponse>(
     node ? `/v1/environment?node_id=${encodeURIComponent(node.id)}` : null,
     60000,
@@ -94,6 +116,51 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
   const highlights = selected ? environmentHighlights(selected, facts) : [];
   const scene = selected ? conditionScene(selected, facts) : "cloudy";
   const activeCategory = categories.find((c) => c.id === selected?.category);
+  function updateParams(changes: Record<string, string>) {
+    const next = new URLSearchParams(params);
+    Object.entries(changes).forEach(([key, value]) => next.set(key, value));
+    setParams(next, { replace: true });
+  }
+  function useDeviceLocation() {
+    setLocationError("");
+    if (!navigator.geolocation) {
+      setLocationError("Peramban ini belum mendukung lokasi perangkat.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (result) => {
+        const point = {
+          latitude: result.coords.latitude,
+          longitude: result.coords.longitude,
+          accuracy: result.coords.accuracy,
+        };
+        setLocating(false);
+        if (!validPoint(point)) {
+          setLocationError("Koordinat belum terbaca. Coba lagi.");
+          return;
+        }
+        setUserPoint(point);
+        setLocationMode("device");
+        const closest = nodes
+          .filter(validPoint)
+          .map((candidate) => ({ candidate, distance: distanceKm(point, candidate) }))
+          .sort((a, b) => a.distance - b.distance)[0];
+        if (closest) updateParams({ node_id: closest.candidate.id });
+      },
+      (locationFailure) => {
+        setLocating(false);
+        setLocationError(
+          locationFailure.code === 1
+            ? "Izin lokasi ditolak. Izinkan lokasi melalui pengaturan situs, lalu coba lagi."
+            : locationFailure.code === 3
+              ? "Lokasi belum ditemukan. Coba di area dengan sinyal lebih baik."
+              : "Lokasi perangkat belum tersedia. Periksa layanan lokasi lalu coba lagi.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    );
+  }
   return (
     <section
       className={`environment-hub insights-hub ${compact ? "insights-compact" : ""}`}
@@ -101,16 +168,43 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
       <header className="insights-heading">
         <div>
           <Heading>
-            {node ? <>Lingkungan di <span className="heading-accent">{node.name}</span></> : <>Lingkungan <span className="heading-accent">robot</span></>}
+            {locationMode === "device" && userPoint
+              ? <>Lingkungan <span className="heading-accent">di sekitar Anda</span></>
+              : node
+                ? <>Lingkungan di <span className="heading-accent">{node.name}</span></>
+                : <>Lingkungan <span className="heading-accent">robot</span></>}
           </Heading>
           <p>
             <MapPin size={15} aria-hidden="true" />
-            {node
-              ? `${node.latitude.toFixed(4)}, ${node.longitude.toFixed(4)} · mengikuti titik node`
+            {locationMode === "device" && userPoint && node
+              ? `${userPoint.latitude.toFixed(4)}, ${userPoint.longitude.toFixed(4)} · node acuan ${node.name}${nearest ? ` (${distanceLabel(nearest.distance)})` : ""}`
+              : node
+                ? `${node.latitude.toFixed(4)}, ${node.longitude.toFixed(4)} · mengikuti titik node`
               : "Pilih titik robot"}
           </p>
+          {locationError && <p className="environment-location-error" role="alert">{locationError}</p>}
         </div>
         <div className="live-actions">
+          {!compact && (
+            <div className="environment-reference" role="group" aria-label="Acuan lokasi lingkungan">
+              <button
+                type="button"
+                aria-pressed={locationMode === "node"}
+                onClick={() => { setLocationMode("node"); setLocationError(""); }}
+              >
+                <MapPin size={15} aria-hidden="true" /> Titik node
+              </button>
+              <button
+                type="button"
+                aria-pressed={locationMode === "device"}
+                disabled={locating}
+                onClick={useDeviceLocation}
+              >
+                <LocateFixed size={15} aria-hidden="true" />
+                {locating ? "Mencari…" : "Lokasi saya"}
+              </button>
+            </div>
+          )}
           {!compact && nodes.length > 0 && (
             <label className="sensor-select sensor-select--light">
               <MapPin size={15} aria-hidden="true" />
@@ -118,7 +212,8 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
               <MonitoringSelect label="Pilih titik robot" value={node?.id || ""}
                 options={nodes.map(n => ({value:n.id,label:n.name}))}
                 onValueChange={(value) => {
-                  const next = new URLSearchParams(params); next.set("node_id", value); setParams(next);
+                  setLocationMode("node");
+                  updateParams({ node_id: value });
                 }} />
             </label>
           )}
@@ -147,7 +242,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             <button
               key={c.id}
               aria-pressed={category === c.id}
-              onClick={() => setParams({ topic: c.id }, { replace: true })}
+              onClick={() => updateParams({ topic: c.id })}
             >
               <c.icon size={17} />
               {c.label}
@@ -262,7 +357,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             <div className="insight-secondary">
               <Link
                 className="live-button"
-                to={`/aerobot?question=${encodeURIComponent(`Jelaskan kondisi ${activeCategory?.label.toLowerCase()} di sekitar titik ${node?.name || "robot"} dari informasi publik terbaru.`)}`}
+                to={`/aerobot?question=${encodeURIComponent(`Jelaskan kondisi ${activeCategory?.label.toLowerCase()} ${locationMode === "device" ? `di sekitar lokasi saya dengan node acuan ${node?.name || "terdekat"}` : `di sekitar titik ${node?.name || "robot"}`} dari informasi publik terbaru.`)}`}
               >
                 Tanya AERO-BOT <ArrowUpRight size={16} />
               </Link>
@@ -351,7 +446,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
               <ChevronDown size={18} />
             </summary>
             <div className="insight-detail-body">
-              <p>Data publik mengikuti koordinat node yang dipilih. Sumber dan waktu pembaruan tercantum di tiap data. Kategori udara memakai US AQI, bukan ISPU.</p>
+              <p>Data publik mengikuti koordinat node acuan. Jika Anda memakai lokasi perangkat, browser memilih node AEROSENSE terdekat; koordinat perangkat tidak dikirim ke server atau disimpan. Sumber dan waktu pembaruan tercantum di tiap data. Kategori udara memakai US AQI, bukan ISPU.</p>
               <ul className="insight-source-list">
                 {data?.providers.map((p) => {
                   const f = p.facts[0];
@@ -388,7 +483,8 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 Titik panas belum memastikan kebakaran. Debit sungai bukan peringatan banjir. Cakupan titik panas 50 km dan gempa 300 km dari titik node.
               </p>
               <p>
-                Lokasi acuan: {data?.area.latitude}, {data?.area.longitude}.
+                Lokasi acuan data: {data?.area.latitude}, {data?.area.longitude}
+                {locationMode === "device" && nearest ? ` · ${nearest.node.name}, ${distanceLabel(nearest.distance)} dari lokasi perangkat` : ""}.
                 Data dan atribusi tersedia pada tautan sumber di atas.{" "}
                 <a
                   href="https://www.airnow.gov/aqi/aqi-basics/"
