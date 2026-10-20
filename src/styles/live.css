@@ -612,6 +612,33 @@ select,
 .chat-voice-button:disabled,.chat-listen:disabled { opacity:.6; cursor:not-allowed; }
 .chat-voice-button.is-recording { background:#fde9ec; color:#a62d42; }
 .chat-listen { display:flex; width:fit-content; margin-top:10px; background:#fff; white-space:normal; }
+/* Hands-free voice mode: large targets and clear state for users with motor or visual disabilities. */
+.handsfree-card { display:grid; gap:10px; margin:8px 16px; padding:14px; border:2px solid #d6e7fb; border-radius:18px; background:linear-gradient(135deg,#f5faff,#ffffff); transition:border-color .2s, box-shadow .2s; }
+.handsfree-card .chat-note { padding:0; }
+.handsfree-card .live-notice { margin:0; }
+.handsfree-card.is-waiting { border-color:#9cc8f7; }
+.handsfree-card.is-listening { border-color:#1677ff; box-shadow:0 0 0 4px rgba(22,119,255,.14); }
+.handsfree-card.is-thinking,.handsfree-card.is-transcribing { border-color:#7fb2ef; }
+.handsfree-card.is-speaking { border-color:#16a36a; box-shadow:0 0 0 4px rgba(22,163,106,.13); }
+.handsfree-card.is-blocked { border-color:#e3a33b; background:#fffaf0; }
+.handsfree-toggle { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:56px; padding:12px 18px; border-radius:16px; background:#0759bc; color:#fff; font-size:15px; font-weight:750; cursor:pointer; transition:background .18s, transform .18s; }
+.handsfree-toggle:hover { background:#0a4ea3; }
+.handsfree-toggle:active { transform:scale(.98); }
+.handsfree-toggle[aria-pressed="true"] { background:#fff; color:#a62d42; border:2px solid #f2c4cc; }
+.handsfree-status { display:flex; align-items:center; gap:12px; color:#173a5e; }
+.handsfree-status strong { display:block; font-size:16px; line-height:1.3; }
+.handsfree-status small { display:block; font-size:12.5px; line-height:1.5; color:#426384; }
+.handsfree-meter { --level:0; display:inline-flex; align-items:center; gap:3px; height:32px; min-width:32px; }
+.handsfree-meter i { display:block; width:4px; height:calc(6px + var(--level) * 26px); max-height:30px; border-radius:4px; background:#9cc8f7; transition:height .1s linear; }
+.handsfree-meter i:nth-child(2),.handsfree-meter i:nth-child(4) { height:calc(6px + var(--level) * 18px); }
+.handsfree-meter i:nth-child(1),.handsfree-meter i:nth-child(5) { height:calc(5px + var(--level) * 10px); }
+.is-listening .handsfree-meter i { background:#1677ff; }
+.is-speaking .handsfree-meter i { background:#16a36a; animation:handsfree-pulse .9s ease-in-out infinite alternate; }
+.is-speaking .handsfree-meter i:nth-child(2n) { animation-delay:.25s; }
+.is-thinking .handsfree-meter i,.is-transcribing .handsfree-meter i { animation:handsfree-pulse 1.1s ease-in-out infinite alternate; }
+.handsfree-heard { margin:0; padding:8px 12px; border-radius:12px; background:#eef5ff; color:#173a5e; font-size:13px; line-height:1.5; }
+@keyframes handsfree-pulse { from { transform:scaleY(.6); } to { transform:scaleY(1.5); } }
+@media (prefers-reduced-motion: reduce) { .handsfree-meter i { animation:none !important; transition:none; } }
 .environment-hub :focus-visible,
 .sensor-workspace :focus-visible,
 .live-chat :focus-visible,

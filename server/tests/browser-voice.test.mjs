@@ -49,3 +49,46 @@ test("browser voice requires auth and owned replies, validates recordings, and n
   await run("config", "GET"); assert.equal(ended.configured, false);
   await assert.rejects(run("speak"), { status: 503 });
 });
+
+test("transcription retries Gemini high-demand errors and falls back to the next model", async () => {
+  const { transcribeWithFallback, transcriptionModels } = await import("../api/browser-voice.mjs");
+  const env = { GEMINI_TEXT_MODEL: "busy-model", GEMINI_TRANSCRIBE_FALLBACK_MODELS: "missing-model, spare-model" };
+  assert.deepEqual(transcriptionModels(env), ["busy-model", "missing-model", "spare-model"]);
+  const calls = [];
+  const gemini = async (_system, _input, extra) => {
+    calls.push(extra.model);
+    if (extra.model === "busy-model") throw Object.assign(Error("Upstream HTTP 503"), { status: 503 });
+    if (extra.model === "missing-model") throw Object.assign(Error("Upstream HTTP 404"), { status: 404 });
+    return { steps: [{ type: "model_output", content: [{ type: "text", text: "Halo" }] }] };
+  };
+  const result = await transcribeWithFallback(gemini, env, "audio/wav", "AAAA", { delays: [1, 1] });
+  assert.equal(result.steps[0].content[0].text, "Halo");
+  assert.deepEqual(calls, ["busy-model", "busy-model", "busy-model", "missing-model", "spare-model"]);
+  const denied = async () => { throw Object.assign(Error("Upstream HTTP 403"), { status: 403 }); };
+  await assert.rejects(transcribeWithFallback(denied, env, "audio/wav", "AAAA", { delays: [1] }), { status: 403 });
+});
+
+test("hands-free wake phrase, voice activity and WAV helpers", async t => {
+  let lib;
+  try { lib = await import("../../src/lib/handsfree.ts"); }
+  catch { t.skip("Node in this environment cannot import TypeScript directly (needs Node 22.18+)."); return; }
+  const { detectWakePhrase, hasQuestion, createVad, encodeWav } = lib;
+  assert.deepEqual(detectWakePhrase("Halo AERO-BOT, bagaimana kualitas udara hari ini?"), { matched: true, remainder: "bagaimana kualitas udara hari ini?" });
+  assert.equal(detectWakePhrase("halo aero bot").matched, true);
+  assert.equal(detectWakePhrase("Hello airobot cuaca hari ini").remainder, "cuaca hari ini");
+  assert.equal(detectWakePhrase("halo robot").matched, true);
+  assert.equal(detectWakePhrase("saya suka robot").matched, false);
+  assert.equal(detectWakePhrase("halo semua").matched, false);
+  assert.equal(hasQuestion(""), false);
+  assert.equal(hasQuestion("ya"), false);
+  assert.equal(hasQuestion("cuaca?"), true);
+  const vad = createVad({ endSilenceMs: 400 });
+  const events = [];
+  for (let i = 0; i < 30; i++) events.push(vad.push(0.003, 20));
+  for (let i = 0; i < 40; i++) events.push(vad.push(0.09, 20));
+  for (let i = 0; i < 30; i++) events.push(vad.push(0.003, 20));
+  assert.deepEqual(events.filter(Boolean), ["start", "end"]);
+  const wav = encodeWav(new Float32Array(160), 16000);
+  assert.equal(Buffer.from(wav.subarray(0, 4)).toString(), "RIFF");
+  assert.equal(wav.length, 44 + 320);
+});

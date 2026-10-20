@@ -1,12 +1,14 @@
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowUp, Loader2, RefreshCw, Mic, Square, Volume2 } from "lucide-react";
+import { ArrowUp, Ear, Loader2, RefreshCw, Mic, MicOff, Square, Volume2 } from "lucide-react";
 import { chatService } from "@/services/chat.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
 import type { LiveNode } from "@/types/live.types";
 import { useChatVoice } from "@/hooks/useChatVoice";
+import { useHandsFreeVoice } from "@/hooks/useHandsFreeVoice";
+import type { HandsFreePhase } from "@/lib/handsfree-engine";
 import { DEMO_MODE } from "@/lib/demo-mode";
 
 interface Message {
@@ -14,6 +16,16 @@ interface Message {
   sender: "bot" | "user";
   text: string;
 }
+const handsFreeLabels: Record<HandsFreePhase, [string, string]> = {
+  off: ["Mode suara mati", "Aktifkan untuk bertanya tanpa menekan tombol."],
+  starting: ["Menyiapkan mikrofon…", "Izinkan mikrofon jika browser meminta."],
+  blocked: ["Ketuk layar atau tekan tombol apa saja", "Browser perlu satu sentuhan untuk menyalakan suara."],
+  waiting: ["Ucapkan “Halo AERO-BOT”", "Lalu langsung sampaikan pertanyaan Anda."],
+  listening: ["Mendengarkan…", "Silakan bicara. Pertanyaan terkirim otomatis saat Anda berhenti."],
+  transcribing: ["Menyalin suara…", "Gemini sedang membaca pertanyaan Anda."],
+  thinking: ["Menyiapkan jawaban…", "AERO-BOT sedang memproses pertanyaan Anda."],
+  speaking: ["Membacakan jawaban", "Tekan Esc atau tombol Hentikan suara untuk berhenti."],
+};
 const suggestions = [
   "Cuaca di titik robot hari ini?",
   "Cara mengurangi polusi?",
@@ -37,7 +49,25 @@ export function ChatPanel() {
     },
   ]);
   const [input, setInput] = useState(params.get("question") || "");
-  const voice = useChatVoice(userId, setInput);
+  const voiceJobs = useRef(new Map<string, "manual" | "handsfree">());
+  const sendRef = useRef<(text: string, fromVoice?: boolean) => Promise<string | null>>(async () => null);
+  const voice = useChatVoice(userId, text => {
+    void sendRef.current(text, true).then(id => { if (id) voiceJobs.current.set(id, "manual"); else setInput(text); });
+  });
+  const handsFree = useHandsFreeVoice({
+    userId,
+    available: voice.configured && !DEMO_MODE,
+    onQuestion: async text => {
+      const id = await sendRef.current(text, true);
+      if (id) voiceJobs.current.set(id, "handsfree");
+      return !!id;
+    },
+  });
+  const handsFreeControls = handsFree.controls;
+  const voiceSpeak = useRef(voice.speak);
+  voiceSpeak.current = voice.speak;
+  const voiceStop = useRef(voice.stopSpeaker);
+  voiceStop.current = voice.stopSpeaker;
   const [pending, setPending] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -83,6 +113,7 @@ export function ChatPanel() {
       try {
         const job = await chatService.result(pending!, controller.signal);
         if (controller.signal.aborted) return;
+        const spoken = voiceJobs.current.get(job.id);
         if (job.status === "done") {
           if (!job.result?.text)
             throw new Error(
@@ -98,19 +129,27 @@ export function ChatPanel() {
           );
           setPending(null);
           setBusy(false);
+          if (spoken) {
+            voiceJobs.current.delete(job.id);
+            if (spoken === "handsfree") void handsFreeControls.speakAnswer(job.id, job.result!.text!);
+            else void voiceSpeak.current(job.id);
+          }
           return;
         }
         if (job.status === "failed") {
           setPending(null);
+          if (spoken === "handsfree") { voiceJobs.current.delete(job.id); void handsFreeControls.announce("Maaf, pertanyaan belum dapat dijawab. Silakan coba lagi."); }
           throw new Error(
             job.error ||
               "Permintaan gagal diproses. Silakan kirim ulang pertanyaan.",
           );
         }
-        if (Date.now() - started > 120000)
+        if (Date.now() - started > 120000) {
+          if (spoken === "handsfree") void handsFreeControls.announce("Jawaban masih diproses. Silakan tanyakan lagi sebentar lagi.");
           throw new Error(
             "Jawaban masih diproses. Tekan Cek jawaban untuk melanjutkan tanpa mengirim pertanyaan baru.",
           );
+        }
         timer = setTimeout(poll, 2000);
       } catch (e) {
         if (!controller.signal.aborted) {
@@ -128,9 +167,20 @@ export function ChatPanel() {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [pending, userId, pollRun]);
-  async function send(text = input) {
-    if (!text.trim() || sending.current || pending || !user || voice.recording || voice.transcribing) return;
+  }, [pending, userId, pollRun, handsFreeControls]);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      handsFreeControls.stopSpeaking();
+      voiceStop.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handsFreeControls]);
+  // Returns the job id so voice questions can be answered aloud automatically.
+  async function send(text = input, fromVoice = false): Promise<string | null> {
+    if (!text.trim() || sending.current || pending || !user) return null;
+    if (!fromVoice && (voice.recording || voice.transcribing)) return null;
     voice.stopSpeaker();
     sending.current = true;
     setBusy(true);
@@ -146,7 +196,7 @@ export function ChatPanel() {
         nodeId,
         robotId,
       );
-      if (!active.current || owner.current !== sender) return;
+      if (!active.current || owner.current !== sender) return null;
       submission.current = null;
       setMessages((prev) => [
         ...prev,
@@ -154,15 +204,19 @@ export function ChatPanel() {
       ]);
       setInput("");
       setPending(job.id);
+      return job.id;
     } catch (e) {
       if (active.current) {
         setError(e instanceof Error ? e.message : "Pesan belum terkirim.");
         setBusy(false);
       }
+      return null;
     } finally {
       sending.current = false;
     }
   }
+  sendRef.current = send;
+  const [handsFreeTitle, handsFreeHint] = handsFreeLabels[handsFree.phase];
   return (
     <section className="live-chat" aria-label="Percakapan AERO-BOT">
       <header>
@@ -225,19 +279,52 @@ export function ChatPanel() {
           </button>
         ))}
       </div>
+      {user && voice.configured && handsFree.supported && (
+        <div className={`handsfree-card is-${handsFree.phase}`}>
+          <button className="handsfree-toggle" type="button" aria-pressed={handsFree.active}
+            onClick={() => handsFree.active ? handsFreeControls.disable() : handsFreeControls.enable()}>
+            {handsFree.active ? <MicOff size={20} /> : <Ear size={20} />}
+            {handsFree.active ? "Matikan mode suara" : "Aktifkan mode suara tanpa tombol"}
+          </button>
+          <div className="handsfree-status" role="status" aria-live="polite">
+            <span className="handsfree-meter" aria-hidden="true" style={{ "--level": handsFree.level } as CSSProperties}><i /><i /><i /><i /><i /></span>
+            <span>
+              <strong>{handsFreeTitle}</strong>
+              <small>{handsFree.notice || handsFreeHint}</small>
+            </span>
+          </div>
+          {handsFree.heard && handsFree.active && <p className="handsfree-heard">Terdengar: “{handsFree.heard}”</p>}
+          {handsFree.phase === "speaking" && (
+            <button className="chat-voice-button" type="button" onClick={() => handsFreeControls.stopSpeaking()}>
+              <Square size={16} />Hentikan suara
+            </button>
+          )}
+          {handsFree.phase === "blocked" && (
+            <button className="chat-voice-button" type="button" onClick={() => handsFreeControls.resume()}>
+              <Volume2 size={16} />Nyalakan suara
+            </button>
+          )}
+          {handsFree.error && <p className="live-notice" role="alert">{handsFree.error}</p>}
+          <p className="chat-note">
+            {handsFree.engine === "browser"
+              ? "Mikrofon tetap menyala selama mode ini aktif. Kata “Halo AERO-BOT” dikenali oleh pengenal suara browser; hanya pertanyaan Anda yang dikirim ke Gemini. Rekaman tidak disimpan AEROSENSE."
+              : "Mikrofon tetap menyala selama mode ini aktif. Setiap ucapan dikirim ke Gemini untuk mengenali “Halo AERO-BOT”. Rekaman tidak disimpan AEROSENSE."}
+          </p>
+        </div>
+      )}
       <div className="chat-voice-toolbar">
         <button className={`chat-voice-button ${voice.recording ? "is-recording" : ""}`} type="button"
           onClick={() => void voice.toggleRecording()}
-          disabled={!user || !voice.configured || !voice.supported || voice.transcribing || busy || !!pending}
+          disabled={!user || !voice.configured || !voice.supported || voice.transcribing || busy || !!pending || handsFree.active}
           aria-pressed={voice.recording}>
           {voice.recording ? <Square size={16} /> : voice.transcribing ? <Loader2 size={16} className="animate-spin" /> : <Mic size={16} />}
           {voice.recording ? "Selesai rekam" : voice.transcribing ? "Menyalin suara…" : "Rekam pertanyaan"}
         </button>
-        <button className="chat-voice-button" type="button" disabled={!user || !voice.configured || voice.recording || voice.transcribing}
+        <button className="chat-voice-button" type="button" disabled={!user || !voice.configured || voice.recording || voice.transcribing || handsFree.active}
           onClick={() => void voice.speak()}>
           <Volume2 size={16} />{voice.speaking === "test" ? "Hentikan tes" : "Tes speaker"}
         </button>
-        <span role="status">{voice.recording ? "Merekam · maksimal 20 detik" : voice.transcribing ? "Gemini sedang menyalin rekaman" : "Suara Gemini · mic dan speaker perangkat ini"}</span>
+        <span role="status">{voice.recording ? "Merekam · maksimal 20 detik" : voice.transcribing ? "Gemini sedang menyalin rekaman" : handsFree.active ? "Mode suara tanpa tombol sedang aktif" : "Suara Gemini · mic dan speaker perangkat ini"}</span>
       </div>
       {voice.error && <p className="live-notice" role="alert">{voice.error}</p>}
       {user && !voice.configured && !voice.error && <p className="chat-note">{DEMO_MODE ? "Uji suara tersedia pada web yang terhubung ke backend produksi." : "Suara belum diaktifkan pengelola."}</p>}
@@ -267,7 +354,7 @@ export function ChatPanel() {
           <ArrowUp size={18} />
         </button>
       </form>
-      {voice.configured && <p className="chat-note">Rekam, periksa teks, lalu kirim. Rekaman dikirim ke Gemini untuk transkripsi dan tidak disimpan AEROSENSE. Klik Dengarkan pada jawaban untuk memutar suara.</p>}
+      {voice.configured && !handsFree.active && <p className="chat-note">Rekam pertanyaan lalu tekan Selesai rekam: pertanyaan terkirim dan jawabannya dibacakan otomatis. Rekaman dikirim ke Gemini untuk transkripsi dan tidak disimpan AEROSENSE.</p>}
     </section>
   );
 }
