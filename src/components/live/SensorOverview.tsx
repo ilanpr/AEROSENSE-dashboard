@@ -38,6 +38,9 @@ export function SensorOverview() {
     : summary.tone === "warning" ? "Cek titik terdekat dan perubahan di lokasi."
     : summary.tone === "pending" ? "Periksa koneksi node dan tunggu pembacaan baru."
     : "Pantau lagi jika kondisi sekitar berubah.";
+  const heroTitle = summary.tone === "calm" ? "Udara terpantau baik." : summary.title;
+  const titleParts = heroTitle.trim().split(/\s+/);
+  const titleAccent = titleParts.pop();
   const fresh = !!node?.latest?.reading_id && !node.latest.stale;
   const keys = [
     node?.pm25_validated ? "pm25_ug_m3" : "dust_ug_m3",
@@ -48,7 +51,7 @@ export function SensorOverview() {
     <section className="insights-hub sensor-overview">
       <header className="insights-heading">
         <div>
-          <h1>Sensor AEROSENSE</h1>
+          <h1>Kondisi udara <span className="heading-accent">di titik AEROSENSE.</span></h1>
         </div>
         <button
           className="live-icon-button"
@@ -73,13 +76,16 @@ export function SensorOverview() {
           <div className="sensor-focus-grid">
           <article className={`sensor-hero tone-${summary.tone}`}>
             <div className="sensor-hero-copy">
-              {summary.tone !== "calm" && <span
+              <span
                 className={`insight-status ${fresh ? "" : "status-pending"}`}
               >
                 <span />
-                {summary.label}
-              </span>}
-              <h2>{summary.title}</h2>
+                {summary.tone === "calm" ? "Estimasi sensor terbaru" : summary.label}
+              </span>
+              <h2 className="sensor-status-title">
+                {titleParts.join(" ")}{titleParts.length > 0 && " "}
+                <span>{titleAccent}</span>
+              </h2>
               <p className="sensor-recommendation"><ArrowRight size={17} aria-hidden="true" />
                 <span>{!nodes.length ? "Belum ada node publik yang tersedia." : recommendation}</span>
               </p>
@@ -145,6 +151,8 @@ export function SensorOverview() {
             </footer>
           </article>
           <aside className={`aero-assist assist-${summary.tone}`}>
+            <span className="assist-orbit assist-orbit-one" aria-hidden="true" />
+            <span className="assist-orbit assist-orbit-two" aria-hidden="true" />
             <div className="assist-copy">
               <h2>{summary.tone === "danger" ? "Periksa titik ini sekarang." : summary.tone === "warning" ? "Ada yang perlu dicek." : summary.tone === "pending" ? "Tunggu data terbaru." : "Kenali kondisi sekitar."}</h2>
               <p>{summary.tone === "danger" ? "Cek lokasi dan perangkat sebelum menentukan tindakan." : summary.tone === "warning" ? "Bandingkan dengan titik terdekat dan periksa sumber perubahan." : summary.tone === "pending" ? "Status baru muncul setelah pembacaan dan aturan tersedia." : "Lihat titik terdekat sebelum beraktivitas di luar."}</p>

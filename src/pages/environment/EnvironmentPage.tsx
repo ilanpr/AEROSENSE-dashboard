@@ -101,7 +101,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
       <header className="insights-heading">
         <div>
           <Heading>
-            {node ? `Lingkungan · ${node.name}` : "Lingkungan robot"}
+            {node ? <>Lingkungan di <span className="heading-accent">{node.name}</span></> : <>Lingkungan <span className="heading-accent">robot</span></>}
           </Heading>
           <p>
             <MapPin size={15} aria-hidden="true" />
