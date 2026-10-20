@@ -480,7 +480,8 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
         const utterance = new SpeechSynthesisUtterance(chunk);
         utterance.lang = "id-ID";
         if (voice) utterance.voice = voice;
-        utterance.rate = 0.95;
+        utterance.rate = 1;
+        utterance.pitch = 1.35; // lighter, robot-friend tone for the device voice fallback
         if (index === chunks.length - 1) { utterance.onend = finish; utterance.onerror = finish; }
         speechSynthesis.speak(utterance);
       });

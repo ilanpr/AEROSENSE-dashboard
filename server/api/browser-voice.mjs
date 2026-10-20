@@ -1,6 +1,9 @@
 import { cleanText, modelText, wavAudio } from "./core.mjs";
 
-const testText = "Halo, saya AERO-BOT. Suara Gemini sekarang diputar melalui speaker laptop Anda.";
+const testText = "Halo halo! Aku AERO-BOT, robot penjaga udaramu. Suaraku sudah terdengar jelas, kan?";
+// Cheerful robot character, still slow and clear enough for listeners with disabilities.
+// Override with GEMINI_TTS_STYLE in the backend .env.
+const defaultStyle = "A cheerful, playful little robot friend speaking Indonesian. Bright, upbeat and smiling, with lively friendly intonation, like a kind children's science show host. Keep every word clear and the pace calm, never rushed.";
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const transientStatus = new Set([429, 500, 502, 503, 504]);
@@ -69,7 +72,7 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
         configured,
         transcription: configured,
         speech: configured,
-        voice: env.GEMINI_TTS_VOICE || "Kore",
+        voice: env.GEMINI_TTS_VOICE || "Puck",
         max_recording_seconds: 20,
       });
       return true;
@@ -124,11 +127,11 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
     }
     try {
       const response = await gemini("", [{ type: "user_input", content: [{
-        type: "text", text, annotations: [{ type: "speech_metadata", style: "Speak Indonesian naturally, warmly and clearly, at a calm conversational pace." }],
+        type: "text", text, annotations: [{ type: "speech_metadata", style: env.GEMINI_TTS_STYLE || defaultStyle }],
       }] }], {
         model: env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts",
         response_format: { type: "audio" },
-        generation_config: { speech_config: [{ voice: env.GEMINI_TTS_VOICE || "Kore" }] },
+        generation_config: { speech_config: [{ voice: env.GEMINI_TTS_VOICE || "Puck" }] },
       });
       const audio = wavAudio(response);
       res.writeHead(200, { "Content-Type": "audio/wav", "Content-Length": audio.length, "Cache-Control": "no-store" });
