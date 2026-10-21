@@ -196,7 +196,9 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .assist-copy p { font-size:13px; line-height:1.7; margin:12px 0 8px; max-width:35ch; color:#476b8b; }
 .assist-link { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:10px 16px; border-radius:999px; color:#fff; background:#0875ee; font-size:12px; font-weight:750; text-decoration:none; box-shadow:0 10px 20px -14px #065fc0; transition:background .18s,transform .18s var(--ui-ease); }
 .assist-link:hover { background:#0564d4; transform:translateY(-1px); }
-.aero-mascot { width:180px; height:180px; flex-shrink:0; object-fit:contain; filter:drop-shadow(0 16px 13px #397cba24); transform-origin:50% 72%; animation:aerobot-float 5.6s var(--ui-ease) infinite; }
+.aero-mascot { width:180px; height:180px; flex-shrink:0; object-fit:contain; filter:drop-shadow(0 16px 13px #397cba24); transform-origin:50% 72%; animation:aerobot-float 6s ease-in-out infinite; }
+.aero-mascot.motion-paused { animation-play-state:paused; }
+.aero-mascot:not(.motion-paused) { will-change:transform; }
 .chat-mascot { width:160px; height:160px; margin:0 auto 20px; }
 .node-status { display:inline-flex; align-items:center; gap:5px; padding:5px 8px; width:fit-content; border-radius:7px; font-size:10px; line-height:1.5; font-weight:600; white-space:nowrap; }
 .node-status.status-calm { color:#176044; background:#e6f5ec; }
@@ -280,20 +282,19 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .app-shell .sensor-hero .sensor-panel-footer { padding:14px 0 20px; }
 .app-shell .sensor-hero .sensor-panel-footer > span { min-width:0; max-width:100%; overflow-wrap:anywhere; }
 /* Keep the hero robot visibly alive while the sensor summary is on screen. */
-.app-shell .sensor-hero .scene-sensor:not(.scene-muted) img {
-  animation:sensor-robot-float 4.8s ease-in-out infinite;
+.app-shell .sensor-hero .scene-sensor img {
+  animation:sensor-robot-float 6.4s ease-in-out infinite;
   transform-origin:50% 72%;
-  will-change:translate,rotate;
 }
+.app-shell .sensor-hero .scene-sensor.scene-offscreen img { animation-play-state:paused; }
+.app-shell .sensor-hero .scene-sensor:not(.scene-offscreen) img { will-change:transform; }
 @keyframes sensor-robot-float {
-  0%,100% { translate:0 0; rotate:-1.4deg; }
-  45% { translate:0 -13px; rotate:1.5deg; }
-  58% { translate:0 -10px; rotate:.5deg; }
+  0%,100% { transform:translate3d(0,0,0) rotate(-.6deg); }
+  50% { transform:translate3d(0,-10px,0) rotate(.6deg); }
 }
 @keyframes aerobot-float {
-  0%,100% { transform:translate3d(0,0,0) rotate(-1.5deg); }
-  46% { transform:translate3d(0,-10px,0) rotate(1.5deg); }
-  58% { transform:translate3d(0,-8px,0) rotate(.5deg); }
+  0%,100% { transform:translate3d(0,0,0) rotate(-.8deg); }
+  50% { transform:translate3d(0,-8px,0) rotate(.8deg); }
 }
 @media(max-width:600px) {
   .app-shell { width:100%; max-width:100vw; overflow-x:hidden; }
@@ -312,6 +313,7 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 
 @media(max-width:360px) { .sensor-node-controls { gap:4px; } .app-shell .sensor-node-controls .sensor-select { max-width:210px; } }
 @media(prefers-reduced-motion:reduce) {
-  .aero-mascot { animation:none; }
+  .aero-mascot,.app-shell .sensor-hero .scene-sensor img { animation:none; }
+  .aero-mascot:not(.motion-paused),.app-shell .sensor-hero .scene-sensor:not(.scene-offscreen) img { will-change:auto; }
   .assist-link:hover { transform:none; }
 }

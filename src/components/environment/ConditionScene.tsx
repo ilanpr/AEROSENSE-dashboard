@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import type { Scene } from "@/lib/environment-presentation";
+import { useIllustrationMotion } from "@/hooks/useIllustrationMotion";
 
 export function ConditionScene({
   scene,
@@ -11,20 +12,11 @@ export function ConditionScene({
   muted?: boolean;
   small?: boolean;
 }) {
-  const sceneRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (small || !sceneRef.current) return;
-    const observer = new IntersectionObserver(([entry]) =>
-      setVisible(entry.isIntersecting),
-    );
-    observer.observe(sceneRef.current);
-    return () => observer.disconnect();
-  }, [small]);
+  const { ref: sceneRef, playing } = useIllustrationMotion<HTMLDivElement>(!small);
   return (
     <div
       ref={sceneRef}
-      className={`condition-scene scene-${scene} ${muted ? "scene-muted" : ""} ${small ? "scene-small" : ""} ${!visible ? "scene-offscreen" : ""}`}
+      className={`condition-scene scene-${scene} ${muted ? "scene-muted" : ""} ${small ? "scene-small" : ""} ${!playing ? "scene-offscreen" : ""}`}
       aria-hidden="true"
     >
       <span className="scene-halo" />
