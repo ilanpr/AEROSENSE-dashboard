@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import { NearbyAlerts } from "@/components/live/NearbyAlerts";
 import { WhatsAppSettings } from "@/components/live/WhatsAppSettings";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +12,7 @@ export function AlertsPage() {
         <div><h2>Lanjutkan lewat WhatsApp</h2><p>Tanya AERO-BOT atau hubungkan notifikasi node.</p></div>
         <WhatsAppEntry />
       </section>
-      {user && <details className="insight-disclosure"><summary>Atur langganan WhatsApp</summary><WhatsAppSettings /></details>}
+      {user && <details className="insight-disclosure"><summary><span>Atur langganan WhatsApp</span><ChevronDown size={16} aria-hidden="true" /></summary><WhatsAppSettings /></details>}
     </div>
   );
 }
