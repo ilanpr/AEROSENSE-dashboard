@@ -75,6 +75,7 @@ export function ChatPanel() {
   const sending = useRef(false);
   const submission = useRef<{ scope: string; key: string } | null>(null);
   const end = useRef<HTMLDivElement>(null);
+  const composer = useRef<HTMLInputElement>(null);
   const owner = useRef<string | undefined>(undefined);
   const active = useRef(true);
   useEffect(() => {
@@ -280,11 +281,40 @@ export function ChatPanel() {
       )}
       <div className="chat-suggestions">
         {suggestions.map((s) => (
-          <button key={s} onClick={() => setInput(s)}>
+          <button key={s} onClick={() => { setInput(s); composer.current?.focus(); }}>
             {s}
           </button>
         ))}
       </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void send();
+        }}
+      >
+        <label className="sr-only" htmlFor="chatInput">
+          Pertanyaan lingkungan
+        </label>
+        <input
+          id="chatInput"
+          ref={composer}
+          aria-describedby="chat-send-hint"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          maxLength={2000}
+          disabled={!user || busy || !!pending || voice.recording || voice.transcribing}
+          placeholder="Tanyakan tentang lingkungan…"
+          autoComplete="off"
+        />
+        <button
+          aria-label="Kirim pesan"
+          title="Kirim pesan"
+          disabled={!user || !input.trim() || busy || !!pending || voice.recording || voice.transcribing}
+        >
+          <ArrowUp size={18} />
+        </button>
+      </form>
+      <p id="chat-send-hint" className="chat-note">{input.trim() && !busy && !pending ? "Pertanyaan belum dikirim. Tekan tombol panah atau Enter untuk mengirim." : "Ketik pertanyaan atau pilih saran, lalu tekan tombol panah untuk mengirim."}</p>
       {user && voice.configured && handsFree.supported && (
         <div className={`handsfree-card is-${handsFree.phase}`}>
           <button className="handsfree-toggle" type="button" aria-pressed={handsFree.active}
@@ -340,31 +370,7 @@ export function ChatPanel() {
       {voice.error && <p className="live-notice" role="alert">{voice.error}</p>}
       {user && !voice.configured && !voice.error && <p className="chat-note">{DEMO_MODE ? "Uji suara tersedia pada web yang terhubung ke backend produksi." : "Suara belum diaktifkan pengelola."}</p>}
       {voice.configured && !voice.supported && <p className="chat-note">Untuk merekam, buka situs HTTPS ini di Chrome atau Edge dan izinkan mikrofon.</p>}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void send();
-        }}
-      >
-        <label className="sr-only" htmlFor="chatInput">
-          Pertanyaan lingkungan
-        </label>
-        <input
-          id="chatInput"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          maxLength={2000}
-          disabled={!user || busy || !!pending || voice.recording || voice.transcribing}
-          placeholder="Tanyakan tentang lingkungan…"
-          autoComplete="off"
-        />
-        <button
-          aria-label="Kirim pesan"
-          disabled={!user || !input.trim() || busy || !!pending || voice.recording || voice.transcribing}
-        >
-          <ArrowUp size={18} />
-        </button>
-      </form>
+
       {voice.configured && !handsFree.active && <p className="chat-note">Rekam pertanyaan lalu tekan Selesai rekam: pertanyaan terkirim dan jawabannya dibacakan otomatis. Rekaman dikirim untuk diproses AERO-BOT menjadi teks dan tidak disimpan AEROSENSE.</p>}
     </section>
   );
