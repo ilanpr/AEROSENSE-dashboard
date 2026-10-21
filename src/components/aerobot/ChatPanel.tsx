@@ -22,7 +22,7 @@ const handsFreeLabels: Record<HandsFreePhase, [string, string]> = {
   blocked: ["Ketuk layar atau tekan tombol apa saja", "Browser perlu satu sentuhan untuk menyalakan suara."],
   waiting: ["Ucapkan “Halo AERO-BOT”", "Lalu langsung sampaikan pertanyaan Anda."],
   listening: ["Mendengarkan…", "Silakan bicara. Pertanyaan terkirim otomatis saat Anda berhenti."],
-  transcribing: ["Menyalin suara…", "Gemini sedang membaca pertanyaan Anda."],
+  transcribing: ["Menyalin suara…", "AERO-BOT sedang memahami pertanyaan Anda."],
   thinking: ["Menyiapkan jawaban…", "AERO-BOT sedang memproses pertanyaan Anda."],
   speaking: ["Membacakan jawaban", "Tekan Esc atau tombol Hentikan suara untuk berhenti."],
 };
@@ -318,8 +318,8 @@ export function ChatPanel() {
           {handsFree.error && <p className="live-notice" role="alert">{handsFree.error}</p>}
           <p className="chat-note">
             {handsFree.engine === "browser"
-              ? "Mikrofon tetap menyala selama mode ini aktif. Kata “Halo AERO-BOT” dikenali oleh pengenal suara browser; hanya pertanyaan Anda yang dikirim ke Gemini. Rekaman tidak disimpan AEROSENSE."
-              : "Mikrofon tetap menyala selama mode ini aktif. Setiap ucapan dikirim ke Gemini untuk mengenali “Halo AERO-BOT”. Rekaman tidak disimpan AEROSENSE."}
+              ? "Mikrofon tetap menyala selama mode ini aktif. Kata “Halo AERO-BOT” dikenali oleh pengenal suara browser; hanya rekaman pertanyaan Anda yang dikirim untuk diproses AERO-BOT. Rekaman tidak disimpan AEROSENSE."
+              : "Mikrofon tetap menyala selama mode ini aktif. Setiap ucapan dikirim untuk diproses AERO-BOT agar mengenali “Halo AERO-BOT”. Rekaman tidak disimpan AEROSENSE."}
           </p>
         </div>
       )}
@@ -335,7 +335,7 @@ export function ChatPanel() {
           onClick={() => void voice.speak()}>
           <Volume2 size={16} />{voice.speaking === "test" ? "Hentikan tes" : "Tes speaker"}
         </button>
-        <span role="status">{voice.recording ? "Merekam · maksimal 20 detik" : voice.transcribing ? "Gemini sedang menyalin rekaman" : handsFree.active ? "Mode suara tanpa tombol sedang aktif" : "Suara Gemini · mic dan speaker perangkat ini"}</span>
+        <span role="status">{voice.recording ? "Merekam · maksimal 20 detik" : voice.transcribing ? "AERO-BOT sedang menyalin rekaman" : handsFree.active ? "Mode suara tanpa tombol sedang aktif" : "Suara AERO-BOT · mic dan speaker perangkat ini"}</span>
       </div>
       {voice.error && <p className="live-notice" role="alert">{voice.error}</p>}
       {user && !voice.configured && !voice.error && <p className="chat-note">{DEMO_MODE ? "Uji suara tersedia pada web yang terhubung ke backend produksi." : "Suara belum diaktifkan pengelola."}</p>}
@@ -365,7 +365,7 @@ export function ChatPanel() {
           <ArrowUp size={18} />
         </button>
       </form>
-      {voice.configured && !handsFree.active && <p className="chat-note">Rekam pertanyaan lalu tekan Selesai rekam: pertanyaan terkirim dan jawabannya dibacakan otomatis. Rekaman dikirim ke Gemini untuk transkripsi dan tidak disimpan AEROSENSE.</p>}
+      {voice.configured && !handsFree.active && <p className="chat-note">Rekam pertanyaan lalu tekan Selesai rekam: pertanyaan terkirim dan jawabannya dibacakan otomatis. Rekaman dikirim untuk diproses AERO-BOT menjadi teks dan tidak disimpan AEROSENSE.</p>}
     </section>
   );
 }

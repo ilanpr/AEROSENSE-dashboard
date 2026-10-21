@@ -17,6 +17,12 @@ function prepareHubContext(base, cacheResult, now=Date.now()) {
   const fresh=same?facts.filter(f=>f.area_id===area.id&&f.data_origin==="external_api"&&f.role==="supplementary"&&f.reference?.latitude===area.latitude&&f.reference?.longitude===area.longitude&&Date.parse(f.fresh_until)>now&&(typeof f.value==="string"?f.value.trim().length>0:Number.isFinite(f.value))):[];
   statuses.push({area_id:area.id,provider:card.provider,status:!same?"location_changed":card.last_error?"provider_error":fresh.length?"available":facts.length?"stale":"unavailable",last_fetch:card.payload?.fetched_at||null});
   let selected=fresh.filter(f=>!wanted.length||wanted.includes(f.category));
+  if(wanted.includes("air_quality")){
+   const current=f=>!["forecast","historical"].includes(f.kind)&&Number.isFinite(Date.parse(f.valid_at))&&Date.parse(f.valid_at)<=now+1800000;
+   selected=selected.filter(f=>f.category!=="air_quality"||current(f));
+   const priority=f=>f.category!=="air_quality"?4:/AQI US|US AQI/i.test(f.label)?0:/PM2[.,]?5/i.test(f.label)?1:/PM10/i.test(f.label)?2:3;
+   selected.sort((a,b)=>priority(a)-priority(b)||(Date.parse(b.valid_at)||0)-(Date.parse(a.valid_at)||0));
+  }
   if(q.includes("besok")){
    const tomorrow=new Date(now+86400000+7*3600000).toISOString().slice(0,10);
    selected.sort((a,b)=>Number(String(b.label).includes(tomorrow))-Number(String(a.label).includes(tomorrow)));

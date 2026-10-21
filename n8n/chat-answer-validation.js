@@ -16,10 +16,13 @@ try{
   }
   for(const s of context){const g=s.gru;if(p.readings.length<8&&g&&Object.hasOwn(allowed,g.target)&&Number.isFinite(g.value)&&s.quality?.invalid!==true&&(g.target!=="pm25_ug_m3"||s.pm25_validated))p.readings.push({node_id:s.node_id,metric:g.target,source:"gru"});}
 
-  if(!p.readings.length){
-   p.environment_refs=(hub.environment||[]).filter(f=>f.category==="air_quality").slice(0,3).map(f=>f.id);
-   if(p.environment_refs.length)p.answer="Pembacaan sensor lokal belum tersedia. Berikut data kualitas udara wilayah sebagai pendamping.";
-  }
+  const air=(hub.environment||[]).filter(f=>f.category==="air_quality"&&!["forecast","historical"].includes(f.kind)&&Date.parse(f.valid_at)<=Date.now()+1800000&&Date.parse(f.fresh_until)>Date.now());
+  const aqi=air.find(f=>/AQI US|US AQI/i.test(f.label)&&Number.isFinite(f.value)&&f.value>=0);
+  p.environment_refs=[...(aqi?[aqi]:[]),...air.filter(f=>f!==aqi)].slice(0,3).map(f=>f.id);
+  if(aqi){
+   const condition=aqi.value<=50?"baik":aqi.value<=100?"sedang":aqi.value<=150?"kurang sehat bagi kelompok sensitif":aqi.value<=200?"tidak sehat":aqi.value<=300?"sangat tidak sehat":"berbahaya";
+   p.answer=`Estimasi kualitas udara wilayah tergolong ${condition}. `+(p.readings.length?"Pembacaan sensor lokal juga tersedia sebagai informasi terpisah. ":"Pembacaan sensor lokal belum tersedia. ")+(aqi.value>100?"Kurangi aktivitas berat di luar, terutama bila sensitif terhadap polusi.":"Tetap hindari asap kendaraan dan pembakaran.");
+  }else if(p.environment_refs.length)p.answer=p.readings.length?"Pembacaan sensor lokal dan estimasi polutan wilayah tersedia sebagai informasi terpisah. Indeks kualitas udara wilayah belum tersedia.":"Pembacaan sensor lokal belum tersedia. Estimasi polutan wilayah tersedia, tetapi indeks kualitas udaranya belum tersedia.";
  }else{
   const text=($json.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("").trim();
   if(!text)throw new Error("Respons Gemini kosong");

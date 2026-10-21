@@ -34,7 +34,7 @@ export function useChatVoice(userId: string | undefined, onTranscript: (text: st
     if (userId && !DEMO_MODE) {
       void apiRequest<{ configured: boolean }>("/v1/voice/config", { signal: controller.signal })
         .then(config => { if (!controller.signal.aborted) setConfigured(config.configured); })
-        .catch(() => { if (!controller.signal.aborted) setError("Suara belum aktif. Pastikan backend sudah diperbarui dan Gemini dikonfigurasi."); });
+        .catch(() => { if (!controller.signal.aborted) setError("Suara AERO-BOT belum dapat diaktifkan. Muat ulang halaman lalu coba lagi."); });
     }
     return () => {
       controller.abort();

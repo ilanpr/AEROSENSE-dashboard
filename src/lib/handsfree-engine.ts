@@ -366,7 +366,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
       else if (event.error === "network" || event.error === "audio-capture") recognitionFailures++;
       if (recognitionFailures >= 3) {
         recognitionWanted = false;
-        set({ engine: "gemini", notice: "Pengenal suara browser tidak tersedia. Deteksi “Halo AERO-BOT” memakai Gemini." });
+        set({ engine: "gemini", notice: "AERO-BOT sedang mendengarkan. Ucapkan “Halo AERO-BOT” lalu sampaikan pertanyaan Anda." });
       }
     };
     instance.onend = () => {

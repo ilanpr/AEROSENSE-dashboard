@@ -81,7 +81,7 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
       send(res, 404, { error: "Not found" });
       return true;
     }
-    if (!configured) throw fail("Suara Gemini belum diaktifkan pengelola.", 503);
+    if (!configured) throw fail("Suara AERO-BOT belum diaktifkan pengelola.", 503);
     rate("voice:" + account.id, 40);
     const input = JSON.parse((await rawBody(req, 1400000)).toString() || "{}");
     if (!input || typeof input !== "object" || Array.isArray(input)) throw fail("Permintaan suara tidak valid.");
@@ -106,8 +106,8 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
         if (error.status === 422) throw error;
         console.error(JSON.stringify({ time: new Date().toISOString(), path: "/v1/voice/transcribe", upstream_status: error?.status || null, error: "transcription_failed" }));
         throw fail(error?.status === 429 || error?.status === 503
-          ? "Layanan Gemini sedang sibuk. Coba ucapkan lagi sebentar lagi."
-          : "Gemini belum dapat menyalin suara. Coba lagi atau ketik pertanyaan.", 503);
+          ? "AERO-BOT sedang sibuk. Coba ucapkan lagi sebentar lagi."
+          : "AERO-BOT belum dapat menyalin suara. Coba lagi atau ketik pertanyaan.", 503);
       }
       return true;
     }
@@ -137,7 +137,7 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
       res.writeHead(200, { "Content-Type": "audio/wav", "Content-Length": audio.length, "Cache-Control": "no-store" });
       res.end(audio);
     } catch {
-      throw fail("Suara Gemini belum dapat dibuat. Teks jawaban tetap bisa dibaca. Coba lagi nanti.", 503);
+      throw fail("Suara AERO-BOT belum dapat dibuat. Teks jawaban tetap bisa dibaca. Coba lagi nanti.", 503);
     }
     return true;
   };
