@@ -2,6 +2,19 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
+test("Gemini input expression is valid and sends facts without URLs", async () => {
+  const expression=(await readFile(new URL("../../n8n/chat-model-input.txt",import.meta.url),"utf8")).trim();
+  assert.equal((expression.match(/\{\{\s*JSON\.stringify/g)||[]).length,1);
+  const body=expression.slice(2,-2).trim();
+  assert.doesNotMatch(body,/\}\}/,"n8n treats adjacent closing braces as the end of an expression");
+  const input={text:"Bagaimana udara di sekitar?",environment:[{id:"air-1",source:"Open-Meteo",source_url:"https://example.org/api",label:"AQI US",value:52,category:"air_quality"}]};
+  const result=JSON.parse(new Function("$json",`return (${body});`)(input));
+  assert.equal(result.question,input.text);
+  assert.equal(result.environment[0].id,"air-1");
+  assert.equal(result.environment[0].source,"Open-Meteo");
+  assert.doesNotMatch(JSON.stringify(result),/https?:|source_url/);
+});
+
 test("worker context follows an authorized robot node and keeps national news separate", async () => {
   const now=Date.now();
   const code=await readFile(new URL("../../n8n/chat-environment-context.js",import.meta.url),"utf8");

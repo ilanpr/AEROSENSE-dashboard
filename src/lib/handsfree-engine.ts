@@ -303,8 +303,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     clearTimeout(listenTimer);
     set({ phase: "thinking", heard: question, error: "", notice: "" });
     earcon("sent");
-    // Short spoken acknowledgement plus a soft tick so silence never feels like a hang.
-    void say("Baik, sebentar ya.", true);
+    // Confirm receipt with an earcon; a second narrator would change the bot's voice.
     clearInterval(thinkingTimer);
     thinkingTimer = setInterval(() => {
       if (token !== run || state.phase !== "thinking") { clearInterval(thinkingTimer); return; }
