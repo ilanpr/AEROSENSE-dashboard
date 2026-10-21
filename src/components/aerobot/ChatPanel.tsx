@@ -247,7 +247,11 @@ export function ChatPanel() {
       <div className="live-messages" role="log" aria-live="polite">
         {messages.map((m) => (
           <div className={"live-message " + m.sender} key={m.id}>
-            {m.text}
+            <div className="chat-message-content">
+              {(m.sender === "bot" ? m.text.trim().split(/\n\s*\n/) : [m.text]).map((paragraph, index) => (
+                <p key={index} className={paragraph.startsWith("Sumber:") ? "chat-message-sources" : undefined}>{paragraph}</p>
+              ))}
+            </div>
             {m.sender === "bot" && m.id !== "welcome" && voice.configured && (
               <button className="chat-listen" type="button" onClick={() => void voice.speak(m.id)} disabled={voice.recording || voice.transcribing}>
                 {voice.speaking === m.id ? <Square size={14} /> : <Volume2 size={15} />}

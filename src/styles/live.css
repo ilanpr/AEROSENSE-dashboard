@@ -542,6 +542,9 @@ select,
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.chat-message-content { display: grid; gap: 12px; max-width: 70ch; }
+.chat-message-content > p { margin: 0; }
+.chat-message-sources { font-size: 0.75rem; line-height: 1.65; }
 .live-message.user {
   background: #086cfb;
   color: #fff;
