@@ -1,0 +1,198 @@
+{
+  "name": "AEROSENSE | Robot wake dan ekspresi",
+  "active": false,
+  "nodes": [
+    {
+      "id": "08b497f9-6b6f-4471-9bce-fc1c4d89d02b",
+      "name": "Dipanggil workflow robot",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        100
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "id": "ef3fd9de-8cee-4095-a190-45e1ad1d2252",
+      "name": "Uji simulasi tanpa perangkat",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        360
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "f3db1379-b864-4c29-9a5d-b78106a9c154",
+      "name": "Contoh event interaksi",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        360
+      ],
+      "parameters": {
+        "jsCode": "const now=Date.now();\nconst base={robot_id:\"aerobot-01\",observed_at:new Date(now).toISOString(),quiet:false};\nreturn [\n {event_id:\"test-wake\",event:\"presence\",state:\"sleep\"},\n {event_id:\"test-repeat\",event:\"presence\",state:\"awake\"},\n {event_id:\"test-listen\",event:\"wakeword\",state:\"awake\"},\n {event_id:\"test-think\",event:\"question\",state:\"listening\"},\n {event_id:\"test-answer\",event:\"answer\",state:\"thinking\",job_id:\"job-example\",active_job_id:\"job-example\",audio_ready:true,answer_expression:\"concerned\",text:\"Kurangi paparan asap dan periksa kondisi sekitar.\"},\n {event_id:\"test-follow-up\",event:\"audio_finished\",state:\"speaking\",job_id:\"job-example\",active_job_id:\"job-example\"},\n {event_id:\"test-sleep\",event:\"idle_timeout\",state:\"awake\",last_interaction_at:new Date(now-180000).toISOString()}\n].map(value=>({json:{...base,...value}}));"
+      }
+    },
+    {
+      "id": "f715cf89-c333-4a94-80c6-1b4ca799fa2c",
+      "name": "Rencanakan wake dan ekspresi",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        160
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Pure interaction planner. Dispatch, persistent dedup and device ACK belong to the caller.\nfunction planRobot(input, now = Date.now()) {\n  const states = [\"sleep\", \"awake\", \"listening\", \"thinking\", \"speaking\"];\n  const events = [\"presence\", \"wakeword\", \"question\", \"answer\", \"audio_finished\", \"idle_timeout\", \"fault\"];\n  const validId = value => typeof value === \"string\" && /^[a-zA-Z0-9_-]{1,80}$/.test(value);\n  const result = { robot_id: input.robot_id, event_id: input.event_id, dispatch: false, execute: false, next_state: input.state, steps: [] };\n  const hold = reason => ({ ...result, reason });\n  if (!validId(input.robot_id) || !validId(input.event_id)) return hold(\"invalid_identity\");\n  if (!states.includes(input.state) || !events.includes(input.event)) return hold(\"invalid_event_or_state\");\n  const observed = Date.parse(input.observed_at);\n  if (!Number.isFinite(observed) || observed > now + 5000 || now - observed > 30000) return hold(\"stale_event\");\n  if (input.quiet === true) return hold(\"quiet_mode\");\n  result.command_id = `interaction:${input.robot_id}:${input.event_id}`;\n  result.expires_at = new Date(now + 30000).toISOString();\n  const wake = { action: \"face\", expression: \"waking\", duration_ms: 1600,\n    keyframes: [{ at_ms: 0, eyes: \"closed\" }, { at_ms: 500, eyes: \"half_open\" },\n      { at_ms: 1000, eyes: \"open\" }, { at_ms: 1250, eyes: \"blink\" }, { at_ms: 1600, eyes: \"open\", expression: \"happy\" }] };\n  const listen = { action: \"listen\", expression: \"listening\", start_after: \"previous_step_completed\", timeout_ms: 9000,\n    wake_detector: true, record_question: true, auto_submit_after_silence_ms: 1100 };\n  const complete = (state, steps, reason = \"ready\") => ({ ...result, execute: true, next_state: state, steps, reason });\n  if (input.event === \"presence\") {\n    if (input.state !== \"sleep\" || input.active_job_id) return hold(\"already_awake_or_busy\");\n    const lastGreeting = input.last_greeted_at == null ? null : Date.parse(input.last_greeted_at);\n    if (lastGreeting !== null && !Number.isFinite(lastGreeting)) return hold(\"invalid_greeting_time\");\n    if (lastGreeting !== null && now - lastGreeting < 120000) return hold(\"greeting_cooldown\");\n    return complete(\"awake\", [wake, { action: \"prepare_greeting\", expression: \"happy\",\n      text: \"Halo, saya AERO-BOT. Ada yang bisa saya bantu?\", tts_provider: \"gemini\", start_after: \"previous_step_completed\",\n      after_audio: \"emit_audio_finished\" }], \"presence_indication\");\n  }\n  if (input.event === \"wakeword\") {\n    if ([\"thinking\", \"speaking\"].includes(input.state) || input.active_job_id) return hold(\"conversation_busy\");\n    return complete(\"listening\", [...(input.state === \"sleep\" ? [wake] : []), listen]);\n  }\n  if (input.event === \"question\") {\n    if (![\"awake\", \"listening\"].includes(input.state) || input.active_job_id) return hold(\"question_not_expected\");\n    return complete(\"thinking\", [{ action: \"pause_question_capture\", wake_detector: true },\n      { action: \"face\", expression: \"thinking\" }, { action: \"route_robot_chat\" }]);\n  }\n  if (input.event === \"answer\") {\n    if (input.state !== \"thinking\") return hold(\"answer_not_expected\");\n    if (!validId(input.job_id) || input.job_id !== input.active_job_id) return hold(\"answer_job_mismatch\");\n    if (typeof input.text !== \"string\" || !input.text.trim() || input.text.length > 2000) return hold(\"invalid_answer\");\n    if (input.audio_ready !== true) return hold(\"audio_not_ready\");\n    // Tone comes from the validated answer metadata, never a claim that an IR object is human.\n    const expression = [\"neutral\", \"happy\", \"concerned\"].includes(input.answer_expression) ? input.answer_expression : \"neutral\";\n    return complete(\"speaking\", [{ action: \"pause_question_capture\", wake_detector: true },\n      { action: \"speak\", job_id: input.job_id, text: input.text, expression, mouth_sync: \"local_audio_rms\",\n        start_after: \"audio_playback_started\", after_audio: \"emit_audio_finished\" }]);\n  }\n  if (input.event === \"audio_finished\") {\n    if (input.state !== \"speaking\" || !validId(input.job_id) || input.job_id !== input.active_job_id) return hold(\"audio_ack_mismatch\");\n    return complete(\"listening\", [listen]);\n  }\n  if (input.event === \"idle_timeout\") {\n    if (![\"awake\", \"listening\"].includes(input.state) || input.active_job_id) return hold(\"conversation_busy\");\n    const lastInteraction = Date.parse(input.last_interaction_at);\n    if (!Number.isFinite(lastInteraction) || now - lastInteraction < 120000) return hold(\"idle_not_reached\");\n    return complete(\"sleep\", [{ action: \"stop_question_capture\", wake_detector: true },\n      { action: \"face\", expression: \"sleeping\", duration_ms: 1200, eyes: \"close_slowly\" }]);\n  }\n  return complete(\"awake\", [{ action: \"face\", expression: \"error\" },\n    { action: \"accessible_notice\", text: \"Maaf, koneksi AERO-BOT sedang bermasalah. Silakan coba lagi.\" }], \"fault\");\n}\nreturn { json: planRobot($json) };\n"
+      }
+    },
+    {
+      "id": "85d8c65a-6273-4929-91b8-480a5280b45e",
+      "name": "Transisi diizinkan",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        760,
+        160
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d327e533-87df-4400-abfe-6d14839d9d9f",
+              "leftValue": "={{ $json.execute }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7c9d47dc-32df-4024-a723-a9e0334671f3",
+      "name": "Rencana untuk caller",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        80
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "32b28691-0b97-417d-9639-d82367d8be32",
+      "name": "Event ditahan",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "ce398115-eaa3-497a-9578-f762b12fa078",
+      "name": "Kontrak interaksi robot",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        -430
+      ],
+      "parameters": {
+        "content": "## AEROSENSE · Robot wake dan ekspresi · DRAFT\nSensor infrared memberi indikasi objek/kehadiran, bukan memastikan manusia.\n\nSleep → waking (mata tertutup, membuka, berkedip, senyum) → sapaan Gemini → mendengarkan → berpikir → berbicara → pertanyaan lanjutan → sleep setelah idle 120 detik.\n\n- Uji manual hanya membuat rencana; tidak memakai mic/speaker atau mengirim perintah perangkat.\n- dispatch=false: caller harus mengantrekan secara idempotent dengan command_id dan TTL.\n- State/event harus baru (30 detik), job jawaban/ACK harus cocok. Presence saat sudah bangun ditahan; cooldown sapaan 120 detik.\n- Audio dan animasi disinkronkan agent lokal berdasarkan playback/ACK. Jangan memakai node Wait sebagai timer animasi atau mengirim tiap frame ke n8n.\n- Jawaban memakai expression allowlist neutral/happy/concerned, default neutral; bukan happy untuk semua jawaban.\n- Planner belum terhubung ke worker produksi. Pengambilan konteks, Gemini/TTS dan API robot yang sudah ada dipakai oleh caller saat integrasi.\n- Tidak menyimpan rekaman atau log per-frame di Supabase.",
+        "width": 740,
+        "height": 460
+      }
+    }
+  ],
+  "connections": {
+    "Dipanggil workflow robot": {
+      "main": [
+        [
+          {
+            "node": "Rencanakan wake dan ekspresi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Uji simulasi tanpa perangkat": {
+      "main": [
+        [
+          {
+            "node": "Contoh event interaksi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contoh event interaksi": {
+      "main": [
+        [
+          {
+            "node": "Rencanakan wake dan ekspresi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rencanakan wake dan ekspresi": {
+      "main": [
+        [
+          {
+            "node": "Transisi diizinkan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transisi diizinkan": {
+      "main": [
+        [
+          {
+            "node": "Rencana untuk caller",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Event ditahan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "executionTimeout": 30
+  },
+  "pinData": {},
+  "tags": []
+}
