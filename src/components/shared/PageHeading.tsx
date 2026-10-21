@@ -18,7 +18,7 @@ export function PageHeading({
   actions,
 }: PageHeadingProps) {
   return (
-    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+    <div className="page-heading flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
       <div>
         {eyebrow && (
           <p className="text-[10px] font-extrabold uppercase tracking-[1.6px] text-[#6fa0ca] mb-2 flex items-center gap-1.5">
