@@ -45,6 +45,8 @@ export interface Reading {
   raw_metrics?: Record<string, number | null>;
   gru: SensorContext["gru"];
   processing?: Record<string, unknown>;
+  quality?: { invalid?: boolean; clock_source?: string; calibration_version?: string | null } | null;
+  raw_sha256?: string | null;
 }
 export interface Alert {
   id: string;

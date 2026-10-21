@@ -22,6 +22,7 @@ const LiveMap = lazy(() =>
 const ReadingChart = lazy(() => import("./ReadingChart"));
 import { api } from "@/services/api";
 import { MonitoringScope } from "./MonitoringScope";
+import { EsgReportPanel } from "./EsgReportPanel";
 
 export function SensorWorkspace({
   mode = "overview",
@@ -63,7 +64,7 @@ export function SensorWorkspace({
     60000,
   );
   const alerts = useLiveData<{ alerts: Alert[] }>(
-    node && ["overview", "alerts", "detail"].includes(mode)
+    node && ["overview", "alerts", "detail", "report"].includes(mode)
       ? "/v1/alerts" + nodeQuery + "&account=" + encodeURIComponent(user?.id || "guest")
       : null,
   );
@@ -387,6 +388,11 @@ export function SensorWorkspace({
                   </table>
                 </div>
               )}
+              {mode === "report" && (
+                <EsgReportPanel node={node} readings={readings} alerts={alerts.data?.alerts || []}
+                  scope={dashboard.data?.report_scope} userEmail={user?.email}
+                  loading={(history.loading && !history.data) || (alerts.loading && !alerts.data)} />
+              )}
               {["detail", "analytics", "report"].includes(mode) && (
                 <section className="live-panel">
                   <div className="live-heading">
@@ -394,7 +400,7 @@ export function SensorWorkspace({
                       <h2>Historis pembacaan</h2>
                       <p>Maksimal 288 pembacaan terakhir per node.</p>
                     </div>
-                    <button
+                    {mode !== "report" && <button
                       className="live-button secondary"
                       onClick={exportReadings}
                       disabled={!user || !readings.length || history.loading || !!history.error}
@@ -402,7 +408,7 @@ export function SensorWorkspace({
                     >
                       <Download size={15} />
                       Ekspor JSON
-                    </button>
+                    </button>}
                   </div>
                   {history.error ? (
                     <DataState error={history.error} retry={history.refresh} />

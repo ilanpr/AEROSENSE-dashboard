@@ -363,3 +363,25 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
   .app-shell .insight-glance .condition-scene { width:120px; height:120px; }
   .app-shell :is(.map-controls,.sensor-toolbar) { padding:14px 12px; }
 }
+
+/* Hub header controls: location switch, node picker and refresh sit on one row in the hero,
+   with the pin inside the picker, and wrap as a group on narrower screens. */
+.app-shell .environment-hub:not(.insights-compact) > .insights-heading > div:first-child { flex:1 1 320px; min-width:0; }
+.app-shell .environment-hub:not(.insights-compact) > .insights-heading .live-actions { flex:0 1 auto; flex-wrap:nowrap; justify-content:flex-end; align-items:center; gap:10px; }
+.app-shell .environment-hub:not(.insights-compact) > .insights-heading .environment-reference { flex:none; }
+.app-shell .environment-hub:not(.insights-compact) > .insights-heading .environment-reference button { white-space:nowrap; }
+.app-shell .environment-hub:not(.insights-compact) > .insights-heading .sensor-select { position:relative; flex:0 1 230px; min-width:180px; margin:0; gap:0; }
+.app-shell .environment-hub:not(.insights-compact) > .insights-heading .sensor-select > svg { position:absolute; left:15px; top:50%; transform:translateY(-50%); z-index:1; color:#2867a8; pointer-events:none; }
+.app-shell .environment-hub:not(.insights-compact) > .insights-heading .sensor-select .monitoring-select[data-slot="select-trigger"] { min-width:0; padding-left:38px; }
+.app-shell .environment-hub:not(.insights-compact) > .insights-heading .live-icon-button { flex:none; border-color:#ffffff80; }
+@media(max-width:1180px) {
+  .app-shell .environment-hub:not(.insights-compact) > .insights-heading { flex-direction:column; align-items:stretch; }
+  .app-shell .environment-hub:not(.insights-compact) > .insights-heading > div:first-child { flex-basis:auto; }
+  .app-shell .environment-hub:not(.insights-compact) > .insights-heading .live-actions { flex-wrap:wrap; justify-content:flex-start; }
+  .app-shell .environment-hub:not(.insights-compact) > .insights-heading .sensor-select { flex:1 1 220px; max-width:360px; }
+}
+@media(max-width:480px) {
+  .app-shell .environment-hub:not(.insights-compact) > .insights-heading .environment-reference { width:100%; }
+  .app-shell .environment-hub:not(.insights-compact) > .insights-heading .environment-reference button { flex:1; }
+  .app-shell .environment-hub:not(.insights-compact) > .insights-heading .sensor-select { max-width:none; }
+}
