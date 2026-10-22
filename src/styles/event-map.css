@@ -1,7 +1,10 @@
 .aerosense-map-marker { background:none; border:0; }
-.map-pin { display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:#fff; color:var(--pin-color); border:1.5px solid var(--pin-color); box-shadow:0 3px 7px -3px #14395866; }
-.map-pin svg { width:18px; height:18px; }
-.map-pin.is-active { outline:3px solid #0967e9; outline-offset:3px; }
+.map-pin { display:grid; place-items:center; box-sizing:border-box; width:32px; height:32px; border-radius:50%; background:linear-gradient(145deg,color-mix(in srgb,var(--pin-color) 82%,white),var(--pin-color)); color:#fff; border:3px solid #fff; box-shadow:0 3px 8px -2px #173a5e66; transition:transform .18s ease-out,box-shadow .18s ease-out; }
+.map-pin svg { width:17px; height:17px; filter:drop-shadow(0 1px 1px #12344b22); }
+.map-pin.is-active { outline:2px solid #0967e9; outline-offset:2px; transform:scale(1.1); box-shadow:0 4px 10px -2px #173a5e66; }
+.aerosense-map-marker:focus-visible { outline:none; }
+.aerosense-map-marker:focus-visible .map-pin { outline:3px solid #0967e9; outline-offset:3px; }
+@media (prefers-reduced-motion:reduce) { .map-pin { transition:none; } }
 .node-focus-tooltip { background:#0967e9; border:0; border-radius:8px; color:#fff; padding:7px 10px; font-family:var(--font-sans); font-size:11px; font-weight:700; box-shadow:0 4px 9px -4px #183e6577; }
 .leaflet-tooltip-top.node-focus-tooltip::before { border-top-color:#0967e9; }
 .map-location-control { display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
@@ -39,10 +42,10 @@
 .map-info-content p { font-size:11px; line-height:1.7; margin:12px 0 0; color:#526a80; }
 .map-event-legend { display:grid; gap:12px; }
 .map-event-legend > span { display:flex; align-items:center; gap:10px; color:#526a80; font-size:11px; }
-.map-event-legend svg { width:18px; height:18px; flex:none; }
-.map-event-legend .legend-sensor svg { color:#218160; }
-.map-event-legend .legend-fire svg { color:#bd4b12; }
-.map-event-legend .legend-earthquake svg { color:#6847bb; }
+.map-event-legend svg { box-sizing:border-box; width:30px; height:30px; padding:5px; border:2px solid #fff; border-radius:50%; flex:none; box-shadow:0 2px 5px -2px #173a5e55; }
+.map-event-legend .legend-sensor svg { color:#fff; background:linear-gradient(145deg,#40997b,#218160); }
+.map-event-legend .legend-fire svg { color:#fff; background:linear-gradient(145deg,#d46c33,#bd4b12); }
+.map-event-legend .legend-earthquake svg { color:#fff; background:linear-gradient(145deg,#8a6dcc,#6847bb); }
 .map-event-notice { color:#526a80; font-size:11px; line-height:1.7; margin:12px 0; }
 .map-event-link { margin-top:18px; }
 @media(max-width:720px) {
