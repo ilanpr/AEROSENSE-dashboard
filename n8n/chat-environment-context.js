@@ -16,7 +16,7 @@ function prepareHubContext(base, cacheResult, now=Date.now()) {
   const facts=Array.isArray(card.payload?.facts)?card.payload.facts:[];
   const fresh=same?facts.filter(f=>f.area_id===area.id&&f.data_origin==="external_api"&&f.role==="supplementary"&&f.reference?.latitude===area.latitude&&f.reference?.longitude===area.longitude&&Date.parse(f.fresh_until)>now&&(typeof f.value==="string"?f.value.trim().length>0:Number.isFinite(f.value))):[];
   statuses.push({area_id:area.id,provider:card.provider,status:!same?"location_changed":card.last_error?"provider_error":fresh.length?"available":facts.length?"stale":"unavailable",last_fetch:card.payload?.fetched_at||null});
-  let selected=fresh.filter(f=>!wanted.length||wanted.includes(f.category));
+  let selected=[...fresh];
   if(wanted.includes("air_quality")){
    const current=f=>!["forecast","historical"].includes(f.kind)&&Number.isFinite(Date.parse(f.valid_at))&&Date.parse(f.valid_at)<=now+1800000;
    selected=selected.filter(f=>f.category!=="air_quality"||current(f));
@@ -27,8 +27,13 @@ function prepareHubContext(base, cacheResult, now=Date.now()) {
    const tomorrow=new Date(now+86400000+7*3600000).toISOString().slice(0,10);
    selected.sort((a,b)=>Number(String(b.label).includes(tomorrow))-Number(String(a.label).includes(tomorrow)));
   }
-  for(const f of selected.slice(0,wanted.length?8:4))if(!seen.has(f.id)){seen.add(f.id);available.push(f);}
+  // Keywords prioritize facts, but never hide other categories from the model.
+  selected.sort((a,b)=>Number(wanted.includes(b.category))-Number(wanted.includes(a.category)));
+  for(const f of selected.slice(0,8))if(!seen.has(f.id)){seen.add(f.id);available.push(f);}
  }
- return {json:{...base,environment_area:validArea?{id:area.id,source_node_id:area.source_node_id,name:area.name,latitude:area.latitude,longitude:area.longitude,coordinate_source:area.coordinate_source,timezone:area.timezone}:null,environment:[...available.slice(0,21),...(base.disaster_news||[])].slice(0,24),environment_status:statuses,environment_scope:"Kabar bencana berlabel Indonesia mencakup nasional dan tidak membuktikan kejadian pada titik robot. Data lingkungan lainnya mengikuti koordinat node yang diizinkan dan terpisah dari pembacaan sensor AEROSENSE. Lokasi stasiun eksternal hanya diketahui bila penyedia menyertakannya; grid model bukan lokasi sensor.",hub_at:new Date(now).toISOString()}};
+ // Round-robin categories so a large weather feed cannot crowd out air or earthquake facts.
+ const groups=Map.groupBy(available,f=>f.category),balanced=[];
+ for(let i=0;balanced.length<21&&i<8;i++)for(const facts of groups.values())if(facts[i]&&balanced.length<21)balanced.push(facts[i]);
+ return {json:{...base,environment_area:validArea?{id:area.id,source_node_id:area.source_node_id,name:area.name,latitude:area.latitude,longitude:area.longitude,coordinate_source:area.coordinate_source,timezone:area.timezone}:null,environment:[...balanced,...(base.disaster_news||[])].slice(0,24),environment_status:statuses,environment_scope:"Kabar bencana berlabel Indonesia mencakup nasional dan tidak membuktikan kejadian pada titik robot. Data lingkungan lainnya mengikuti koordinat node yang diizinkan dan terpisah dari pembacaan sensor AEROSENSE. Lokasi stasiun eksternal hanya diketahui bila penyedia menyertakannya; grid model bukan lokasi sensor.",hub_at:new Date(now).toISOString()}};
 }
 return prepareHubContext($("Muat konteks terbaru Web").first().json,$json);

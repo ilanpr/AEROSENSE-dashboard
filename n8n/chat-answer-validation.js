@@ -3,7 +3,6 @@ const context=hub.context||[];
 const direct=$("Periksa input Web").first().json.direct_route===true;
 const refusal="Maaf, AERO-BOT hanya membantu pertanyaan tentang udara dan lingkungan. Silakan gunakan bahasa yang sopan.";
 const allowed={dust_ug_m3:["Debu","µg/m³"],pm25_ug_m3:["PM2.5","µg/m³"],eco2_ppm:["eCO2","ppm"],tvoc_ppb:["TVOC","ppb"],temperature_c:["Suhu","°C"],humidity_pct:["Kelembapan","%"]};
-const topics=["air_quality","pollution","waste","water","climate","ecosystems","greeting","weather","soil","fire","flood","earthquake","biodiversity"];
 const clean=s=>String(s||"").replace(/[\r\n<>]/g," ").slice(0,100);
 let result={answer:refusal,decision:"deny",provider_error:false};
 try{
@@ -26,26 +25,28 @@ try{
  }else{
   const text=($json.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("").trim();
   if(!text)throw new Error("Respons Gemini kosong");
-  p=JSON.parse(text);
+  p=JSON.parse(text.replace(/^```(?:json)?\s*/i," ").replace(/\s*```$/, "").trim());
+  if(p && !Array.isArray(p)){p.readings??=[];p.environment_refs??=[];}
  }
- if(!p||Array.isArray(p)||Object.keys(p).sort().join(",")!=="answer,decision,environment_refs,readings,topic"||!["allow","deny"].includes(p.decision)||typeof p.answer!=="string"||!Array.isArray(p.readings)||p.readings.length>8||!Array.isArray(p.environment_refs)||p.environment_refs.length>4)throw new Error("Format jawaban tidak valid");
+ if(!p||Array.isArray(p)||!["allow","deny"].includes(p.decision)||typeof p.answer!=="string"||!Array.isArray(p.readings)||p.readings.length>8||!Array.isArray(p.environment_refs)||p.environment_refs.length>4)throw new Error("Format jawaban tidak valid");
  if(p.decision==="allow"){
-  if(!topics.includes(p.topic)||!p.answer.trim()||p.answer.length>1000||/[0-9]|https?:|www\./i.test(p.answer))throw new Error("Isi jawaban tidak valid");
+  if(!p.answer.trim()||p.answer.length>1000||/https?:|www\./i.test(p.answer))throw new Error("Isi jawaban tidak valid");
   // Only list where the information came from and when. No values, labels or links.
   const sources=new Map();const seen=new Set();
   const when=v=>{const d=Date.parse(v);return Number.isFinite(d)?new Date(d).toLocaleString("id-ID",{timeZone:"Asia/Jakarta",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+" WIB":"";};
   const addSource=(name,time,stale)=>{const key=clean(name);if(!key)return;const t=Date.parse(time);const old=sources.get(key);if(!old||(Number.isFinite(t)&&t>old.t))sources.set(key,{t:Number.isFinite(t)?t:-1,label:when(time),stale:!!stale});};
   for(const ref of p.readings){
-   if(!ref||Object.keys(ref).sort().join(",")!=="metric,node_id,source"||!Object.hasOwn(allowed,ref.metric)||!["measured","gru"].includes(ref.source))throw new Error("Referensi tidak valid");
+   if(!ref||!Object.hasOwn(allowed,ref.metric)||!["measured","gru"].includes(ref.source))throw new Error("Referensi tidak valid");
    const s=context.find(s=>s.node_id===ref.node_id);
    if(!s||s.quality?.invalid===true||(ref.metric==="pm25_ug_m3"&&!s.pm25_validated))throw new Error("Sensor tidak diizinkan");
-   const key=ref.node_id+":"+ref.metric+":"+ref.source;if(seen.has(key))throw new Error("Referensi duplikat");seen.add(key);
+   const key=ref.node_id+":"+ref.metric+":"+ref.source;if(seen.has(key))continue;seen.add(key);
    const value=ref.source==="gru"?(s.gru?.target===ref.metric?s.gru.value:null):s.metrics?.[ref.metric];
    if(!Number.isFinite(value))throw new Error("Nilai sensor tidak tersedia");
    addSource("Sensor AEROSENSE "+(s.name||s.node_id),s.observed_at,s.stale);
   }
   for(const id of p.environment_refs){
-   if(typeof id!=="string"||seen.has(id))throw new Error("Referensi lingkungan tidak valid");
+   if(typeof id!=="string")throw new Error("Referensi lingkungan tidak valid");
+   if(seen.has(id))continue;
    const f=hub.environment.find(f=>f.id===id);
    const national=f&&f.area_id==="indonesia"&&["news","monitoring_notification"].includes(f.kind)&&(hub.disaster_news||[]).some(n=>n.id===id&&n.source_url===f.source_url);
    if(!f||(!national&&f.area_id!==hub.environment_area?.id)||f.data_origin!=="external_api"||f.role!=="supplementary"||!Number.isFinite(Date.parse(f.fresh_until))||Date.parse(f.fresh_until)<=Date.now())throw new Error("Fakta lingkungan tidak tersedia");
@@ -60,5 +61,5 @@ try{
   if(answer.length>2000)throw new Error("Jawaban terlalu panjang");
   result={answer,decision:"allow",provider_error:false};
  }
-}catch{result={answer:"",decision:"deny",provider_error:true};}
+}catch(error){result={answer:"",decision:"deny",provider_error:true,validation_error:String(error.message||"Validasi gagal").slice(0,120)};}
 return {json:result};

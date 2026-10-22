@@ -27,7 +27,7 @@ test("worker context follows an authorized robot node and keeps national news se
     {area_id:area.id,provider:"openmeteo_air",request_latitude:area.latitude,request_longitude:area.longitude,payload:{facts:[fact,{...fact,id:"old",fresh_until:new Date(now-1).toISOString()}]}},
     {area_id:area.id,provider:"legacy",request_latitude:area.latitude,request_longitude:area.longitude,payload:{facts:[{...fact,id:"legacy",category:"biodiversity"}]}}
   ]},()=>({first:()=>({json:base})})).json;
-  assert.deepEqual(result.environment.map(x=>x.id),["air","news-1"]);
+  assert.deepEqual(result.environment.map(x=>x.id),["air","legacy","news-1"]);
   assert.deepEqual(result.context,[]);
   assert.equal(result.environment_area.id,"node_node1");
   const validation=await readFile(new URL("../../n8n/chat-answer-validation.js",import.meta.url),"utf8");
@@ -70,4 +70,28 @@ test("Hub planner only polls active robot-node points and skips fresh provider c
   assert(jobs.every(j=>j.json.targets.every(a=>a.id===area.id&&a.latitude===area.latitude)));
   assert.equal(run({areas:[area],cache:jobs.map(j=>({area_id:area.id,provider:j.json.provider,request_latitude:area.latitude,request_longitude:area.longitude,refresh_after:new Date(Date.now()+86400000).toISOString()}))}).length,0);
   assert.equal(run({areas:[area],cache:jobs.map(j=>({area_id:area.id,provider:j.json.provider,request_latitude:area.latitude,request_longitude:area.longitude,refresh_after:new Date(Date.now()+15000).toISOString()}))}).length,5);
+});
+
+
+test("model output accepts harmless JSON variations without weakening source checks", async () => {
+ const code=await readFile(new URL("../../n8n/chat-answer-validation.js",import.meta.url),"utf8");
+ const lookup=name=>({first:()=>({json:name==="Siapkan konteks hub Web"?{context:[],environment:[]}:{direct_route:false}})});
+ const run=p=>new Function("$json","$",code)({candidates:[{content:{parts:[{text:"```json\n"+JSON.stringify(p)+"\n```"}]}}]},lookup).json;
+ const answer=run({decision:"allow",topic:"environment_advice",answer:"Kurangi paparan PM2.5 dengan menghindari asap.",extra:"ignored"});
+ assert.equal(answer.decision,"allow");
+ assert.match(answer.answer,/PM2.5/);
+ assert.equal(run({decision:"allow",answer:"Info sumber.",environment_refs:["invented"]}).provider_error,true);
+ assert.equal(run({decision:"deny",answer:"Tidak sesuai topik."}).decision,"deny");
+});
+
+
+test("keyword hints keep other fresh categories available to the model", async () => {
+ const code=await readFile(new URL("../../n8n/chat-environment-context.js",import.meta.url),"utf8");
+ const area={id:"node_n1",source_node_id:"n1",coordinate_source:"robot_node",latitude:-7,longitude:112};
+ const facts=Array.from({length:17},(_,i)=>({id:"weather-"+i,category:"weather"})).concat([{id:"air",category:"air_quality"},{id:"quake",category:"earthquake"}]).map(f=>({...f,area_id:area.id,data_origin:"external_api",role:"supplementary",reference:area,fresh_until:new Date(Date.now()+3600000).toISOString(),value:1}));
+ const cards=["weather","air_quality","earthquake"].map(category=>({area_id:area.id,request_latitude:area.latitude,request_longitude:area.longitude,payload:{facts:facts.filter(f=>f.category===category)}}));
+ const result=new Function("$json","$",code)({environment_area:area,environment_cache:cards},()=>({first:()=>({json:{text:"Cuaca di sini?",node_ids:["n1"]}})})).json;
+ assert(result.environment.some(f=>f.id==="air"));
+ assert(result.environment.some(f=>f.id==="quake"));
+ assert(result.environment.length<=24);
 });

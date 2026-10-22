@@ -56,3 +56,11 @@ docker compose exec -T aerosense-api node scripts/check-environment.mjs
 Periksa `environment_providers` untuk waktu percobaan, jadwal berikut, fakta masih berlaku, fakta lama, kategori, dan waktu data. Respons HTTP 200 saja belum membuktikan setiap sumber masih baru. `public_nodes: 0` berarti guest belum mempunyai node yang dipublikasikan; login untuk membaca node akun, atau terbitkan node yang memang disetujui pengelola.
 
 `https://aerosense.me/api/health` harus mengembalikan JSON `{"status":"ok"}`. Jika HTML dikembalikan, hostname masih mengarah ke origin/rute yang salah. Arahkan layanan web Cloudflare ke container/origin web port 8082 yang memiliki proxy `/api/`, lalu periksa lagi. Jangan memakai keberhasilan localhost sebagai bukti domain publik sudah terhubung.
+
+## Pemahaman pertanyaan dan format jawaban
+
+Pada 22 Oktober 2026, workflow Jawaban website dan WhatsApp dipublikasikan dengan konteks lintas kategori: kata kunci hanya memberi prioritas, tidak lagi menyembunyikan kategori lain. Fakta tetap dibatasi pada lokasi yang diizinkan dan masa berlakunya. Maksimal 21 fakta lokal dibagi antar kategori, ditambah kabar nasional hingga 24 fakta.
+
+Validator menerima JSON dengan pagar Markdown, field tambahan, daftar referensi yang tidak disertakan, dan variasi nama topik. Istilah seperti PM2.5 dan eCO2 tidak memicu kegagalan hanya karena mengandung digit. Referensi yang tidak tersedia, data kedaluwarsa, dan URL dalam jawaban tetap ditolak. Kegagalan validasi memiliki `validation_error` pada output node n8n agar dapat dibedakan dari respons model kosong.
+
+Sumber kode: `n8n/chat-environment-context.js`, `n8n/chat-answer-validation.js`, `n8n/chat-system-prompt.txt`. Untuk WhatsApp, nama referensi node Web diganti menjadi WhatsApp. Perubahan ini diterapkan langsung pada workflow aktif; tidak membutuhkan rebuild web/API. Uji ulang memakai pertanyaan baru, karena hasil job lama tidak diubah.
