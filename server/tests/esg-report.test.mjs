@@ -17,7 +17,7 @@ test("ESG report summarizes readings and renders a valid PDF", async t => {
     pm25_validated: false, calibration_version: null, rules: [{ metric: "dust_ug_m3", high: 35, danger_high: null, unit: "µg/m³", enabled: true }] };
   const digest = await report.sha256Hex(report.readingsFingerprintSource(readings));
   assert.match(digest, /^[a-f0-9]{64}$/);
-  const r = report.buildReport({ node, readings, alerts: [], generatedAt: new Date(now), digest });
+  const r = report.buildReport({ node, readings, alerts: [], generatedAt: new Date(now), recipient: "PT Penerima", digest });
   const dust = r.metrics.find(m => m.key === "dust_ug_m3");
   assert.equal(dust.count, 4); // the invalid reading is excluded
   assert.equal(dust.max, 110);
@@ -31,6 +31,12 @@ test("ESG report summarizes readings and renders a valid PDF", async t => {
   assert.ok(text.startsWith("%PDF-1.4"));
   assert.ok(text.trimEnd().endsWith("%%EOF"));
   assert.ok(text.includes(digest));
+  assert.ok(text.includes("PT Penerima"));
+  const single=report.buildReport({node,readings:readings.slice(0,1),digest,alerts:[{id:"old",created_at:new Date(now-86400000).toISOString()}]});
+  assert.equal(single.alerts.total,0,"alerts outside the reporting period are excluded");
+  const singlePdf=Buffer.from(pdf.renderEsgReportPdf(single,digest)).toString("latin1");
+  assert.match(singlePdf,/\/Count 1/);
+  assert.ok(!singlePdf.includes("Tren parameter"),"a single observation does not create empty charts");
   assert.match(text, /\/Count \d+/);
   const xref = Number(text.match(/startxref\n(\d+)/)[1]);
   assert.equal(text.slice(xref, xref + 4), "xref");

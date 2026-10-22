@@ -125,7 +125,7 @@ export function buildReport(input: {
   const from = readings.length ? readings[readings.length - 1].observed_at : null;
   const to = readings.length ? readings[0].observed_at : null;
   const hours = from && to ? round((Date.parse(to) - Date.parse(from)) / 3600000, 1) : null;
-  const alerts = [...(input.alerts || [])].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+  const alerts = [...(input.alerts || [])].filter(a => from && to && Date.parse(a.created_at) >= Date.parse(from) && Date.parse(a.created_at) <= Date.parse(to)).sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
   const metrics = REPORT_METRICS
     .filter(m => m.key !== "pm25_ug_m3" || input.node.pm25_validated)
     .map(m => summarizeMetric(m.key, readings, input.node.rules));
