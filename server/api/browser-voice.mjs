@@ -32,8 +32,8 @@ export function answerChunks(text, first = 140, rest = 280) {
 }
 
 export function transcriptionModels(env) {
-  const primary = env.GEMINI_TRANSCRIBE_MODEL || env.GEMINI_TEXT_MODEL || "gemini-3.1-flash-lite";
-  const fallback = String(env.GEMINI_TRANSCRIBE_FALLBACK_MODELS ?? "gemini-3.5-flash-lite,gemini-2.5-flash-lite")
+  const primary = env.GEMINI_TRANSCRIBE_MODEL || "gemini-3.5-flash-lite";
+  const fallback = String(env.GEMINI_TRANSCRIBE_FALLBACK_MODELS ?? "gemini-3.1-flash-lite")
     .split(",").map(model => model.trim()).filter(Boolean);
   return [...new Set([primary, ...fallback])];
 }

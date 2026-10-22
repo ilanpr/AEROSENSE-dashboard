@@ -26,7 +26,8 @@ original = env_path.read_text()
 existing = dict(line.split('=', 1) for line in original.splitlines() if '=' in line and not line.lstrip().startswith('#'))
 values = {
     'GEMINI_API_KEY': existing.get('GEMINI_API_KEY') or candidates[0]['data']['apiKey'],
-    'GEMINI_TEXT_MODEL': existing.get('GEMINI_TEXT_MODEL') or 'gemini-3.1-flash-lite',
+    'GEMINI_TEXT_MODEL': existing.get('GEMINI_TEXT_MODEL') or 'gemini-3.5-flash-lite',
+    'GEMINI_TRANSCRIBE_MODEL': existing.get('GEMINI_TRANSCRIBE_MODEL') or 'gemini-3.5-flash-lite',
     'GEMINI_TTS_MODEL': existing.get('GEMINI_TTS_MODEL') or 'gemini-3.8-flash-tts',
     'GEMINI_TTS_VOICE': existing.get('GEMINI_TTS_VOICE') or 'Puck',
 }

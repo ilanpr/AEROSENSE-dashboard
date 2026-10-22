@@ -58,7 +58,8 @@ test("browser voice requires auth and owned replies, validates recordings, and n
 
 test("transcription retries Gemini high-demand errors and falls back to the next model", async () => {
   const { transcribeWithFallback, transcriptionModels } = await import("../api/browser-voice.mjs");
-  const env = { GEMINI_TEXT_MODEL: "busy-model", GEMINI_TRANSCRIBE_FALLBACK_MODELS: "missing-model, spare-model" };
+  assert.equal(transcriptionModels({GEMINI_TEXT_MODEL:"gemini-3.1-flash-lite"})[0],"gemini-3.5-flash-lite");
+  const env = { GEMINI_TRANSCRIBE_MODEL: "busy-model", GEMINI_TRANSCRIBE_FALLBACK_MODELS: "missing-model, spare-model" };
   assert.deepEqual(transcriptionModels(env), ["busy-model", "missing-model", "spare-model"]);
   const calls = [];
   const gemini = async (_system, _input, extra) => {
