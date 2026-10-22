@@ -120,3 +120,15 @@ test("spoken text keeps values and drops source and time details", async () => {
   try { browser = await import("../../src/lib/handsfree.ts"); } catch { return; }
   assert.deepEqual(browser.answerChunks(answer), answerChunks(answer));
 });
+
+
+test("speech errors expose only a controlled message and keep upstream status in safe logs", async () => {
+ const logs=[],original=console.error;
+ console.error=line=>logs.push(JSON.parse(line));
+ try {
+  const route=browserVoiceRoutes({env:{GEMINI_API_KEY:"configured"},user:async()=>({id:"owner"}),one:async()=>null,member:async()=>{},rate:()=>{},rawBody:async()=>Buffer.from('{"test":true}'),send:()=>{},gemini:async()=>{throw Object.assign(Error("private provider details"),{status:429});}});
+  await assert.rejects(route({method:"POST"},{},new URL("http://test/v1/voice/speak")),error=>error.status===503 && /Batas pemakaian/.test(error.publicMessage) && !/private/.test(error.publicMessage));
+  assert.equal(logs[0].upstream_status,429);
+  assert(!JSON.stringify(logs).includes("private provider"));
+ } finally {console.error=original;}
+});

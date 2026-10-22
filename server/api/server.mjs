@@ -1318,10 +1318,12 @@ const server = http.createServer(async (req, res) => {
     if (!res.headersSent)
       send(
         res,
-        err.status && err.status >= 400 && err.status < 500 ? err.status : 400,
+        err.status && err.status >= 400 && err.status < 600 ? err.status : 400,
         {
           error:
-            err.status === 429
+            typeof err.publicMessage === "string"
+              ? err.publicMessage
+              : err.status === 429
               ? err.message
               : "Permintaan gagal. Periksa input atau konfigurasi layanan.",
         },

@@ -126,6 +126,13 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
     assert.equal((await fetch(base + "/v1/nodes")).status, 401);
     const ruleBody = {node_id:"n1",metric:"dust_ug_m3",high:40,clear_below:35,danger_high:60,unit:"µg/m³",cooldown_seconds:1800,enabled:true};
     const ruleAuth = {Authorization:"Bearer valid"};
+    const previousGeminiKey = process.env.GEMINI_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+    const unavailableVoice = await post("/v1/voice/speak", {test:true}, ruleAuth);
+    if (previousGeminiKey !== undefined) process.env.GEMINI_API_KEY = previousGeminiKey;
+    assert.equal(unavailableVoice.status,503);
+    assert.match((await unavailableVoice.json()).error,/Suara AERO-BOT belum diaktifkan/);
+
     const savedRule = await post("/v1/rules",ruleBody,ruleAuth);
     assert.equal(savedRule.status,200);
     assert.equal((await savedRule.json())[0].danger_high,60);
