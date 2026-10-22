@@ -36,6 +36,12 @@ test("browser voice requires auth and owned replies, validates recordings, and n
   await run("speak");
   assert.equal(status, 200); assert(Buffer.isBuffer(ended));
   assert.equal(modelCalls[0].input[0].content[0].text, reply.result.text);
+  const callsBeforeReplay = modelCalls.length;
+  await run("speak");
+  assert.equal(modelCalls.length, callsBeforeReplay, "repeat playback reuses audio after access checks");
+  authorized = false;
+  await assert.rejects(run("speak"), { status: 401 });
+  authorized = true;
   payload = { test: true, text: "Do not speak arbitrary input" };
   await run("speak");
   assert(!JSON.stringify(modelCalls.at(-1)).includes(payload.text));

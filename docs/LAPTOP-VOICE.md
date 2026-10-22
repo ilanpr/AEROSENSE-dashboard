@@ -64,3 +64,11 @@ Pada 22 Oktober 2026, workflow Jawaban website dan WhatsApp dipublikasikan denga
 Validator menerima JSON dengan pagar Markdown, field tambahan, daftar referensi yang tidak disertakan, dan variasi nama topik. Istilah seperti PM2.5 dan eCO2 tidak memicu kegagalan hanya karena mengandung digit. Referensi yang tidak tersedia, data kedaluwarsa, dan URL dalam jawaban tetap ditolak. Kegagalan validasi memiliki `validation_error` pada output node n8n agar dapat dibedakan dari respons model kosong.
 
 Sumber kode: `n8n/chat-environment-context.js`, `n8n/chat-answer-validation.js`, `n8n/chat-system-prompt.txt`. Untuk WhatsApp, nama referensi node Web diganti menjadi WhatsApp. Perubahan ini diterapkan langsung pada workflow aktif; tidak membutuhkan rebuild web/API. Uji ulang memakai pertanyaan baru, karena hasil job lama tidak diubah.
+
+## Perbaikan latensi 22 Oktober 2026
+
+Uji produksi menemukan satu job web menunggu 270,85 detik hingga selesai karena baru terambil lewat pemulihan lima menit. Pemulihan Control Center sekarang tiap 10 detik; listener event database tetap aktif. Eksekusi dispatcher sukses tidak disimpan agar polling kosong tidak memenuhi database n8n. Eksekusi gagal dan log worker tetap disimpan.
+
+Pada uji berikutnya worker mengambil job kurang dari satu detik, tetapi Gemini 3.1 Flash-Lite memerlukan 70,39 detik. Workflow web dan WhatsApp beralih ke `models/gemini-3.5-flash-lite`, maksimum 512 token. Probe melalui antrean yang sama selesai dalam 2,79 detik dengan jawaban valid. Angka ini hasil satu pengujian, bukan jaminan latensi semua permintaan.
+
+Tombol Dengarkan dan rekam manual sekarang meminta audio per bagian seperti mode suara. Bagian berikutnya disiapkan saat bagian sebelumnya diputar. Backend menyimpan maksimal 16 audio kecil, masing-masing maksimal 1 MB, selama lima menit di memori proses; akses pemilik dan node diperiksa sebelum cache. Tidak menambah penyimpanan Supabase. Pasang ulang API dan web untuk menggunakan perubahan suara ini.

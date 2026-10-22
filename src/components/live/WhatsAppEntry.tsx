@@ -33,7 +33,7 @@ export function WhatsAppEntry({ command = "Mulai", label = "Chat lewat WhatsApp"
       {url && <a ref={primary} className="wa-start-primary" href={url} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
         Buka WhatsApp<ArrowUpRight size={20} aria-hidden="true" />
       </a>}
-      <p className="wa-start-note">{pairing ? "Anda menyetujui notifikasi node ini. Ketik BERHENTI untuk berhenti." : DEMO_MODE ? "Chat WhatsApp ini nyata. Data di web demo tetap simulasi." : "Notifikasi sensor diaktifkan terpisah, setelah Anda memilih node."}</p>
+      <p className="wa-start-note">{pairing ? "Anda menyetujui notifikasi node ini. Ketik BERHENTI untuk berhenti." : DEMO_MODE ? "Lanjutkan percakapan melalui WhatsApp. Data sensor pada tampilan ini merupakan simulasi." : "Notifikasi sensor diaktifkan terpisah, setelah Anda memilih node."}</p>
     </DialogContent>
   </Dialog>;
 }

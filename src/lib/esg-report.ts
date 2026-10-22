@@ -34,6 +34,7 @@ export interface EsgReport {
   report_type: "ambient_monitoring";
   generated_at: string;
   generated_by: string | null;
+  recipient: string | null;
   node: ReportNode;
   period: { from: string | null; to: string | null; hours: number | null };
   coverage: {
@@ -117,7 +118,7 @@ export function reportId(nodeId: string, generatedAt: Date, digest: string) {
 
 export function buildReport(input: {
   node: ReportNode; readings: ReportReading[]; alerts?: ReportAlert[]; scope?: Record<string, unknown>;
-  generatedAt?: Date; generatedBy?: string | null; digest?: string;
+  generatedAt?: Date; generatedBy?: string | null; recipient?: string; digest?: string;
 }): EsgReport {
   const generatedAt = input.generatedAt || new Date();
   const readings = [...input.readings].sort((a, b) => Date.parse(b.observed_at) - Date.parse(a.observed_at));
@@ -134,6 +135,7 @@ export function buildReport(input: {
     report_type: "ambient_monitoring",
     generated_at: generatedAt.toISOString(),
     generated_by: input.generatedBy || null,
+    recipient: input.recipient?.trim().slice(0,160) || null,
     node: input.node,
     period: { from, to, hours },
     coverage: coverageOf(readings),
@@ -173,16 +175,15 @@ const when = formatWhen;
 
 export function summarySentence(report: EsgReport): string {
   const c = report.coverage;
-  const valid = c.reading_count ? Math.round((c.valid_count / c.reading_count) * 100) : 0;
-  const parts = [
-    `Selama ${report.period.hours !== null ? number(report.period.hours, 1) + " jam" : "periode tersedia"} (${when(report.period.from)} sampai ${when(report.period.to)}), node ${report.node.name} mencatat ${c.reading_count} pembacaan dengan ${valid}% valid.`,
-  ];
+  const parts = [c.reading_count === 1
+    ? `Satu pengamatan tercatat pada ${when(report.period.to)}.`
+    : `${c.reading_count} pengamatan mencakup ${number(report.period.hours || 0, 1)} jam pemantauan.`];
   const dust = report.metrics.find(m => m.key === (report.node.pm25_validated ? "pm25_ug_m3" : "dust_ug_m3"));
   if (dust && dust.count) parts.push(`${dust.label} rata-rata ${number(dust.mean)} ${dust.unit} dengan nilai tertinggi ${number(dust.max)} ${dust.unit}.`);
   const exceeded = report.metrics.filter(m => m.above_threshold > 0);
   parts.push(exceeded.length
     ? `Pembacaan di atas ambang node: ${exceeded.map(m => `${m.label} ${m.above_threshold} kali`).join(", ")}.`
-    : "Tidak ada pembacaan di atas ambang yang diatur untuk node ini.");
+    : report.metrics.some(m=>m.threshold!==null) ? "Tidak tercatat pelampauan ambang pemantauan." : "Ambang pemantauan tidak ditetapkan pada periode ini.");
   if (c.gaps) parts.push(`Terdapat ${c.gaps} jeda data, terpanjang sekitar ${number(c.longest_gap_minutes, 0)} menit.`);
   return parts.join(" ");
 }

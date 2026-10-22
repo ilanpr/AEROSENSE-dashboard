@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "@/services/api";
+import { answerChunks } from "@/lib/handsfree";
 import { DEMO_MODE } from "@/lib/demo-mode";
 
 export function useChatVoice(userId: string | undefined, onTranscript: (text: string) => void) {
@@ -7,6 +8,7 @@ export function useChatVoice(userId: string | undefined, onTranscript: (text: st
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [speaking, setSpeaking] = useState<string | null>(null);
+  const [preparingSpeech, setPreparingSpeech] = useState(false);
   const [error, setError] = useState("");
   const recorder = useRef<MediaRecorder | null>(null);
   const mic = useRef<MediaStream | null>(null);
@@ -25,6 +27,7 @@ export function useChatVoice(userId: string | undefined, onTranscript: (text: st
     if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
     audioUrl.current = null;
     setSpeaking(null);
+    setPreparingSpeech(false);
   }
   useEffect(() => {
     ++generation.current;
@@ -110,7 +113,7 @@ export function useChatVoice(userId: string | undefined, onTranscript: (text: st
     } finally { acquiring.current = false; }
   }
 
-  async function speak(jobId?: string) {
+  async function speak(jobId?: string, text?: string) {
     const id = jobId || "test";
     if (speaking === id) { stopSpeaker(); return; }
     stopSpeaker();
@@ -119,18 +122,33 @@ export function useChatVoice(userId: string | undefined, onTranscript: (text: st
     const controller = new AbortController();
     audioController.current = controller;
     try {
-      const blob = await apiRequest<Blob>("/v1/voice/speak", {
-        method: "POST", body: JSON.stringify(jobId ? { job_id: jobId } : { test: true }),
-        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(65000)]),
+      const parts = jobId && text ? answerChunks(text) : [text || ""];
+      const fetchPart = (part: number) => apiRequest<Blob>("/v1/voice/speak", {
+        method: "POST", body: JSON.stringify(jobId ? { job_id: jobId, ...(text ? { part } : {}) } : { test: true }),
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(25000)]),
       }, true, "blob");
-      if (controller.signal.aborted) return;
-      if (!blob.type.startsWith("audio/wav")) throw new Error("Respons suara belum tersedia. Perbarui backend dan coba lagi.");
-      audioUrl.current = URL.createObjectURL(blob);
-      const audio = new Audio(audioUrl.current);
-      player.current = audio;
-      audio.onended = stopSpeaker;
-      audio.onerror = () => { stopSpeaker(); setError("Speaker gagal memutar suara. Periksa keluaran audio laptop."); };
-      await audio.play();
+      setPreparingSpeech(true);
+      let next = fetchPart(0);
+      for (let part = 0; part < parts.length; part++) {
+        const blob = await next;
+        if (controller.signal.aborted) return;
+        if (!blob.type.startsWith("audio/wav")) throw new Error("Suara belum tersedia. Coba dengarkan kembali.");
+        // Prepare the next part while the current part plays; never wait for the full answer audio.
+        if (part + 1 < parts.length) { next = fetchPart(part + 1); void next.catch(() => {}); }
+        if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
+        audioUrl.current = URL.createObjectURL(blob);
+        const audio = new Audio(audioUrl.current);
+        player.current = audio;
+        setPreparingSpeech(false);
+        await new Promise<void>((resolve, reject) => {
+          audio.onended = () => resolve();
+          audio.onerror = () => reject(new Error("Speaker gagal memutar suara."));
+          controller.signal.addEventListener("abort", () => resolve(), { once: true });
+          audio.play().catch(reject);
+        });
+        if (controller.signal.aborted) return;
+      }
+      stopSpeaker();
     } catch (failure) {
       if (!controller.signal.aborted) {
         stopSpeaker();
@@ -140,5 +158,5 @@ export function useChatVoice(userId: string | undefined, onTranscript: (text: st
       }
     }
   }
-  return { configured, supported, recording, transcribing, speaking, error, toggleRecording, speak, stopSpeaker };
+  return { configured, supported, recording, transcribing, speaking, preparingSpeech, error, toggleRecording, speak, stopSpeaker };
 }

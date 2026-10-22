@@ -17,26 +17,17 @@ function download(bytes: BlobPart, type: string, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-const pdfContents = [
-  "Ringkasan dan identitas laporan, termasuk sidik jari data SHA-256",
-  "Statistik tiap parameter dan jumlah pembacaan di atas ambang",
-  "Cakupan dan mutu data: jeda, data tidak valid, hash data mentah",
-  "Peringatan tercatat dan status peninjauan",
-  "Grafik tren tiap parameter",
-  "Kerangka acuan GRI, batasan penggunaan, dan lembar verifikasi",
-  "Lampiran tabel seluruh pembacaan",
-];
-
 export function EsgReportPanel({ node, readings, alerts, scope, userEmail, loading }: {
   node: LiveNode; readings: Reading[]; alerts: Alert[]; scope?: Record<string, unknown>; userEmail?: string | null; loading: boolean;
 }) {
   const [busy, setBusy] = useState<"pdf" | "json" | null>(null);
   const [status, setStatus] = useState("");
+  const [recipient, setRecipient] = useState("");
   const preview = useMemo(() => readings.length ? buildReport({ node, readings, alerts, scope }) : null, [node, readings, alerts, scope]);
 
   async function prepare(): Promise<{ report: EsgReport; digest: string }> {
     const digest = await sha256Hex(readingsFingerprintSource(readings));
-    return { report: buildReport({ node, readings, alerts, scope, generatedBy: userEmail || null, digest }), digest };
+    return { report: buildReport({ node, readings, alerts, scope, generatedBy: userEmail || null, recipient, digest }), digest };
   }
 
   async function exportPdf() {
@@ -73,27 +64,26 @@ export function EsgReportPanel({ node, readings, alerts, scope, userEmail, loadi
     <section className="live-panel esg-report" aria-labelledby="esg-report-title">
       <div className="esg-report-head">
         <div>
-          <h2 id="esg-report-title">Ringkasan laporan</h2>
-          <p>{preview ? `${formatWhen(preview.period.from)} sampai ${formatWhen(preview.period.to)}` : "Menunggu riwayat pembacaan node."}</p>
+          <h2 id="esg-report-title">Hasil pemantauan</h2>
+          <p>{preview ? preview.period.from === preview.period.to ? formatWhen(preview.period.to) : `${formatWhen(preview.period.from)} – ${formatWhen(preview.period.to)}` : "Menunggu riwayat pembacaan node."}</p>
         </div>
         <div className="esg-report-actions">
           <button className="live-button" type="button" onClick={exportPdf} disabled={disabled}>
             {busy === "pdf" ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />}
             Unduh PDF laporan
           </button>
-          <button className="live-button secondary" type="button" onClick={exportJson} disabled={disabled}>
-            {busy === "json" ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-            Ekspor JSON
-          </button>
+
         </div>
       </div>
+
+      <label className="esg-recipient">Perusahaan penerima<input value={recipient} onChange={e=>setRecipient(e.target.value)} maxLength={160} placeholder="Nama perusahaan (opsional)" /></label>
 
       {preview && c ? (
         <>
           <div className="esg-report-tiles">
-            <div><span>Pembacaan</span><strong>{c.reading_count}</strong><small>dari maksimal {c.limit} terakhir</small></div>
+            <div><span>Pembacaan</span><strong>{c.reading_count}</strong><small>pengamatan tercatat</small></div>
             <div data-tone={valid >= 90 ? "ok" : "warn"}><span>Data valid</span><strong>{valid}%</strong><small>{c.invalid_count} ditandai tidak valid</small></div>
-            <div data-tone={above ? "warn" : "ok"}><span>Di atas ambang</span><strong>{above}</strong><small>jumlah pembacaan</small></div>
+            <div data-tone={above ? "warn" : "ok"}><span>Pelampauan</span><strong>{above}</strong><small>jumlah pembacaan</small></div>
             <div><span>Peringatan</span><strong>{preview.alerts.total}</strong><small>{preview.alerts.acknowledged} sudah ditinjau</small></div>
           </div>
           <p className="esg-report-summary">{summarySentence(preview)}</p>
@@ -118,16 +108,18 @@ export function EsgReportPanel({ node, readings, alerts, scope, userEmail, loadi
               </tbody>
             </table>
           </div>
+          <details className="esg-report-contents"><summary>Kualitas & berkas data</summary>
           <dl className="esg-report-quality">
             <div><dt>Interval umum</dt><dd>{c.median_interval_minutes === null ? "—" : formatNumber(c.median_interval_minutes, 1) + " menit"}</dd></div>
             <div><dt>Jeda data</dt><dd>{c.gaps ? `${c.gaps} jeda · terpanjang ${formatNumber(c.longest_gap_minutes, 0)} menit` : "Tidak ada"}</dd></div>
             <div><dt>Hash data mentah</dt><dd>{c.hashed_raw_count} dari {c.reading_count} pembacaan</dd></div>
             <div><dt>Model GRU</dt><dd>{preview.model.version ? `${preview.model.version} · ${preview.model.estimates} estimasi` : "Tidak ada"}</dd></div>
           </dl>
-          <details className="esg-report-contents">
-            <summary>Isi PDF laporan</summary>
-            <ul>{pdfContents.map(item => <li key={item}>{item}</li>)}</ul>
-            <p>File PDF dan JSON memakai nomor laporan dan sidik jari SHA-256 yang sama, sehingga auditor dapat mencocokkan keduanya.</p>
+          <p>PDF memuat hasil parameter, peringatan, dan tren jika tersedia. Ekspor data menyertakan pembacaan lengkap serta identitas verifikasinya.</p>
+          <button className="esg-data-export" type="button" onClick={exportJson} disabled={disabled}>
+            {busy === "json" ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+            Ekspor JSON
+          </button>
           </details>
         </>
       ) : (

@@ -398,7 +398,7 @@ export function SensorWorkspace({
                   <div className="live-heading">
                     <div>
                       <h2>Historis pembacaan</h2>
-                      <p>Maksimal 288 pembacaan terakhir per node.</p>
+                      <p>Riwayat terbaru pada lokasi terpilih.</p>
                     </div>
                     {mode !== "report" && <button
                       className="live-button secondary"
@@ -428,9 +428,7 @@ export function SensorWorkspace({
                         <ReadingChart data={chart} />
                       </Suspense>
                       <p className="hub-footnote">
-                        Prediksi GRU dengan horizon lebih dari 0 ditampilkan
-                        terpisah pada rincian model, bukan sebagai koreksi pada
-                        waktu pembacaan.
+                        Pembacaan sensor dan prediksi model ditampilkan terpisah.
                       </p>
                     </>
                   )}

@@ -3,14 +3,12 @@ import { PdfDocument, PdfPage, wrapText, type FontName, type Rgb } from "./pdf-w
 import { formatNumber, formatWhen, summarySentence, type EsgReport, type MetricSummary, type ReportReading } from "./esg-report.ts";
 
 const BRAND: Rgb = [0.027, 0.349, 0.737];
-const BRAND_DEEP: Rgb = [0.016, 0.231, 0.541];
 const SKY: Rgb = [0.918, 0.953, 0.988];
 const INK: Rgb = [0.063, 0.149, 0.247];
 const MUTED: Rgb = [0.29, 0.396, 0.518];
 const RULE: Rgb = [0.827, 0.89, 0.965];
 const WHITE: Rgb = [1, 1, 1];
 const WARN: Rgb = [0.651, 0.176, 0.259];
-const OK: Rgb = [0.075, 0.478, 0.31];
 const ZEBRA: Rgb = [0.965, 0.978, 0.995];
 
 const MARGIN = 46;
@@ -40,20 +38,27 @@ class Layout {
   newPage(first = false) {
     this.page = this.doc.addPage();
     if (first) {
-      this.page.rect(0, 0, this.page.width, 150, { fill: BRAND_DEEP });
-      this.page.rect(this.page.width * 0.55, 0, this.page.width * 0.45, 150, { fill: BRAND });
-      this.page.text("AEROSENSE", MARGIN, 42, { size: 11, font: "bold", color: WHITE });
-      this.page.text("Laporan Pemantauan Udara Ambien", MARGIN, 80, { size: 20, font: "bold", color: WHITE, maxWidth: this.width - 150 });
-      this.page.text(this.report.node.name, MARGIN, 102, { size: 13, color: WHITE, maxWidth: this.width * 0.62 });
-      this.page.text("Bukti pendukung audit ESG · belum mendapat assurance independen", MARGIN, 126, { size: 9, color: [0.85, 0.92, 1] });
-      const right = this.page.width - MARGIN;
-      this.page.text("Nomor laporan", right, 30, { size: 7.5, color: [0.85, 0.92, 1], align: "right" });
-      this.page.text(this.report.report_id, right, 43, { size: 9.5, font: "bold", color: WHITE, align: "right" });
-      this.page.text("Dibuat " + when(this.report.generated_at), right, 56, { size: 7.5, color: [0.85, 0.92, 1], align: "right" });
-      this.y = 178;
+      this.page.rect(0, 0, this.page.width, 7, { fill: BRAND });
+      this.page.text("AEROSENSE", MARGIN, 40, { size: 12, font: "bold", color: BRAND });
+      const right=this.page.width-MARGIN;
+      this.page.text(this.report.report_id, right, 34, { size:8, color:MUTED, align:"right" });
+      this.page.text(when(this.report.generated_at),right,47,{size:8,color:MUTED,align:"right"});
+      this.page.text("Laporan pemantauan",MARGIN,91,{size:25,font:"bold",color:INK});
+      this.page.text("udara ambien",MARGIN,121,{size:25,font:"bold",color:INK});
+      this.page.text(this.report.node.name,MARGIN,147,{size:12,color:BRAND,maxWidth:this.width});
+      this.y=168;
+      if(this.report.recipient){
+        this.page.text("Disampaikan kepada",MARGIN,this.y,{size:8,color:MUTED});this.y+=16;
+        for(const line of wrapText(this.report.recipient,this.width,11,"bold")){this.page.text(line,MARGIN,this.y,{size:11,font:"bold",color:INK});this.y+=14;}
+        this.y+=8;
+      }
+      if(this.report.scope?.type==="synthetic_demo"){
+        this.page.text("DATA SIMULASI - bukan hasil pengukuran lapangan",MARGIN,this.y,{size:8,font:"bold",color:WARN});this.y+=18;
+      }
+      this.page.line(MARGIN,this.y,this.page.width-MARGIN,this.y,{color:RULE});this.y+=22;
     } else {
       this.page.text("AEROSENSE", MARGIN, 40, { size: 9, font: "bold", color: BRAND });
-      this.page.text("Laporan Pemantauan Udara Ambien · " + this.report.node.name, MARGIN + 64, 40, { size: 8.5, color: MUTED, maxWidth: this.width - 200 });
+      this.page.text("Pemantauan udara ambien", MARGIN + 80, 40, { size: 8.5, color: MUTED });
       this.page.text(this.report.report_id, this.page.width - MARGIN, 40, { size: 8.5, color: MUTED, align: "right" });
       this.page.line(MARGIN, 50, this.page.width - MARGIN, 50, { color: RULE });
       this.y = TOP;
@@ -67,8 +72,7 @@ class Layout {
   heading(title: string, note?: string) {
     this.ensure(44);
     this.y += 8;
-    this.page.rect(MARGIN, this.y - 11, 4, 15, { fill: BRAND });
-    this.page.text(title, MARGIN + 12, this.y, { size: 13, font: "bold", color: INK });
+    this.page.text(title, MARGIN, this.y, { size: 13, font: "bold", color: INK });
     if (note) this.page.text(note, this.page.width - MARGIN, this.y, { size: 8, color: MUTED, align: "right" });
     this.y += 16;
   }
@@ -102,48 +106,36 @@ class Layout {
     }
   }
 
-  tiles(items: { label: string; value: string; note: string; tone?: Rgb }[]) {
-    const gap = 10, height = 62;
-    const w = (this.width - gap * (items.length - 1)) / items.length;
-    this.ensure(height + 10);
-    items.forEach((item, i) => {
-      const x = MARGIN + i * (w + gap);
-      this.page.rect(x, this.y, w, height, { fill: SKY, stroke: RULE });
-      this.page.text(item.label.toUpperCase(), x + 10, this.y + 16, { size: 7, font: "bold", color: MUTED, maxWidth: w - 20 });
-      this.page.text(item.value, x + 10, this.y + 38, { size: 17, font: "bold", color: item.tone ?? BRAND, maxWidth: w - 20 });
-      this.page.text(item.note, x + 10, this.y + 53, { size: 7.5, color: MUTED, maxWidth: w - 20 });
-    });
-    this.y += height + 14;
-  }
-
   table(columns: Column[], rows: string[][], options: { size?: number; rowHeight?: number; tones?: (Rgb | null)[] } = {}) {
     const size = options.size ?? 8.5;
     const rowHeight = options.rowHeight ?? 16;
     const scale = this.width / columns.reduce((a, c) => a + c.width, 0);
     const widths = columns.map(c => c.width * scale);
+    const headerHeight=Math.max(rowHeight+6,...columns.map((c,i)=>wrapText(c.title,widths[i]-12,size-0.5,"bold").length*(size+3)+12));
     const drawHeader = () => {
-      this.page.rect(MARGIN, this.y, this.width, rowHeight + 2, { fill: BRAND });
-      let x = MARGIN;
-      columns.forEach((c, i) => {
-        const tx = c.align === "right" ? x + widths[i] - 6 : x + 6;
-        this.page.text(c.title, tx, this.y + rowHeight - 4, { size: size - 0.5, font: "bold", color: WHITE, align: c.align === "right" ? "right" : "left", maxWidth: widths[i] - 8 });
-        x += widths[i];
+      this.page.rect(MARGIN,this.y,this.width,headerHeight,{fill:SKY});
+      let x=MARGIN;
+      columns.forEach((c,i)=>{
+        const tx=c.align==="right"?x+widths[i]-6:x+6;
+        wrapText(c.title,widths[i]-12,size-0.5,"bold").forEach((line,n)=>this.page.text(line,tx,this.y+12+n*(size+3),{size:size-0.5,font:"bold",color:INK,align:c.align||"left"}));
+        x+=widths[i];
       });
-      this.y += rowHeight + 2;
+      this.y+=headerHeight;
     };
     this.ensure(rowHeight * 3);
     drawHeader();
-    rows.forEach((row, r) => {
-      if (this.y + rowHeight > BOTTOM) { this.newPage(); drawHeader(); }
-      if (r % 2) this.page.rect(MARGIN, this.y, this.width, rowHeight, { fill: ZEBRA });
-      let x = MARGIN;
-      row.forEach((cell, i) => {
-        const c = columns[i];
-        const tx = c.align === "right" ? x + widths[i] - 6 : x + 6;
-        this.page.text(cell, tx, this.y + rowHeight - 4.5, { size, font: c.font, color: options.tones?.[r] && i === row.length - 1 ? options.tones[r]! : INK, align: c.align === "right" ? "right" : "left", maxWidth: widths[i] - 8 });
-        x += widths[i];
+    rows.forEach((row,r)=>{
+      const lines=row.map((cell,i)=>wrapText(cell,widths[i]-12,size,columns[i].font));
+      const height=Math.max(rowHeight,Math.max(...lines.map(l=>l.length))*(size+3)+12);
+      if(this.y+height>BOTTOM){this.newPage();drawHeader();}
+      if(r%2)this.page.rect(MARGIN,this.y,this.width,height,{fill:ZEBRA});
+      let x=MARGIN;
+      lines.forEach((cell,i)=>{
+        const c=columns[i],tx=c.align==="right"?x+widths[i]-6:x+6;
+        cell.forEach((line,n)=>this.page.text(line,tx,this.y+12+n*(size+3),{size,font:c.font,color:options.tones?.[r]&&i===row.length-1?options.tones[r]!:INK,align:c.align||"left"}));
+        x+=widths[i];
       });
-      this.y += rowHeight;
+      this.y+=height;
     });
     this.page.line(MARGIN, this.y, MARGIN + this.width, this.y, { color: RULE });
     this.y += 12;
@@ -196,123 +188,62 @@ class Layout {
     const total = this.doc.pages.length;
     this.doc.pages.forEach((page, i) => {
       page.line(MARGIN, 806, page.width - MARGIN, 806, { color: RULE });
-      page.text("Dokumen pendukung audit ESG. Tidak menetapkan kepatuhan, skor ESG, atau sumber pencemar.", MARGIN, 820, { size: 7, color: MUTED });
+      page.text("AEROSENSE | Laporan pemantauan lingkungan", MARGIN, 820, { size: 7, color: MUTED });
       page.text(`Halaman ${i + 1} dari ${total}`, page.width - MARGIN, 820, { size: 7, color: MUTED, align: "right" });
     });
   }
 }
 
 export function renderEsgReportPdf(report: EsgReport, digest: string): Uint8Array {
-  const L = new Layout(report, digest);
-  const c = report.coverage;
-  const metricsAbove = report.metrics.reduce((a, m) => a + m.above_threshold, 0);
-  const valid = c.reading_count ? Math.round((c.valid_count / c.reading_count) * 100) : 0;
+  const L=new Layout(report,digest),c=report.coverage;
   L.newPage(true);
-
-  L.heading("Ringkasan");
-  L.tiles([
-    { label: "Pembacaan", value: String(c.reading_count), note: `dari maksimal ${c.limit} terakhir` },
-    { label: "Data valid", value: valid + "%", note: `${c.invalid_count} ditandai tidak valid`, tone: valid >= 90 ? OK : WARN },
-    { label: "Di atas ambang", value: String(metricsAbove), note: "jumlah pembacaan", tone: metricsAbove ? WARN : OK },
-    { label: "Peringatan", value: String(report.alerts.total), note: `${report.alerts.acknowledged} sudah ditinjau` },
-  ]);
-  L.paragraph(summarySentence(report));
-  L.y += 6;
-
-  L.heading("Identitas laporan");
   L.keyValues([
-    ["Nomor laporan", report.report_id],
-    ["Dibuat", when(report.generated_at) + (report.generated_by ? " oleh " + report.generated_by : "")],
-    ["Node", `${report.node.name} (${report.node.id})`],
-    ["Koordinat node", `${number(report.node.latitude, 5)}, ${number(report.node.longitude, 5)}`],
-    ["Periode data", `${when(report.period.from)} sampai ${when(report.period.to)}`],
-    ["Gateway · kalibrasi", `${report.node.gateway_id || "—"} · ${report.node.calibration_version || "belum tercatat"}`],
-    ["PM2.5", report.node.pm25_validated ? "Tervalidasi untuk node ini" : "Belum tervalidasi. Debu optik dilaporkan terpisah."],
-    ["Status assurance", "Belum mendapat assurance independen"],
+    ["Mulai pengamatan",when(report.period.from)],
+    ["Akhir pengamatan",when(report.period.to)],
+    ["Lokasi",`${number(report.node.latitude,5)}, ${number(report.node.longitude,5)}`],
+    ["Cakupan data",`${c.reading_count} pengamatan | ${c.valid_count} lolos pemeriksaan`],
   ]);
-  L.keyValues([["Sidik jari data (SHA-256)", digest || "Tidak tersedia di peramban ini", "mono"]], 1);
-  L.paragraph("Sidik jari dihitung dari daftar pembacaan dan sama dengan nilai readings_sha256 pada file JSON. Nilai yang berbeda berarti data telah berubah.", { size: 8, color: MUTED });
-
-  L.heading("Statistik parameter", "Pembacaan valid saja");
+  L.heading("Hasil pemantauan");
+  L.paragraph(summarySentence(report));L.y+=10;
   L.table([
-    { title: "Parameter", width: 92 }, { title: "Satuan", width: 44 }, { title: "n", width: 30, align: "right" },
-    { title: "Min", width: 42, align: "right" }, { title: "Median", width: 46, align: "right" }, { title: "Rata-rata", width: 50, align: "right" },
-    { title: "Maks", width: 42, align: "right" }, { title: "Terakhir", width: 46, align: "right" }, { title: "Ambang", width: 46, align: "right" },
-    { title: "> Ambang", width: 46, align: "right" },
-  ], report.metrics.map(m => [m.label, m.unit, String(m.count), number(m.min), number(m.median), number(m.mean), number(m.max), number(m.latest),
-    m.threshold === null ? "—" : number(m.threshold), m.threshold === null ? "—" : String(m.above_threshold)]),
-  { tones: report.metrics.map(m => m.above_threshold ? WARN : null) });
-
-  L.heading("Cakupan dan mutu data");
-  const clocks = Object.entries(c.clock_sources).map(([k, v]) => `${k === "sensor" ? "jam sensor" : k === "gateway" ? "jam gateway" : k} ${v}`).join(", ") || "—";
-  L.table([{ title: "Pemeriksaan", width: 200 }, { title: "Hasil", width: 300 }], [
-    ["Interval pembacaan umum", c.median_interval_minutes === null ? "—" : number(c.median_interval_minutes, 1) + " menit"],
-    ["Jeda data (> 3 kali interval)", c.gaps ? `${c.gaps} jeda, terpanjang ${number(c.longest_gap_minutes, 0)} menit` : "Tidak ada"],
-    ["Pembacaan ditandai tidak valid", `${c.invalid_count} dari ${c.reading_count}`],
-    ["Pembacaan dengan hash data mentah", `${c.hashed_raw_count} dari ${c.reading_count}`],
-    ["Sumber waktu", clocks],
-    ["Model estimasi GRU", report.model.version ? `${report.model.version} · target ${report.model.target} · ${report.model.estimates} estimasi` : "Tidak ada hasil model"],
+    {title:"Parameter",width:112},{title:"Satuan",width:44},
+    {title:"Rata-rata",width:60,align:"right"},{title:"Min",width:46,align:"right"},
+    {title:"Maks",width:46,align:"right"},{title:"Terakhir",width:57,align:"right"},
+    {title:"Ambang",width:55,align:"right"},{title:"Pelampauan",width:67,align:"right"},
+  ],report.metrics.filter(m=>m.count>0).map(m=>[
+    m.label,m.unit,number(m.mean),number(m.min),number(m.max),number(m.latest),
+    m.threshold===null?"-":number(m.threshold),m.threshold===null?"-":String(m.above_threshold),
+  ]),{size:8.5,rowHeight:27,tones:report.metrics.filter(m=>m.count>0).map(m=>m.above_threshold?WARN:null)});
+  L.paragraph("Ambang mengikuti konfigurasi node. Statistik hanya menggunakan pembacaan yang lolos pemeriksaan kualitas.",{size:8,color:MUTED});
+  L.heading("Peringatan & kualitas data");
+  L.keyValues([
+    ["Peringatan tercatat",`${report.alerts.total} peringatan | ${report.alerts.acknowledged} ditinjau`],
+    ["Pemeriksaan kualitas",`${c.invalid_count} pembacaan tidak valid | ${c.gaps} jeda data`],
   ]);
-
-  L.heading("Peringatan tercatat", `${report.alerts.total} total`);
-  if (report.alerts.recent.length) {
-    L.table([{ title: "Waktu", width: 130 }, { title: "Parameter", width: 110 }, { title: "Nilai", width: 80, align: "right" },
-      { title: "Ambang", width: 80, align: "right" }, { title: "Status", width: 100 }],
-    report.alerts.recent.map(a => [when(a.created_at), (report.metrics.find(m => m.key === a.metric)?.label || a.metric), number(a.value) + " " + a.unit, number(a.threshold) + " " + a.unit,
-      a.acknowledged_at ? "Sudah ditinjau" : "Belum ditinjau"]),
-    { tones: report.alerts.recent.map(a => a.acknowledged_at ? OK : WARN) });
-  } else L.paragraph("Tidak ada peringatan tersimpan untuk node ini.", { color: MUTED });
-
-  L.heading("Tren pembacaan");
-  const charts = report.metrics.filter(m => m.count > 0);
-  const gap = 12, cw = (L.width - gap) / 2, ch = 128;
-  for (let i = 0; i < charts.length; i += 2) {
-    L.ensure(ch + gap);
-    L.chart(MARGIN, L.y, cw, ch, charts[i], report.readings);
-    if (charts[i + 1]) L.chart(MARGIN + cw + gap, L.y, cw, ch, charts[i + 1], report.readings);
-    L.y += ch + gap;
+  if(report.alerts.recent.length)L.table([
+    {title:"Waktu (WIB)",width:120},{title:"Parameter",width:120},{title:"Nilai",width:85,align:"right"},
+    {title:"Ambang",width:85,align:"right"},{title:"Peninjauan",width:93},
+  ],report.alerts.recent.slice(0,5).map(a=>[when(a.created_at),report.metrics.find(m=>m.key===a.metric)?.label||a.metric,number(a.value)+" "+a.unit,number(a.threshold)+" "+a.unit,a.acknowledged_at?"Ditinjau":"Menunggu"]),{size:8});
+  const charts=report.metrics.filter(m=>m.count>=2);
+  if(charts.length){
+    L.newPage();L.heading("Tren parameter",report.node.name);
+    L.paragraph(`${when(report.period.from)} - ${when(report.period.to)}`,{size:8,color:MUTED});L.y+=12;
+    const gap=14,cw=(L.width-gap)/2,ch=148;
+    for(let i=0;i<charts.length;i+=2){
+      L.ensure(ch+gap);L.chart(MARGIN,L.y,cw,ch,charts[i],report.readings);
+      if(charts[i+1])L.chart(MARGIN+cw+gap,L.y,cw,ch,charts[i+1],report.readings);
+      L.y+=ch+gap;
+    }
+    L.paragraph("Garis merah: ambang node. Putusnya garis: jeda pengamatan. Data mentah tersedia pada ekspor terpisah.",{size:8,color:MUTED});
   }
-  L.paragraph("Garis putus merah menunjukkan ambang peringatan node. Garis terputus berarti tidak ada pembacaan pada periode tersebut.", { size: 8, color: MUTED });
-
-  L.heading("Kerangka acuan");
-  L.table([{ title: "Acuan", width: 70, font: "bold" }, { title: "Topik", width: 120 }, { title: "Penggunaan dalam laporan ini", width: 320 }],
-    report.frameworks.map(f => [f.code, f.topic, f.use]), { rowHeight: 18 });
-
-  L.heading("Batasan penggunaan");
-  for (const item of report.limitations) L.paragraph(item, { bullet: true, size: 9 });
-  L.y += 6;
-
-  L.heading("Lembar verifikasi");
-  L.ensure(120);
-  const boxW = (L.width - 14) / 2;
-  for (const [i, title] of ["Disusun oleh", "Diperiksa oleh"].entries()) {
-    const x = MARGIN + i * (boxW + 14);
-    L.page.rect(x, L.y, boxW, 108, { stroke: RULE });
-    L.page.text(title.toUpperCase(), x + 12, L.y + 18, { size: 7.5, font: "bold", color: MUTED });
-    ["Nama", "Jabatan", "Tanggal", "Tanda tangan"].forEach((field, n) => {
-      const ly = L.y + 40 + n * 20;
-      L.page.text(field, x + 12, ly, { size: 8.5, color: MUTED });
-      L.page.line(x + 78, ly + 2, x + boxW - 12, ly + 2, { color: RULE });
-    });
-  }
-  L.y += 122;
-
-  L.newPage();
-  L.heading("Lampiran A · Pembacaan lengkap", `${report.readings.length} baris, terbaru di atas`);
-  const shown = report.metrics;
-  L.table([
-    { title: "Waktu (WIB)", width: 98 },
-    ...shown.map(m => ({ title: `${m.label.replace(" tervalidasi", "").replace("Kelembapan", "RH").replace("Debu optik", "Debu")} (${m.unit})`, width: 58, align: "right" as const })),
-    { title: "GRU", width: 50, align: "right" }, { title: "Status", width: 50 },
-  ], report.readings.map(r => [
-    when(r.observed_at),
-    ...shown.map(m => number(r.metrics[m.key])),
-    r.gru ? number(r.gru.value) : "—",
-    r.quality?.invalid ? "Tidak valid" : "Valid",
-  ]), { size: 7.5, rowHeight: 13, tones: report.readings.map(r => r.quality?.invalid ? WARN : null) });
-  L.paragraph("GRU adalah estimasi model untuk target " + (report.model.target || "—") + " dan tidak menggantikan pembacaan terukur.", { size: 8, color: MUTED });
-
-  L.footers();
-  return L.doc.save();
+  L.heading("Catatan laporan");
+  L.paragraph("Pemantauan udara ambien pada titik pemasangan; bukan inventaris emisi atau penetapan kepatuhan dan sumber pencemar. Verifikasi independen tidak termasuk dalam laporan.",{size:8,color:MUTED});
+  if(!report.node.pm25_validated)L.paragraph("Debu optik dilaporkan sebagai indikator sensor, bukan PM2.5 tervalidasi.",{size:8,color:MUTED});
+  L.paragraph("eCO2 adalah estimasi sensor gas, bukan CO2e inventaris gas rumah kaca.",{size:8,color:MUTED});
+  L.y+=10;
+  L.keyValues([["Identitas node",report.node.id],["Kalibrasi",report.node.calibration_version||"Tidak tercatat"]]);
+  L.ensure(45);L.page.text("VERIFIKASI DATA | SHA-256",MARGIN,L.y,{size:7,font:"bold",color:MUTED});L.y+=12;
+  const hash=digest||"Tidak tersedia";
+  for(const line of wrapText(hash,L.width,7.5,"mono")){L.page.text(line,MARGIN,L.y,{size:7.5,font:"mono",color:MUTED});L.y+=11;}
+  L.footers();return L.doc.save();
 }
-

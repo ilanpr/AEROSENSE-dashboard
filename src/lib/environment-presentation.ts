@@ -176,8 +176,8 @@ export function sensorSummary(
     };
   if (usable.length && usable.length === configured.length)
     return {
-      label: "Relatif bersih",
-      title: "Relatif bersih.",
+      label: "Terpantau baik",
+      title: "Terpantau baik.",
       body: "",
       tone: "calm",
     };

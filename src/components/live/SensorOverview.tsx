@@ -184,7 +184,7 @@ export function SensorOverview() {
           <details className="insight-disclosure status-method">
             <summary><span>Arti status sensor</span><ChevronDown size={17} /></summary>
             <div className="insight-detail-body">
-              <p>Relatif bersih: pembacaan parameter udara berada di bawah ambang yang diatur. Waspada: ambang peringatan terlewati atau belum pulih. Bahaya: ambang bahaya yang diatur terlewati. Data lama, nilai tidak valid, atau aturan belum tersedia tidak diberi status bersih.</p>
+              <p>Terpantau baik: pembacaan parameter udara berada di bawah ambang yang diatur. Waspada: ambang peringatan terlewati atau belum pulih. Bahaya: ambang bahaya yang diatur terlewati. Data lama, nilai tidak valid, atau aturan belum tersedia tidak diberi status bersih.</p>
               <p>Status ini untuk pemantauan sensor, bukan AQI, ISPU, kategori kesehatan, atau bukti sumber emisi. Debu optik dan eCO₂ tetap merupakan indikator sensor.</p>
               {node?.rules?.map(r=><p key={r.metric}>{metricLabels[r.metric]?.[0] || r.metric}: waspada ≥ {r.high} {r.unit}{r.danger_high != null ? ` · bahaya ≥ ${r.danger_high} ${r.unit}` : " · ambang bahaya belum diatur"}.</p>)}
             </div>

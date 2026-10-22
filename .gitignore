@@ -29,3 +29,6 @@ dist-demo/
 !.env.example
 artifacts/
 reference-ui
+
+# Generated document previews
+output/

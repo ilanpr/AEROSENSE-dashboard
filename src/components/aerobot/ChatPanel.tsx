@@ -133,7 +133,7 @@ export function ChatPanel() {
           if (spoken) {
             voiceJobs.current.delete(job.id);
             if (spoken === "handsfree") void handsFreeControls.speakAnswer(job.id, job.result!.text!);
-            else void voiceSpeak.current(job.id);
+            else void voiceSpeak.current(job.id, job.result!.text!);
           }
           return;
         }
@@ -183,7 +183,6 @@ export function ChatPanel() {
   // Voice users cannot easily pick a sensor, so voice questions fall back to the first node.
   // The node gives Gemini the sensor readings and the public environment data (weather, air, fire, flood).
   const voiceNode = nodeId || nodes.data?.nodes?.[0]?.id || "";
-  const voiceNodeName = nodes.data?.nodes?.find(n => n.id === voiceNode)?.name;
   async function send(text = input, fromVoice = false): Promise<string | null> {
     const targetNode = fromVoice && !robotId ? voiceNode : nodeId;
     if (!text.trim() || sending.current || pending || !user) return null;
@@ -253,9 +252,9 @@ export function ChatPanel() {
               ))}
             </div>
             {m.sender === "bot" && m.id !== "welcome" && voice.configured && (
-              <button className="chat-listen" type="button" onClick={() => void voice.speak(m.id)} disabled={voice.recording || voice.transcribing}>
-                {voice.speaking === m.id ? <Square size={14} /> : <Volume2 size={15} />}
-                {voice.speaking === m.id ? "Hentikan suara" : "Dengarkan"}
+              <button className="chat-listen" type="button" onClick={() => void voice.speak(m.id, m.text)} disabled={voice.recording || voice.transcribing}>
+                {voice.speaking === m.id && voice.preparingSpeech ? <Loader2 size={14} className="animate-spin" /> : voice.speaking === m.id ? <Square size={14} /> : <Volume2 size={15} />}
+                {voice.speaking === m.id ? voice.preparingSpeech ? "Menyiapkan suara…" : "Hentikan suara" : "Dengarkan"}
               </button>
             )}
           </div>
@@ -302,7 +301,7 @@ export function ChatPanel() {
         <input
           id="chatInput"
           ref={composer}
-          aria-describedby="chat-send-hint"
+          aria-describedby={voice.recording || voice.transcribing ? "chat-recording-status" : undefined}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           maxLength={2000}
@@ -310,6 +309,13 @@ export function ChatPanel() {
           placeholder="Tanyakan tentang lingkungan…"
           autoComplete="off"
         />
+        <button className={`chat-composer-mic ${voice.recording ? "is-recording" : ""}`} type="button"
+          onClick={() => void voice.toggleRecording()}
+          disabled={!user || !voice.configured || !voice.supported || voice.transcribing || busy || !!pending || handsFree.active}
+          aria-label={voice.recording ? "Selesai rekam dan kirim" : "Rekam pertanyaan"}
+          title={voice.recording ? "Selesai rekam dan kirim" : "Rekam pertanyaan"} aria-pressed={voice.recording}>
+          {voice.recording ? <Square size={18} /> : voice.transcribing ? <Loader2 size={18} className="animate-spin" /> : <Mic size={18} />}
+        </button>
         <button
           aria-label="Kirim pesan"
           title="Kirim pesan"
@@ -318,26 +324,21 @@ export function ChatPanel() {
           <ArrowUp size={18} />
         </button>
       </form>
-      <p id="chat-send-hint" className="chat-note">{input.trim() && !busy && !pending ? "Pertanyaan belum dikirim. Tekan tombol panah atau Enter untuk mengirim." : "Ketik pertanyaan atau pilih saran, lalu tekan tombol panah untuk mengirim."}</p>
+      {(voice.recording || voice.transcribing) && <p id="chat-recording-status" className="chat-note" role="status">{voice.recording ? "Merekam… Tekan tombol berhenti untuk mengirim." : "AERO-BOT sedang memahami rekaman…"}</p>}
       {user && voice.configured && handsFree.supported && (
         <div className={`handsfree-card is-${handsFree.phase}`}>
           <button className="handsfree-toggle" type="button" aria-pressed={handsFree.active}
             onClick={() => handsFree.active ? handsFreeControls.disable() : handsFreeControls.enable()}>
             {handsFree.active ? <MicOff size={20} /> : <Ear size={20} />}
-            {handsFree.active ? "Matikan mode suara" : "Aktifkan mode suara tanpa tombol"}
+            {handsFree.active ? "Matikan mode suara" : "Aktifkan mode suara"}
           </button>
-          <div className="handsfree-status" role="status" aria-live="polite">
+          {handsFree.active && <div className="handsfree-status" role="status" aria-live="polite">
             <span className="handsfree-meter" aria-hidden="true" style={{ "--level": handsFree.level } as CSSProperties}><i /><i /><i /><i /><i /></span>
             <span>
               <strong>{handsFreeTitle}</strong>
               <small>{handsFree.notice || handsFreeHint}</small>
             </span>
-          </div>
-          {handsFree.active && !robotId && (
-            <p className="chat-note">{voiceNodeName
-              ? `Data sensor dan lingkungan diambil dari titik ${voiceNodeName}. Ubah lewat pilihan Sensor di atas.`
-              : "Belum ada titik sensor, jadi AERO-BOT menjawab tanpa data lingkungan setempat."}</p>
-          )}
+          </div>}
           {handsFree.heard && handsFree.active && <p className="handsfree-heard">Terdengar: “{handsFree.heard}”</p>}
           {handsFree.phase === "speaking" && (
             <button className="chat-voice-button" type="button" onClick={() => handsFreeControls.stopSpeaking()}>
@@ -350,32 +351,13 @@ export function ChatPanel() {
             </button>
           )}
           {handsFree.error && <p className="live-notice" role="alert">{handsFree.error}</p>}
-          <p className="chat-note">
-            {handsFree.engine === "browser"
-              ? "Mikrofon tetap menyala selama mode ini aktif. Kata “Halo AERO-BOT” dikenali oleh pengenal suara browser; hanya rekaman pertanyaan Anda yang dikirim untuk diproses AERO-BOT. Rekaman tidak disimpan AEROSENSE."
-              : "Mikrofon tetap menyala selama mode ini aktif. Setiap ucapan dikirim untuk diproses AERO-BOT agar mengenali “Halo AERO-BOT”. Rekaman tidak disimpan AEROSENSE."}
-          </p>
+          {handsFree.active && <details className="chat-voice-privacy"><summary>Privasi mikrofon</summary><p>Mikrofon aktif selama mode suara menyala. {handsFree.engine === "browser" ? "Rekaman pertanyaan dikirim untuk diproses AERO-BOT." : "Ucapan dikirim untuk mengenali panggilan dan pertanyaan."} Rekaman tidak disimpan AEROSENSE.</p></details>}
         </div>
       )}
-      <div className="chat-voice-toolbar">
-        <button className={`chat-voice-button ${voice.recording ? "is-recording" : ""}`} type="button"
-          onClick={() => void voice.toggleRecording()}
-          disabled={!user || !voice.configured || !voice.supported || voice.transcribing || busy || !!pending || handsFree.active}
-          aria-pressed={voice.recording}>
-          {voice.recording ? <Square size={16} /> : voice.transcribing ? <Loader2 size={16} className="animate-spin" /> : <Mic size={16} />}
-          {voice.recording ? "Selesai rekam" : voice.transcribing ? "Menyalin suara…" : "Rekam pertanyaan"}
-        </button>
-        <button className="chat-voice-button" type="button" disabled={!user || !voice.configured || voice.recording || voice.transcribing || handsFree.active}
-          onClick={() => void voice.speak()}>
-          <Volume2 size={16} />{voice.speaking === "test" ? "Hentikan tes" : "Tes speaker"}
-        </button>
-        <span role="status">{voice.recording ? "Merekam · maksimal 20 detik" : voice.transcribing ? "AERO-BOT sedang menyalin rekaman" : handsFree.active ? "Mode suara tanpa tombol sedang aktif" : "Suara AERO-BOT · mic dan speaker perangkat ini"}</span>
-      </div>
       {voice.error && <p className="live-notice" role="alert">{voice.error}</p>}
-      {user && !voice.configured && !voice.error && <p className="chat-note">{DEMO_MODE ? "Uji suara tersedia pada web yang terhubung ke backend produksi." : "Suara belum diaktifkan pengelola."}</p>}
       {voice.configured && !voice.supported && <p className="chat-note">Untuk merekam, buka situs HTTPS ini di Chrome atau Edge dan izinkan mikrofon.</p>}
 
-      {voice.configured && !handsFree.active && <p className="chat-note">Rekam pertanyaan lalu tekan Selesai rekam: pertanyaan terkirim dan jawabannya dibacakan otomatis. Rekaman dikirim untuk diproses AERO-BOT menjadi teks dan tidak disimpan AEROSENSE.</p>}
+
     </section>
   );
 }

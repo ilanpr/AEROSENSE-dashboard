@@ -696,3 +696,20 @@ select,
     text-align: center;
   }
 }
+
+/* Concise monitoring context and voice controls. */
+.monitoring-scope > details > summary { display:flex; align-items:center; justify-content:space-between; list-style:none; }
+.monitoring-scope > details > summary::-webkit-details-marker { display:none; }
+.monitoring-scope details[open] > summary > svg { transform:rotate(180deg); }
+.scope-reference { display:inline-flex; align-items:center; gap:6px; min-height:44px; margin-top:12px; font-size:13px; font-weight:600; color:#0759bc; }
+.live-chat > form input { min-width:0; flex:1; }
+.live-chat > form .chat-composer-mic { flex:0 0 44px; width:44px; min-height:44px; padding:0; background:#edf5ff; color:#0759bc; border-radius:50%; }
+.live-chat > form .chat-composer-mic.is-recording { background:#fde9ec; color:#a62d42; }
+.handsfree-card { border:0; border-radius:0; background:none; margin:0 16px 12px; padding:0; gap:10px; box-shadow:none; }
+.handsfree-toggle { justify-self:start; min-height:44px; border-radius:999px; font-size:13px; padding:10px 16px; }
+.handsfree-toggle[aria-pressed="true"] { border:1px solid #f2c4cc; }
+.handsfree-status strong { font-size:13px; }
+.handsfree-status small { font-size:12px; }
+.chat-voice-privacy { font-size:11px; line-height:1.6; color:#526b85; }
+.chat-voice-privacy summary { cursor:pointer; padding:6px 0; }
+.chat-voice-privacy p { max-width:70ch; }

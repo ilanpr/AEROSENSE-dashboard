@@ -1,6 +1,6 @@
 import type { LiveNode, Reading, EnvironmentFact, EnvironmentResponse, Alert } from "../types/live.types";
 
-export const DEMO_NOTICE = "Data simulasi untuk pengambilan video, bukan hasil pengukuran lapangan atau kondisi terkini Surabaya.";
+export const DEMO_NOTICE = "Data simulasi. Bukan hasil pengukuran lapangan; informasi wilayah dari API ditampilkan terpisah.";
 // Fixed synthetic deployment points across urban Surabaya, with irregular spacing.
 const demoCoordinates = [
   [-7.2309,112.7227],[-7.2518,112.7083],[-7.2374,112.7486],[-7.2472,112.7802],

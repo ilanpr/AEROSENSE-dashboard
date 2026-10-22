@@ -38,7 +38,7 @@ export function LoginPage() {
           <Link to={ROUTES.DASHBOARD} className="guest-entry">Lihat kondisi sekarang <ArrowRight size={19} /></Link>
         </div>
         <img className="login-scene" src="/assets/aerobot/calm.png" alt="Maskot AERO-BOT" />
-        <span className="login-story-footer">{DEMO_MODE ? "Pratinjau Surabaya · data simulasi" : "AEROSENSE · Pemantauan lingkungan"}</span>
+        <span className="login-story-footer">{DEMO_MODE ? "Surabaya · Data simulasi" : "AEROSENSE · Pemantauan lingkungan"}</span>
       </section>
       <section className="login-form-panel" aria-labelledby="login-heading">
         <div className="login-form-inner">
@@ -47,7 +47,7 @@ export function LoginPage() {
           <p className="login-caption">Kelola perangkat dan tindak lanjut peringatan.</p>
           <form onSubmit={handleSubmit}>
             {DEMO_MODE && <div className="demo-login">
-              <strong>Akun untuk mencoba</strong>
+              <strong>Pilih akses</strong>
               <div>{DEMO_ACCOUNTS.map(a => <button type="button" key={a.role} onClick={()=>{setEmail(a.email);setPassword(a.password);setError("");}}>Akun {a.label.toLowerCase()} <ArrowRight size={14} /></button>)}</div>
             </div>}
             {error && <p className="live-notice" role="alert">{error}</p>}

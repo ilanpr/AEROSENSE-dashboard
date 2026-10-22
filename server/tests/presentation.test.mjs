@@ -109,12 +109,12 @@ test("sensor summary respects hysteresis, validation and missing readings", () =
 test("node bands use sensor evidence and configured thresholds, with no invented danger level", () => {
   const rule = {metric:"dust_ug_m3",enabled:true,active:false,high:40,danger_high:60,clear_below:35,unit:"µg/m³"};
   const node = value => ({pm25_validated:false,rules:[rule],latest:{reading_id:"r1",stale:false,metrics:{dust_ug_m3:value}}});
-  assert.equal(sensorSummary(node(22)).label,"Relatif bersih");
+  assert.equal(sensorSummary(node(22)).label,"Terpantau baik");
   assert.equal(sensorSummary(node(40)).label,"Waspada");
   assert.equal(sensorSummary(node(60)).label,"Bahaya");
   assert.equal(sensorSummary(node(200),[{...rule,danger_high:null}]).label,"Waspada");
   assert.equal(sensorSummary(node(38),[{...rule,active:true}]).label,"Waspada");
-  assert.equal(sensorSummary(node(35),[{...rule,active:true}]).label,"Relatif bersih");
+  assert.equal(sensorSummary(node(35),[{...rule,active:true}]).label,"Terpantau baik");
   for (const value of [null,NaN,Infinity,-1]) assert.equal(sensorSummary(node(value)).label,"Data belum cukup");
   assert.equal(sensorSummary({...node(22),latest:{...node(22).latest,stale:true}}).label,"Data belum cukup");
   assert.equal(sensorSummary({...node(22),latest:{...node(22).latest,quality:{invalid:true}}}).label,"Data belum cukup");
