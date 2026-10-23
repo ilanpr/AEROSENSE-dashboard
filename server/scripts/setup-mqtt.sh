@@ -37,13 +37,16 @@ docker run --rm -i -v "$home/config:/mosquitto/config" "$image" sh -s "${args[@]
 set -e
 rm -f /mosquitto/config/passwd
 touch /mosquitto/config/passwd
+chmod 0700 /mosquitto/config/passwd
 while [ "$#" -ge 2 ]; do mosquitto_passwd -b /mosquitto/config/passwd "$1" "$2"; shift 2; done
 chown -R mosquitto:mosquitto /mosquitto/config /mosquitto/data
 chmod 0700 /mosquitto/config/passwd /mosquitto/config/acl
 SH
-MQTT_HOME="$home" docker compose -f "$repo/deploy/mqtt/compose.yaml" up -d
+export MQTT_HOME="$home"
+docker compose -f "$repo/deploy/mqtt/compose.yaml" up -d
 sleep 2
-docker compose -f "$repo/deploy/mqtt/compose.yaml" ps
+docker compose -f "$repo/deploy/mqtt/compose.yaml" ps || true
+docker logs --tail 5 aerosense-mqtt 2>&1 || true
 echo
 echo "Broker berjalan. Host untuk n8n: aerosense-mqtt port 1883. Host untuk ESP32: IP LAN server ini port 1883."
 { ip -4 -o addr show scope global 2>/dev/null | awk '{print "  IP server: " $4}'; } || true
