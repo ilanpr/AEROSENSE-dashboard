@@ -49,7 +49,7 @@ git pull --ff-only origin feat/environment-insights
 bash server/scripts/setup-mqtt.sh mist-01
 ```
 
-Tambahkan ID lain dipisah spasi (`mist-01 mist-02`). ID memakai huruf kecil, angka, dan tanda `-`, sama persis dengan `actuator_id` di n8n. Password baru dicetak sekali dan disimpan di `~/aerosense-mqtt/credentials.env` (mode 600). Menjalankan ulang script tidak mengganti password lama.
+Tambahkan ID lain dipisah spasi (`mist-01 mist-02`). ID memakai huruf kecil, angka, dan tanda `-`, sama persis dengan `actuator_id` di n8n. Password baru dicetak sekali dan disimpan di `~/aerosense-mqtt/credentials.env` (mode 600). Menjalankan ulang script tidak mengganti password lama; `--rotate` membuat password baru untuk semua akun, lalu credential n8n dan `config.h` ESP32 harus diperbarui.
 
 Batasi port 1883 hanya untuk jaringan perangkat, misalnya `sudo ufw allow from 192.168.1.0/24 to any port 1883 proto tcp`. Port ini tanpa TLS; jangan dibuka ke internet. Jika sprinkler berada di jaringan lain, pakai VPN atau listener TLS 8883 terlebih dahulu.
 
