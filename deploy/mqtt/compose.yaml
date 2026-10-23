@@ -1,0 +1,23 @@
+# MQTT broker for AEROSENSE actuators (mist sprinkler). Started by server/scripts/setup-mqtt.sh.
+name: aerosense-mqtt
+services:
+  mqtt:
+    image: eclipse-mosquitto:2.0.20
+    container_name: aerosense-mqtt
+    restart: unless-stopped
+    ports:
+      # ESP32 devices connect over Wi-Fi/LAN. Limit this port with a firewall to the device network.
+      - "${MQTT_BIND:-0.0.0.0}:1883:1883"
+    volumes:
+      - ${MQTT_HOME:?}/config:/mosquitto/config
+      - ${MQTT_HOME:?}/data:/mosquitto/data
+    networks: [n8n]
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+networks:
+  n8n:
+    external: true
+    name: n8n_default
