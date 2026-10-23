@@ -1,6 +1,6 @@
 # Node sensor AEROSENSE dengan layar TFT
 
-Firmware `firmware/sensor-node/` untuk ESP32-S3 dengan SGP30, Sharp GP2Y1010AU0F, AM2301 (DHT21), modul LoRa EBYTE E220-900T22D dan layar TFT 1,8" 128×160 (ST7735S). Layar membaca sensor langsung di node, tanpa Wi-Fi atau server:
+Firmware `firmware/sensor-node/` untuk ESP32-S3 dengan SGP30, Sharp GP2Y1010AU0F, AM2301 (DHT21), modul LoRa EBYTE E220-900T22D dan layar TFT 1,8" 128×160 (ST7735S). Layar dipasang tegak (portrait 128×160) dan membaca sensor langsung di node, tanpa Wi-Fi atau server:
 
 1. Logo AEROSENSE selama sekitar 3 detik saat menyala.
 2. Debu optik (rata-rata bergerak 10 detik), eCO2, TVOC, suhu, kelembapan; diperbarui tiap detik.
@@ -23,7 +23,7 @@ Debu yang dikirim adalah rata-rata selama interval. eCO2 dan TVOC dikirim `nan` 
 | SGP30 | SDA / SCL | GPIO 8 / 9 |
 | AM2301 | Data | GPIO 6 |
 | Sharp GP2Y1010 | LED (lewat resistor 150 Ω + kapasitor 220 µF sesuai datasheet) | GPIO 4 |
-| Sharp GP2Y1010 | Vo | GPIO 5 (ADC1) |
+| Sharp GP2Y1010 | Vo | GPIO 1 (ADC1) |
 | E220 | TXD / RXD | GPIO 17 / 18 |
 | E220 | M0, M1 | GND (mode transparan) |
 | E220 | AUX (opsional) | isi `LORA_AUX` |

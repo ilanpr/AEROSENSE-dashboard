@@ -19,8 +19,8 @@
 // Sharp GP2Y1010AU0F: LED drive pin and analog output (ADC1)
 #define SHARP_LED_PIN 4
 #define SHARP_LED_ACTIVE_LOW true     // typical wiring: pin LOW turns the IR LED on
-#define SHARP_VO_PIN 5
-#define SHARP_DIVIDER 1.0             // Vo/ADC ratio. Divider 10k (top) + 20k (bottom) -> 1.5
+#define SHARP_VO_PIN 1               // AEROSENSE PCB: Vo goes to GPIO 1 (ADC1)
+#define SHARP_DIVIDER 1.0             // Vo/ADC ratio. No divider on the current PCB; 10k (top) + 20k (bottom) -> 1.5
 #define SHARP_ZERO_V 0.60             // Vo in clean air; measure on site and update
 // EBYTE E220 (UART, transparent mode: M0 and M1 to GND)
 #define LORA_RX 17                    // ESP32 RX  <- module TXD
@@ -36,6 +36,7 @@
 #define TFT_BL 21                     // BL, or -1 if BL goes to 3V3
 #define TFT_TAB INITR_BLACKTAB        // try INITR_GREENTAB if shifted, INITR_REDTAB if red/blue swapped
 #define TFT_INVERT 0
+#define TFT_ROTATION 0                // portrait 128x160; use 2 if the picture is upside down
 
 // ---- Link quality ----
 // The E220 in transparent mode cannot tell whether the gateway heard a packet. With ACK_MODE 1

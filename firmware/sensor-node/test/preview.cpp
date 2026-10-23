@@ -7,11 +7,11 @@
 #include <string>
 class Frame : public Adafruit_GFX {
  public:
-  uint16_t px[160 * 128];
-  Frame() : Adafruit_GFX(160, 128) {}
-  void drawPixel(int16_t x, int16_t y, uint16_t c) override { if (x >= 0 && y >= 0 && x < 160 && y < 128) px[y * 160 + x] = c; }
+  uint16_t px[128 * 160];
+  Frame() : Adafruit_GFX(128, 160) {}
+  void drawPixel(int16_t x, int16_t y, uint16_t c) override { if (x >= 0 && y >= 0 && x < 128 && y < 160) px[y * 128 + x] = c; }
   void save(const std::string& path) {
-    std::ofstream f(path, std::ios::binary); f << "P6\n160 128\n255\n";
+    std::ofstream f(path, std::ios::binary); f << "P6\n128 160\n255\n";
     for (uint16_t c : px) { unsigned char rgb[3] = {(unsigned char)((c >> 11) << 3), (unsigned char)(((c >> 5) & 63) << 2), (unsigned char)((c & 31) << 3)}; f.write((char*)rgb, 3); }
   }
 };

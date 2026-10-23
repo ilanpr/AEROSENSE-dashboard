@@ -6,8 +6,9 @@ from PIL import Image
 root = pathlib.Path(__file__).resolve().parents[3]
 svg = (root / "public/assets/aerosense-logo.svg").read_text()
 image = Image.open(io.BytesIO(base64.b64decode(re.search(r'base64,([^"]+)"', svg).group(1)))).convert("RGB")
-HEIGHT = 120  # fits the 128 px tall screen in landscape
-width = round(image.width * HEIGHT / image.height)
+WIDTH = 124  # fits the 128 px wide screen in portrait
+HEIGHT = round(image.height * WIDTH / image.width)
+width = WIDTH
 image = image.resize((width, HEIGHT), Image.LANCZOS)
 
 def rgb565(r, g, b):

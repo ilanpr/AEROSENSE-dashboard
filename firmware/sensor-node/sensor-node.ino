@@ -8,11 +8,14 @@
 #include <Adafruit_SGP30.h>
 #include <DHT.h>
 #include "config.h"
+#ifndef TFT_ROTATION
+#define TFT_ROTATION 0   // portrait; older config.h files do not define it
+#endif
 #include "screens.h"
 
 SPIClass tftSpi(FSPI);
 Adafruit_ST7735 tft(&tftSpi, TFT_CS, TFT_DC, TFT_RST);
-GFXcanvas16 canvas(160, 128);   // draw off-screen, then push in one go: no flicker
+GFXcanvas16 canvas(128, 160);   // draw off-screen, then push in one go: no flicker
 Adafruit_SGP30 sgp;
 DHT dht(DHT_PIN, DHT21);
 HardwareSerial lora(1);
@@ -142,7 +145,7 @@ void setup() {
   tftSpi.begin(TFT_SCK, -1, TFT_MOSI, TFT_CS);
   tft.initR(TFT_TAB);
   tft.setSPISpeed(27000000);
-  tft.setRotation(1);
+  tft.setRotation(TFT_ROTATION);
   tft.invertDisplay(TFT_INVERT);
   screen::logo(tft);
   const uint32_t logoShown = millis();

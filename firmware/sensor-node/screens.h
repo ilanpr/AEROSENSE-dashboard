@@ -1,4 +1,4 @@
-// Screens for the 1.8" 160x128 ST7735 (landscape) on the sensor node. Only Adafruit_GFX calls,
+// Screens for the 1.8" 128x160 ST7735 (portrait) on the sensor node. Only Adafruit_GFX calls,
 // so the same code draws on the TFT, into a GFXcanvas16, and in the computer preview test.
 #pragma once
 #include <Adafruit_GFX.h>
@@ -67,40 +67,53 @@ inline void cell(Adafruit_GFX& g, int16_t x, int16_t y, const char* label, const
   text(g, x + textWidth(g, value, &FreeSansBold9pt7b) + 4, y + 16, unit, MUTED);
 }
 
-// nextSendS: seconds until the next LoRa packet, shown so field staff know the node is alive.
+// Portrait 128x160. nextSendS: seconds until the next LoRa packet, so field staff see the node is alive.
 inline void reading(Adafruit_GFX& g, const char* nodeId, const Sample& s, Level level, const LinkState& link,
                     uint32_t counter, uint32_t nextSendS) {
+  (void)counter;  // the packet counter goes to Serial and the CSV
+  const int16_t W = g.width();
   g.fillScreen(PAPER);
-  g.fillRect(0, 0, g.width(), 16, BRAND);
-  char label[16]; uint16_t color;
-  linkLabel(link, label, sizeof(label), color);
-  pill(g, g.width() - 3, 3, 11, label, color);
+
+  // Header: node id
+  g.fillRect(0, 0, W, 15, BRAND);
   char id[24];
   snprintf(id, sizeof(id), "%s", nodeId);
-  const int16_t room = g.width() - 3 - (textWidth(g, label) + 8) - 9;
-  for (size_t n = strlen(id); n > 1 && textWidth(g, id) > room; n--) { id[n - 1] = '\0'; id[n - 2] = '.'; }
-  text(g, 5, 5, id, WHITE);
+  for (size_t n = strlen(id); n > 1 && textWidth(g, id) > W - 8; n--) { id[n - 1] = '\0'; id[n - 2] = '.'; }
+  text(g, 4, 4, id, WHITE);
 
-  text(g, 5, 21, "Debu ug/m3", MUTED);
-  char value[12], status[24];
+  // Link state and countdown
+  char label[16], status[16]; uint16_t color;
+  linkLabel(link, label, sizeof(label), color);
+  int16_t pw = textWidth(g, label) + 8;
+  g.fillRoundRect(3, 18, pw, 11, 3, color);
+  text(g, 7, 20, label, WHITE);
+  snprintf(status, sizeof(status), "%lu:%02lu", static_cast<unsigned long>(nextSendS / 60), static_cast<unsigned long>(nextSendS % 60));
+  text(g, W - 4 - textWidth(g, status), 20, status, MUTED);
+
+  // Main value: optical dust
+  text(g, 4, 35, "Debu ug/m3", MUTED);
+  char value[12];
   number(value, sizeof(value), s.dust, 1);
-  text(g, 5, 57, value, INK, &FreeSansBold18pt7b);
-  const char* word = level == Level::Danger ? "BAHAYA" : level == Level::Warning ? "WASPADA" : level == Level::Good ? "BAIK" : "";
-  if (*word) pill(g, g.width() - 5, 36, 15, word, level == Level::Danger ? DANGER : level == Level::Warning ? WARN : GOOD);
-  (void)counter;  // the packet counter goes to Serial and the CSV; the screen shows the countdown
-  snprintf(status, sizeof(status), "kirim %lu:%02lu", static_cast<unsigned long>(nextSendS / 60), static_cast<unsigned long>(nextSendS % 60));
-  text(g, g.width() - 5 - textWidth(g, status), 21, status, MUTED);
+  text(g, (W - textWidth(g, value, &FreeSansBold18pt7b)) / 2, 71, value, INK, &FreeSansBold18pt7b);
 
-  g.drawFastHLine(5, 63, g.width() - 10, LINE);
+  // Level bar across the width, easy to read from a distance
+  const char* word = level == Level::Danger ? "BAHAYA" : level == Level::Warning ? "WASPADA" : level == Level::Good ? "BAIK" : "BELUM ADA DATA";
+  uint16_t barColor = level == Level::Danger ? DANGER : level == Level::Warning ? WARN : level == Level::Good ? GOOD : MUTED;
+  g.fillRoundRect(4, 78, W - 8, 17, 4, barColor);
+  text(g, (W - textWidth(g, word)) / 2, 83, word, WHITE);
+
+  // 2x2 grid
+  g.drawFastHLine(4, 99, W - 8, LINE);
   char v[12];
+  const int16_t col = W / 2 + 2;
   if (s.sgpWarming) snprintf(v, sizeof(v), "...");
   else number(v, sizeof(v), s.eco2, 0);
-  cell(g, 5, 67, "eCO2", v, "ppm");
+  cell(g, 4, 103, "eCO2 ppm", v, "");
   if (s.sgpWarming) snprintf(v, sizeof(v), "...");
   else number(v, sizeof(v), s.tvoc, 0);
-  cell(g, 84, 67, "TVOC", v, "ppb");
-  number(v, sizeof(v), s.temperature, 1); cell(g, 5, 97, "Suhu", v, "C");
-  number(v, sizeof(v), s.humidity, 0);    cell(g, 84, 97, "Kelembapan", v, "%");
+  cell(g, col, 103, "TVOC ppb", v, "");
+  number(v, sizeof(v), s.temperature, 1); cell(g, 4, 132, "Suhu C", v, "");
+  number(v, sizeof(v), s.humidity, 0);    cell(g, col, 132, "RH %", v, "");
 }
 
 }  // namespace screen
