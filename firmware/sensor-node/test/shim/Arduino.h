@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <algorithm>
+#include <unistd.h>  // like the ESP32 core: catches names such as link() that clash with POSIX
 typedef bool boolean;
 typedef uint8_t byte;
 #define PROGMEM

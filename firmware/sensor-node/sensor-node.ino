@@ -25,7 +25,7 @@ uint8_t dustRingCount = 0, dustRingNext = 0;
 double dustSum = 0;              // since the last packet
 uint32_t dustSamples = 0;
 uint32_t counter = 0;
-LinkState link;
+LinkState loraLink;
 bool awaitingAck = false;
 uint32_t ackDeadline = 0;
 char rxLine[96];
@@ -94,7 +94,7 @@ void sendPacket() {
   lora.print(line);
   Serial.print("LoRa TX ");
   Serial.print(line);
-  link.sent(ACK_MODE);
+  loraLink.sent(ACK_MODE);
   awaitingAck = ACK_MODE;
   ackDeadline = millis() + ACK_TIMEOUT_MS;
 }
@@ -109,21 +109,21 @@ void readLora() {
     int rssi = 0;
     bool hasRssi = false;
     if (awaitingAck && parseAck(rxLine, NODE_ID, counter, rssi, hasRssi)) {
-      link.acked(rssi, hasRssi, LORA_WEAK_BELOW);
+      loraLink.acked(rssi, hasRssi, LORA_WEAK_BELOW);
       awaitingAck = false;
       Serial.printf("ACK #%lu rssi %d\n", static_cast<unsigned long>(counter), hasRssi ? rssi : 0);
     }
   }
   if (awaitingAck && static_cast<int32_t>(millis() - ackDeadline) >= 0) {
     awaitingAck = false;
-    link.timedOut(LORA_LOST_AFTER);
+    loraLink.timedOut(LORA_LOST_AFTER);
     Serial.printf("No ACK for #%lu\n", static_cast<unsigned long>(counter));
   }
 }
 
 void draw() {
   uint32_t left = static_cast<int32_t>(nextSendMs - millis()) > 0 ? (nextSendMs - millis() + 999) / 1000 : 0;
-  screen::reading(canvas, NODE_ID, live, levelFor(live.dust, DUST_WARNING, DUST_DANGER), link, counter, left);
+  screen::reading(canvas, NODE_ID, live, levelFor(live.dust, DUST_WARNING, DUST_DANGER), loraLink, counter, left);
   tft.drawRGBBitmap(0, 0, canvas.getBuffer(), canvas.width(), canvas.height());
 }
 
