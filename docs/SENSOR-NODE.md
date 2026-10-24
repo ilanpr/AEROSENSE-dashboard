@@ -21,12 +21,13 @@ Debu yang dikirim adalah rata-rata selama interval. eCO2 dan TVOC dikirim `nan` 
 | Komponen | Pin komponen | ESP32-S3 |
 |---|---|---|
 | SGP30 | SDA / SCL | GPIO 8 / 9 |
-| AM2301 | Data | GPIO 6 |
+| AM2301 / AM2302 | Data (pull-up 4,7–10 kΩ ke 3V3) | GPIO 5 |
 | Sharp GP2Y1010 | LED (lewat resistor 150 Ω + kapasitor 220 µF sesuai datasheet) | GPIO 4 |
 | Sharp GP2Y1010 | Vo | GPIO 1 (ADC1) |
-| E220 | TXD / RXD | GPIO 17 / 18 |
+| E220 | TXD → ESP RX / RXD ← ESP TX | GPIO 18 / 17 |
 | E220 | M0, M1 | GND (mode transparan) |
-| E220 | AUX (opsional) | isi `LORA_AUX` |
+| E220 | AUX | GPIO 16 |
+| Baterai 18650 | B+ lewat pembagi 100k/100k | GPIO 2 (hanya log Serial) |
 | TFT | SCL / SDA | GPIO 12 / 11 |
 | TFT | CS / DC / RES | GPIO 10 / 13 / 14 |
 | TFT | BL | GPIO 21 (atau 3V3, lalu `TFT_BL -1`) |
@@ -39,7 +40,7 @@ Sharp memberi Vo hingga sekitar 3,6 V, sedangkan ADC ESP32 aman sampai 3,3 V. Pa
 1. Arduino IDE: board **esp32** (Espressif, core 3.x), pilih **ESP32S3 Dev Module** atau board Anda.
 2. Library Manager: **Adafruit ST7735 and ST7789**, **Adafruit GFX**, **Adafruit SGP30**, **DHT sensor library** (Adafruit, beserta Adafruit Unified Sensor).
 3. Di `firmware/sensor-node/` salin `config.example.h` menjadi `config.h`. Isi `NODE_ID` sama dengan ID node di Supabase, serta `DUST_WARNING` dan `DUST_DANGER` sama dengan aturan node (`high`, `danger_high`) supaya layar dan dashboard sejalan.
-4. Upload `sensor-node.ino`. Serial Monitor 115200 menampilkan setiap baris yang dikirim (`LoRa TX ...`).
+4. Upload `sensor-node.ino`. Serial Monitor 115200 menampilkan pin yang dipakai saat menyala, satu baris `Baca | ...` tiap 5 detik (`SERIAL_LOG_S`), dan setiap baris yang dikirim (`LoRa TX ...`). Untuk uji cepat, isi sementara `SEND_INTERVAL_S 10`.
 
 ## Kalibrasi debu
 

@@ -11,13 +11,25 @@
 #ifndef TFT_ROTATION
 #define TFT_ROTATION 0   // portrait; older config.h files do not define it
 #endif
+#ifndef DHT_TYPE
+#define DHT_TYPE DHT21   // AM2301
+#endif
+#ifndef BATTERY_PIN
+#define BATTERY_PIN -1
+#endif
+#ifndef BATTERY_DIVIDER
+#define BATTERY_DIVIDER 2.0
+#endif
+#ifndef SERIAL_LOG_S
+#define SERIAL_LOG_S 5   // readable sensor line on Serial Monitor; 0 to turn off
+#endif
 #include "screens.h"
 
 SPIClass tftSpi(FSPI);
 Adafruit_ST7735 tft(&tftSpi, TFT_CS, TFT_DC, TFT_RST);
 GFXcanvas16 canvas(128, 160);   // draw off-screen, then push in one go: no flicker
 Adafruit_SGP30 sgp;
-DHT dht(DHT_PIN, DHT21);
+DHT dht(DHT_PIN, DHT_TYPE);
 HardwareSerial lora(1);
 
 Sample live;
@@ -33,7 +45,8 @@ bool awaitingAck = false;
 uint32_t ackDeadline = 0;
 char rxLine[96];
 size_t rxLen = 0;
-uint32_t lastSgp = 0, lastDht = 0, lastDust = 0, lastDraw = 0, nextSendMs = 0;
+uint32_t lastSgp = 0, lastDht = 0, lastDust = 0, lastDraw = 0, lastLog = 0, nextSendMs = 0;
+float lastSharpVolts = NAN;
 
 float readSharpVolts() {
   // Datasheet timing: LED on, sample at 0.28 ms, LED off after 0.32 ms, 10 ms cycle.
@@ -50,7 +63,8 @@ float readSharpVolts() {
 }
 
 void readDust() {
-  float ug = sharpDust(readSharpVolts(), SHARP_ZERO_V);
+  lastSharpVolts = readSharpVolts();
+  float ug = sharpDust(lastSharpVolts, SHARP_ZERO_V);
   dustRing[dustRingNext] = ug;
   dustRingNext = (dustRingNext + 1) % 10;
   if (dustRingCount < 10) dustRingCount++;
@@ -79,6 +93,32 @@ void readSgp() {
   live.sgpWarming = millis() - sgpStartMs < 15000;
   live.eco2 = sgp.eCO2;
   live.tvoc = sgp.TVOC;
+}
+
+float readBatteryVolts() {
+#if BATTERY_PIN >= 0
+  uint32_t total = 0;
+  for (int i = 0; i < 8; i++) total += analogReadMilliVolts(BATTERY_PIN);
+  return total / 8.0f / 1000.0f * BATTERY_DIVIDER;
+#else
+  return NAN;
+#endif
+}
+
+// One plain line per SERIAL_LOG_S for bench testing. The screen is not affected.
+void logReadings() {
+  Serial.printf("Baca | debu %.1f ug/m3 (Vo %.2f V) | eCO2 %.0f ppm | TVOC %.0f ppb%s | suhu %.1f C | RH %.1f %%",
+    live.dust, lastSharpVolts, live.eco2, live.tvoc, live.sgpWarming ? " (pemanasan)" : "",
+    live.temperature, live.humidity);
+#if BATTERY_PIN >= 0
+  Serial.printf(" | baterai %.2f V", readBatteryVolts());
+#endif
+#if LORA_AUX >= 0
+  Serial.printf(" | AUX %s", digitalRead(LORA_AUX) ? "siap" : "sibuk");
+#endif
+  if (isnan(live.temperature) || isnan(live.humidity)) Serial.print(" | AM2301 tidak terbaca: cek GPIO DHT_PIN");
+  if (lastSharpVolts > 3.0f) Serial.print(" | Vo mendekati batas ADC");
+  Serial.println();
 }
 
 void sendPacket() {
@@ -154,9 +194,14 @@ void setup() {
   sgpOk = sgp.begin(&Wire);
   sgpStartMs = millis();
   if (sgpOk) sgp.IAQinit();
-  else Serial.println("SGP30 tidak terdeteksi");
+  else Serial.println("SGP30 tidak terdeteksi: cek SDA/SCL GPIO 8/9 dan 3V3");
   dht.begin();
   lora.begin(LORA_BAUD, SERIAL_8N1, LORA_RX, LORA_TX);
+#if BATTERY_PIN >= 0
+  analogSetPinAttenuation(BATTERY_PIN, ADC_11db);
+#endif
+  Serial.printf("AEROSENSE %s | DHT GPIO %d | Sharp LED %d Vo %d | LoRa RX %d TX %d AUX %d | SGP30 %s\n",
+    NODE_ID, DHT_PIN, SHARP_LED_PIN, SHARP_VO_PIN, LORA_RX, LORA_TX, LORA_AUX, sgpOk ? "OK" : "GAGAL");
 
   while (millis() - logoShown < 3000) { readSgp(); delay(1000); }   // logo while sensors start
   nextSendMs = millis() + 30000;   // first packet after SGP30 warm-up and a few dust samples
@@ -169,6 +214,7 @@ void loop() {
   if (now - lastDht >= 2500) { lastDht = now; readDht(); }
   if (static_cast<int32_t>(now - nextSendMs) >= 0) { nextSendMs = now + SEND_INTERVAL_S * 1000UL; sendPacket(); }
   readLora();
+  if (SERIAL_LOG_S > 0 && now - lastLog >= SERIAL_LOG_S * 1000UL) { lastLog = now; logReadings(); }
   if (now - lastDraw >= 1000) { lastDraw = now; draw(); }
   delay(5);
 }

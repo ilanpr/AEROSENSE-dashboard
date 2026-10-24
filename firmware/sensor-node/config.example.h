@@ -14,19 +14,23 @@
 // SGP30 (I2C)
 #define SGP_SDA 8
 #define SGP_SCL 9
-// AM2301 / DHT21 data
-#define DHT_PIN 6
+// AM2301 / AM2302 data (PCB: GPIO 5, 4.7k-10k pull-up to 3V3)
+#define DHT_PIN 5
+#define DHT_TYPE DHT21                // AM2301 = DHT21, AM2302 = DHT22 (same read routine)
 // Sharp GP2Y1010AU0F: LED drive pin and analog output (ADC1)
-#define SHARP_LED_PIN 4
+#define SHARP_LED_PIN 4               // PCB: Sharp pin 3 (LED)
 #define SHARP_LED_ACTIVE_LOW true     // typical wiring: pin LOW turns the IR LED on
 #define SHARP_VO_PIN 1               // AEROSENSE PCB: Vo goes to GPIO 1 (ADC1)
 #define SHARP_DIVIDER 1.0             // Vo/ADC ratio. No divider on the current PCB; 10k (top) + 20k (bottom) -> 1.5
 #define SHARP_ZERO_V 0.60             // Vo in clean air; measure on site and update
 // EBYTE E220 (UART, transparent mode: M0 and M1 to GND)
-#define LORA_RX 17                    // ESP32 RX  <- module TXD
-#define LORA_TX 18                    // ESP32 TX  -> module RXD
-#define LORA_AUX -1                   // module AUX pin, or -1 if not wired
+#define LORA_RX 18                    // ESP32 RX  <- module TXD (PCB: GPIO 18)
+#define LORA_TX 17                    // ESP32 TX  -> module RXD (PCB: GPIO 17)
+#define LORA_AUX 16                   // module AUX (PCB: GPIO 16), or -1 if not wired
 #define LORA_BAUD 9600
+// Battery B+ through a 100k/100k divider (PCB: GPIO 2). Serial log only; -1 to disable.
+#define BATTERY_PIN 2
+#define BATTERY_DIVIDER 2.0
 // TFT 1.8" ST7735 (pin on the module -> GPIO)
 #define TFT_SCK 12                    // SCL
 #define TFT_MOSI 11                   // SDA
