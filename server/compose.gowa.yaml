@@ -1,0 +1,32 @@
+services:
+  aerosense-gowa:
+    image: ghcr.io/aldinokemal/go-whatsapp-web-multidevice:v9.6.0
+    command: [rest]
+    restart: unless-stopped
+    ports: ["127.0.0.1:3001:3000"]
+    environment:
+      APP_PORT: "3000"
+      APP_DEBUG: "false"
+      APP_BASIC_AUTH: "${GOWA_BASIC_AUTH:?Run scripts/setup-gowa.sh install}"
+      WHATSAPP_WEBHOOK: http://aerosense-api:8080/webhooks/gowa
+      WHATSAPP_WEBHOOK_SECRET: "${GOWA_WEBHOOK_SECRET:?Generate a webhook secret}"
+      WHATSAPP_WEBHOOK_EVENTS: message,message.ack
+      WHATSAPP_WEBHOOK_IGNORE_JIDS: "@g.us"
+      WHATSAPP_AUTO_DOWNLOAD_MEDIA: "false"
+      WHATSAPP_IGNORE_STATUS_MEDIA: "true"
+      WHATSAPP_AUTO_MARK_READ: "false"
+      WHATSAPP_ACCOUNT_VALIDATION: "true"
+    volumes:
+      - gowa-storage:/app/storages
+      - gowa-statics:/app/statics
+    networks: [n8n]
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "2"}
+volumes:
+  gowa-storage:
+  gowa-statics:
+networks:
+  n8n:
+    external: true
+    name: n8n_default

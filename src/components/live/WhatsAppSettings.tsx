@@ -1,8 +1,10 @@
+import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
 import { api } from "@/services/api";
 import type { LiveNode } from "@/types/live.types";
+import { WhatsAppEntry } from "./WhatsAppEntry";
 export function WhatsAppSettings() {
   const { user } = useAuth();
   const nodes = useLiveData<{ nodes: LiveNode[] }>(
@@ -26,20 +28,9 @@ export function WhatsAppSettings() {
         WhatsApp untuk menghentikan langganan.
       </p>
       <div className="live-actions">
-        <select
-          aria-label="Node untuk langganan WhatsApp"
-          value={id}
-          onChange={(e) => {
-            setSelected(e.target.value);
-            setCommand("");
-          }}
-        >
-          {nodes.data.nodes.map((n) => (
-            <option key={n.id} value={n.id}>
-              {n.name}
-            </option>
-          ))}
-        </select>
+        <MonitoringSelect label="Node untuk langganan WhatsApp" value={id}
+          onValueChange={value=>{setSelected(value);setCommand("");}}
+          options={nodes.data.nodes.map(n=>({value:n.id,label:n.name}))} />
         <button
           className="live-button"
           disabled={busy}
@@ -65,10 +56,10 @@ export function WhatsAppSettings() {
         </button>
       </div>
       {command && (
-        <p className="pair-code">
-          Kirim <code>{command}</code> ke nomor WhatsApp AEROSENSE. Kode berlaku
-          10 menit.
-        </p>
+        <div className="wa-pair-actions">
+          <WhatsAppEntry command={command} label="Hubungkan WhatsApp" />
+          <details><summary>Lihat kode manual · berlaku 10 menit</summary><code>{command}</code></details>
+        </div>
       )}
       {error && <p role="alert">{error}</p>}
       {subscriptions.error && <p role="alert">{subscriptions.error}</p>}

@@ -1,6 +1,7 @@
 // Local fixture server for browser checks. It never connects to a real database or n8n.
 import http from "node:http";
 const userId = "00000000-0000-4000-8000-000000000001";
+const viewerId = "00000000-0000-4000-8000-000000000002";
 const user = {
   id: userId,
   aud: "authenticated",
@@ -24,11 +25,12 @@ const token =
   ).toString("base64url") +
   ".fixture";
 const area = {
-  id: "surabaya",
-  name: "Wilayah Kota Surabaya",
-  latitude: -7.24917,
-  longitude: 112.75083,
-  coordinate_source: "city_reference",
+  id: "node_node-preview",
+  source_node_id: "node-preview",
+  name: "Node pengujian lokal",
+  latitude: -7.28,
+  longitude: 112.78,
+  coordinate_source: "robot_node",
   enabled: true,
 };
 const node = {
@@ -42,13 +44,23 @@ const node = {
   pm25_validated: false,
 };
 const jobs = [];
+const newsTime = new Date().toISOString();
 const facts = [
   ["weather", "Suhu udara", 30, "°C"],
   ["weather", "Kelembapan udara", 72, "%"],
   ["weather", "Kecepatan angin", 12, "km/jam"],
+  ["weather", "Kode kondisi cuaca (WMO)", 0, ""],
   ["soil", "Estimasi kadar air tanah 0–1 cm", 0.34, "m³/m³"],
   ["air_quality", "Estimasi PM2.5 wilayah", 16, "µg/m³"],
   ["air_quality", "Estimasi AQI US wilayah, bukan ISPU", 54, "indeks US AQI"],
+  ["fire", "Jumlah titik panas pada feed satelit 24 jam", 0, "titik"],
+  [
+    "earthquake",
+    "Cakupan hasil gempa BMKG",
+    "Tidak ada entri pada daftar M5+ dalam radius contoh.",
+    "",
+  ],
+  ["flood", "Prakiraan debit sungai", 12, "m³/s"],
 ].map(([category, label, value, unit], i) => ({
   id: "fixture-" + i,
   area_id: area.id,
@@ -57,14 +69,40 @@ const facts = [
   value,
   unit,
   reference: { latitude: area.latitude, longitude: area.longitude },
-  valid_at: new Date().toISOString(),
+  valid_at:
+    category === "flood"
+      ? new Date(Date.now() + 3600000).toISOString()
+      : new Date().toISOString(),
   fresh_until: new Date(Date.now() + 3600000).toISOString(),
-  kind: "model",
+  kind:
+    {
+      fire: "satellite",
+      earthquake: "event",
+      flood: "forecast",
+    }[category] || "model",
   source: "Open-Meteo / data pengujian lokal",
   source_url: "https://open-meteo.com/",
   spatial_context:
     "Nilai sintetis untuk memeriksa tampilan, bukan kondisi lapangan.",
 }));
+facts.unshift({
+  ...facts[0],
+  id: "fixture-old",
+  value: 99,
+  valid_at: new Date(Date.now() - 86400000).toISOString(),
+  fresh_until: new Date(Date.now() - 1000).toISOString(),
+});
+// Opt in to real public headlines while sensor/weather fixtures stay synthetic.
+let publicNewsRows = null;
+if (process.env.PREVIEW_LIVE_NEWS === "true") {
+  publicNewsRows = [];
+  const { disasterNews } = await import("../api/disaster-news.mjs");
+  const news = disasterNews({db:async (_table,_query,method,body) => {
+    if (method === "POST") {publicNewsRows=publicNewsRows.filter(r=>r.provider!==body.provider).concat(body);return null;}
+    return publicNewsRows;
+  }});
+  await news.refresh();
+}
 const mock = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   let raw = "";
@@ -82,6 +120,13 @@ const mock = http.createServer(async (req, res) => {
     return;
   }
   let output = [];
+  if (url.pathname === "/rest/v1/ae_disaster_news_cache") output = publicNewsRows || [{
+    provider: "gdacs", last_success_at: newsTime, refresh_after: new Date(Date.now()+3600000).toISOString(), last_error:null,
+    items: [
+      {id:"example-fire", title:"Contoh pantauan karhutla", original_title:"Data sintetis untuk pratinjau, bukan kejadian nyata", url:"https://www.gdacs.org/", source:"GDACS · contoh tampilan", published_at:newsTime, kind:"monitoring",type:"Karhutla",location:"Indonesia",country_code:"IDN",metrics:[{value:1200,unit:"ha",label:"Estimasi area GDACS"}]},
+      {id:"example-flood", title:"Contoh pantauan banjir", original_title:"Data sintetis untuk pratinjau, bukan kejadian nyata", url:"https://www.gdacs.org/report.aspx?eventtype=FL", source:"GDACS · contoh tampilan", published_at:newsTime, kind:"monitoring",type:"Banjir",location:"Indonesia",country_code:"IDN",metrics:[]}
+    ]
+  }];
   if (url.pathname === "/auth/v1/token") {
     if (
       p?.password !== "fixture-password" &&
@@ -96,16 +141,26 @@ const mock = http.createServer(async (req, res) => {
       );
       return;
     }
+    const isViewer =
+      p?.email === "viewer@example.test" ||
+      p?.refresh_token === "fixture-viewer";
     output = {
-      access_token: token,
+      access_token: isViewer
+        ? token.replace(/fixture$/, "fixture-viewer")
+        : token,
       refresh_token: "fixture-refresh",
       token_type: "bearer",
       expires_in: 3600,
       expires_at: Math.floor(Date.now() / 1000) + 3600,
-      user,
+      user: isViewer
+        ? { ...user, id: viewerId, email: "viewer@example.test" }
+        : user,
     };
   }
-  if (url.pathname === "/auth/v1/user") output = user;
+  if (url.pathname === "/auth/v1/user")
+    output = req.headers.authorization?.endsWith("fixture-viewer")
+      ? { ...user, id: viewerId, email: "viewer@example.test" }
+      : user;
   if (url.pathname === "/auth/v1/logout") {
     res.writeHead(204);
     res.end();
@@ -113,7 +168,17 @@ const mock = http.createServer(async (req, res) => {
   }
   if (url.pathname === "/rest/v1/ae_members")
     output = [
-      { user_id: userId, location_id: node.location_id, role: "admin" },
+      {
+        user_id:
+          url.searchParams.get("user_id") === "eq." + viewerId
+            ? viewerId
+            : userId,
+        location_id: node.location_id,
+        role:
+          url.searchParams.get("user_id") === "eq." + viewerId
+            ? "viewer"
+            : "admin",
+      },
     ];
   if (url.pathname === "/rest/v1/ae_nodes") output = [node];
   if (url.pathname === "/rest/v1/ae_sensor_context")
@@ -191,6 +256,7 @@ Object.assign(process.env, {
   INTERNAL_API_KEY: "fixture-internal",
   DEVICE_KEYS_JSON: "{}",
   WEB_ORIGINS: "http://127.0.0.1:4173",
+  DISASTER_NEWS_ENABLED: "false",
 });
 await import("../api/server.mjs");
 console.log(

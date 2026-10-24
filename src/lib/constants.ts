@@ -38,24 +38,24 @@ export interface NavItemConfig {
 
 /** Navigation items for citizen-centric sidebar */
 export const NAV_ITEMS: readonly NavItemConfig[] = [
-  { label: "Hub lingkungan", path: ROUTES.ENVIRONMENT, icon: "Leaf" },
   {
     label: "Beranda",
     path: ROUTES.DASHBOARD,
     icon: "LayoutGrid",
   },
+  { label: "Hub lingkungan", path: ROUTES.ENVIRONMENT, icon: "Leaf" },
   {
     label: "Peta sensor",
     path: ROUTES.SENSOR_MAP,
     icon: "Map",
   },
   {
-    label: "Analitik AI",
+    label: "Riwayat & model",
     path: ROUTES.ANALYTICS,
     icon: "LineChart",
   },
   {
-    label: "Laporan pemantauan",
+    label: "Laporan lingkungan",
     path: ROUTES.ESG_REPORTS,
     icon: "FileText",
   },
@@ -68,8 +68,6 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
     label: "Tanya AERO-BOT",
     path: ROUTES.AEROBOT,
     icon: "MessageCircle",
-    badge: "BARU",
-    badgeType: "pill",
   },
   {
     label: "Monitoring node",

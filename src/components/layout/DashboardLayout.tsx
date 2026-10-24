@@ -1,31 +1,42 @@
-import { useState, useEffect } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
-import { Sidebar } from './Sidebar'
-import { Topbar } from './Topbar'
+import { useState, useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
+import { Sidebar } from "./Sidebar";
+import { Topbar } from "./Topbar";
+import { AccessProvider } from "./AccessProvider";
+import { DEMO_MODE } from "@/lib/demo-mode";
+import { DemoBanner } from "@/components/shared/DemoBanner";
 
 export function DashboardLayout() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const location = useLocation()
+  return (
+    <AccessProvider>
+      <DashboardShell />
+    </AccessProvider>
+  );
+}
+function DashboardShell() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   // Scroll to top and close mobile menu on route change
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'auto' })
-    setMobileMenuOpen(false)
-  }, [location.pathname])
+    window.scrollTo({ top: 0, behavior: "auto" });
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   // Close mobile drawer on Escape key press
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setMobileMenuOpen(false)
+      if (event.key === "Escape") {
+        setMobileMenuOpen(false);
       }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
-    <div className="flex min-h-screen bg-[#f3f8ff] text-[#11223D]">
+    <div className={`app-shell flex min-h-screen bg-[#f3f8ff] text-[#11223D] ${DEMO_MODE ? "demo-shell" : ""}`}>
+      {DEMO_MODE && <DemoBanner />}
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <Sidebar />
@@ -53,5 +64,5 @@ export function DashboardLayout() {
         </main>
       </div>
     </div>
-  )
+  );
 }

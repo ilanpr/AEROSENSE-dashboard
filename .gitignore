@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-demo/
 *.local
 
 # Editor directories and files
@@ -28,3 +29,6 @@ dist-ssr
 !.env.example
 artifacts/
 reference-ui
+
+# Generated document previews
+output/
