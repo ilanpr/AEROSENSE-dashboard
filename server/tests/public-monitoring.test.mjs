@@ -38,6 +38,9 @@ test("guest monitoring publishes only opted-in nodes and strips private fields",
   const history=await request("/v1/public/history?node_id=public");
   assert.equal(history.data.readings[0].processing,undefined);
   assert.deepEqual(history.data.readings[0].metrics,{dust_ug_m3:23});
+  assert.equal(history.data.readings[0].raw_metrics,undefined);
+  assert.equal(history.data.readings[0].gru,undefined);
+  assert.equal(history.data.detail,"simple");
   assert(calls.some(([table,q])=>table==="ae_readings"&&q.endsWith("&order=observed_at.desc&limit=288")));
   const alerts=await request("/v1/public/alerts?node_id=public");
   assert.equal(alerts.data.alerts[0].acknowledged_by,undefined);

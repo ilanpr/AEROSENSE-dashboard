@@ -1,5 +1,6 @@
 import http from "node:http";
 import { webRoutes } from "./web.mjs";
+import { canViewModel, simpleReading } from "./access.mjs";
 import { browserVoiceRoutes } from "./browser-voice.mjs";
 import { disasterNews } from "./disaster-news.mjs";
 import { normalizeGowa, sendGowa, gowaChoiceIds } from "./gowa.mjs";
@@ -362,7 +363,7 @@ async function member(u, nodeId, write = false) {
     throw Object.assign(new Error("Akses lokasi tidak diizinkan"), {
       status: 403,
     });
-  return n;
+  return Object.assign(n, { member_role: m.role });
 }
 function device(req, type) {
   const id = req.headers["x-device-id"];
@@ -1116,14 +1117,16 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, { data: await context([nodeId]) });
       }
       if (path === "/v1/history" && req.method === "GET") {
-        await member(u, nodeId);
+        const n = await member(u, nodeId);
+        const rows = await db(
+          "ae_readings",
+          "node_id=eq." + filter(nodeId) + "&order=observed_at.desc&limit=288",
+        );
+        // Viewers (warga) get the corrected readings only; raw inputs and model output
+        // are for operators, admins and auditors who can interpret them.
         return send(res, 200, {
-          readings: await db(
-            "ae_readings",
-            "node_id=eq." +
-              filter(nodeId) +
-              "&order=observed_at.desc&limit=288",
-          ),
+          readings: canViewModel(n.member_role) ? rows : rows.map(simpleReading),
+          detail: canViewModel(n.member_role) ? "model" : "simple",
         });
       }
       if (path === "/v1/alerts" && req.method === "GET") {

@@ -22,7 +22,7 @@ export async function demoRequest(endpoint:string, options:RequestInit={}, accou
   const role=account?.app_metadata.demo_role==="admin"?"admin":"viewer";
   const index=DEMO_POINTS.findIndex(n=>n.id===(url.searchParams.get("node_id")||body.node_id));
   const nodes=demoNodes(role);
-  if(p==="/v1/access")return {can_audit_esg:role==="admin"};
+  if(p==="/v1/access")return {role,can_audit_esg:role==="admin",can_view_model:role==="admin",can_manage:role==="admin"};
   if((p==="/v1/dashboard"||p==="/v1/nodes") && !post)return {nodes,refreshed_at:new Date().toISOString()};
   if(p==="/v1/esg/report"){
     if(role!=="admin")throw new Error("Laporan lingkungan memerlukan akses administrator.");
@@ -36,7 +36,12 @@ export async function demoRequest(endpoint:string, options:RequestInit={}, accou
   if(p==="/v1/history"||p==="/v1/rules"||p==="/v1/alerts"||p==="/v1/environment"){
     if(index<0)throw new Error("Pilih lokasi sensor di Surabaya.");
     if(post)throw new Error("Aturan pada data simulasi bersifat hanya baca.");
-    if(p==="/v1/history")return {readings:demoHistory(index)};
+    if(p==="/v1/history"){
+      const readings=demoHistory(index);
+      // Same rule as the API: guests and warga get corrected readings only.
+      if(role==="admin")return {readings,detail:"model"};
+      return {detail:"simple",readings:readings.map(r=>({id:r.id,node_id:r.node_id,observed_at:r.observed_at,metrics:r.metrics,quality:{invalid:r.quality?.invalid===true}}))};
+    }
     if(p==="/v1/rules")return {rules:demoRules(index)};
     if(p==="/v1/alerts")return {alerts:demoAlerts(index).map(a=>acknowledgements.has(a.id)?{...a,acknowledged_at:new Date().toISOString()}:a)};
     const base=demoEnvironment(index);

@@ -4,6 +4,7 @@ import {
   orderEnvironmentFacts,
 } from "./environment-insights.mjs";
 import { publicMonitoring } from "./public-monitoring.mjs";
+import { canAuditEsg, canManage, canViewModel, highestRole } from "./access.mjs";
 const reportScope = {
   type: "ambient_monitoring",
   assurance_status: "not_assured",
@@ -50,16 +51,22 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
     const u = await user(req),
       memberships = await db("ae_members", "user_id=eq." + filter(u.id)),
       nodes = [];
-    const admins = memberships.filter((m) => m.role === "admin");
+    const auditors = memberships.filter((m) => canAuditEsg(m.role));
     if (path === "/v1/access") {
-      send(res, 200, { can_audit_esg: admins.length > 0 });
+      const role = highestRole(memberships);
+      send(res, 200, {
+        role,
+        can_audit_esg: auditors.length > 0,
+        can_view_model: memberships.some((m) => canViewModel(m.role)),
+        can_manage: memberships.some((m) => canManage(m.role)),
+      });
       return true;
     }
-    if (path === "/v1/esg/report" && !admins.length)
-      throw Object.assign(new Error("Laporan lingkungan hanya tersedia untuk admin."), {
+    if (path === "/v1/esg/report" && !auditors.length)
+      throw Object.assign(new Error("Laporan lingkungan hanya tersedia untuk admin dan auditor."), {
         status: 403,
       });
-    for (const m of path === "/v1/esg/report" ? admins : memberships) {
+    for (const m of path === "/v1/esg/report" ? auditors : memberships) {
       const found = await db(
         "ae_nodes",
         "location_id=eq." + filter(m.location_id) + "&enabled=eq.true",
@@ -71,7 +78,7 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
       if (path === "/v1/esg/report" && requested) {
         if (!nodes.some((n) => n.id === requested))
           throw Object.assign(
-            new Error("Anda bukan admin untuk lokasi node ini."),
+            new Error("Anda bukan admin atau auditor untuk lokasi node ini."),
             { status: 403 },
           );
         const readings = await db(
@@ -88,9 +95,11 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
         nodes.map(async (n) => ({
           ...n,
           rules: allRules.filter(r => r.node_id === n.id),
-          latest:
-            (await one("ae_sensor_context", "node_id=eq." + filter(n.id))) ??
-            null,
+          latest: await (async () => {
+            const latest = (await one("ae_sensor_context", "node_id=eq." + filter(n.id))) ?? null;
+            // Model output is shown to operators, admins and auditors only.
+            return latest && !canViewModel(n.role) ? { ...latest, gru: null } : latest;
+          })(),
         })),
       );
       data.sort(

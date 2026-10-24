@@ -1,10 +1,9 @@
 const pick = (row, keys) => Object.fromEntries(keys.filter(k => row?.[k] !== undefined).map(k => [k, row[k]]));
 const metricKeys = ["dust_ug_m3", "pm25_ug_m3", "eco2_ppm", "tvoc_ppb", "temperature_c", "humidity_pct"];
 const metrics = row => pick(row, metricKeys);
-const gru = row => row ? pick(row, ["target", "value", "model_version", "horizon_seconds"]) : null;
 const context = row => row ? {
   ...pick(row, ["node_id", "name", "reading_id", "observed_at", "received_at", "stale", "pm25_validated"]),
-  metrics: metrics(row.metrics), gru: gru(row.gru), quality: { invalid: row.quality?.invalid === true },
+  metrics: metrics(row.metrics), gru: null, quality: { invalid: row.quality?.invalid === true },
 } : null;
 const allowed = new Set(["dashboard", "nodes", "history", "rules", "alerts", "environment"]);
 
@@ -47,8 +46,9 @@ export async function publicMonitoring({ db, one, send, filter, readEnvironment 
   const table = { history: "ae_readings", rules: "ae_rules", alerts: "ae_alerts" }[resource];
   const suffix = resource === "history" ? "&order=observed_at.desc&limit=288" : resource === "alerts" ? "&order=created_at.desc&limit=100" : "";
   const rows = await db(table, "node_id=eq." + filter(id) + suffix);
-  send(res, 200, { [resource === "history" ? "readings" : resource]: rows.map(row => ({
-    ...pick(row, fields), ...(resource === "history" ? { metrics: metrics(row.metrics), raw_metrics: metrics(row.raw_metrics), gru: gru(row.gru) } : {}),
+  send(res, 200, { ...(resource === "history" ? { detail: "simple" } : {}), [resource === "history" ? "readings" : resource]: rows.map(row => ({
+    // Guests see corrected readings only; raw inputs and model output need an operator account.
+    ...pick(row, fields), ...(resource === "history" ? { metrics: metrics(row.metrics), quality: { invalid: row.quality?.invalid === true } } : {}),
   })) });
   return true;
 }

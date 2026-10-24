@@ -34,12 +34,16 @@ test('demo citizen cannot open admin reports, and no fallback reaches production
   const citizen=authenticateDemo('warga@demo.aerosense.test','WargaDemo2026!');
   assert.equal(citizen.app_metadata.demo_role,'viewer');
   assert.throws(()=>authenticateDemo('warga@demo.aerosense.test','wrong'));
-  assert.deepEqual(await demoRequest('/v1/access',{},citizen),{can_audit_esg:false});
+  assert.deepEqual(await demoRequest('/v1/access',{},citizen),{role:'viewer',can_audit_esg:false,can_view_model:false,can_manage:false});
   await assert.rejects(demoRequest('/v1/esg/report',{},citizen),/admin/);
   assert.equal((await demoRequest('/v1/esg/report',{},demoUser('admin'))).nodes.length,16);
   await assert.rejects(demoRequest('/v1/private-unknown',{},citizen),/produksi/);
   assert.equal((await demoRequest('/v1/dashboard',{},null)).nodes.length,16);
-  assert.equal((await demoRequest('/v1/history?node_id=demo-sby-01',{},null)).readings.length,96);
+  const guestHistory=await demoRequest('/v1/history?node_id=demo-sby-01',{},null);
+  assert.equal(guestHistory.readings.length,96);
+  assert.equal(guestHistory.detail,'simple');
+  assert(guestHistory.readings.every(r=>r.gru===undefined&&r.raw_metrics===undefined));
+  assert.equal((await demoRequest('/v1/history?node_id=demo-sby-01',{},demoUser('admin'))).detail,'model');
   assert.equal((await demoRequest('/v1/environment?node_id=demo-sby-01',{},null)).area.latitude,DEMO_POINTS[0].latitude);
   await assert.rejects(demoRequest('/v1/esg/report',{},null),/Masuk/);
   await assert.rejects(demoRequest('/v1/alerts/ack',{method:'POST',body:'{"id":"x"}'},null),/Masuk/);

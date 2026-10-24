@@ -11,7 +11,7 @@ export function ESGReportsPage() {
       <section>
         <DataState
           error={
-            access.error || "Laporan lingkungan hanya tersedia untuk admin lokasi."
+            access.error || "Laporan lingkungan hanya tersedia untuk admin dan auditor lokasi."
           }
         />
         <Link to="/dashboard" className="live-button secondary">

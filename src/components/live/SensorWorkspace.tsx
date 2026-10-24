@@ -57,7 +57,7 @@ export function SensorWorkspace({
     nodes.find((n) => n.id === (id || selected || (mode==="map"?mapParams.get("node_id"):null))) ||
     (!id ? nodes[0] : undefined);
   const nodeQuery = node ? "?node_id=" + encodeURIComponent(node.id) : "";
-  const history = useLiveData<{ readings: Reading[] }>(
+  const history = useLiveData<{ readings: Reading[]; detail?: "simple" | "model" }>(
     node && ["analytics", "detail", "report"].includes(mode)
       ? (mode === "report" ? "/v1/esg/report" : "/v1/history") + nodeQuery + "&account=" + encodeURIComponent(user?.id || "guest")
       : null,
@@ -69,6 +69,8 @@ export function SensorWorkspace({
       : null,
   );
   const readings = history.data?.readings || [];
+  // The API decides: "model" for operators, admins and auditors; "simple" for guests and warga.
+  const modelView = history.data?.detail === "model";
   const environment = useLiveData<EnvironmentResponse>(node && mode==="map" ? `/v1/environment?node_id=${encodeURIComponent(node.id)}&account=${encodeURIComponent(user?.id||"guest")}` : null,60000);
   const events=(environment.data?.events||[]).filter(e=>eventType==="all"||e.category===eventType);
   function changeMapParam(key: string, value: string) {
@@ -85,7 +87,7 @@ export function SensorWorkspace({
     map: "Peta sensor",
     nodes: "Monitoring node",
     detail: node?.name || "Detail node",
-    analytics: "Riwayat sensor",
+    analytics: "Riwayat udara",
     alerts: "Peringatan sensor",
     report: "Laporan lingkungan",
   }[mode];
@@ -217,9 +219,15 @@ export function SensorWorkspace({
         <div>
           <h1>{title}</h1>
           {mode !== "map" && <p>
-            {mode === "report"
-              ? "Riwayat sensor untuk pemeriksaan kondisi udara."
-              : "Pembacaan node dan hasil model, terpisah dari informasi wilayah."}
+            {{
+              report: "Ringkasan dan ekspor untuk pemeriksaan ESG.",
+              nodes: "Status setiap perangkat yang dapat Anda akses.",
+              analytics: "Perubahan kualitas udara 24 jam terakhir di satu titik.",
+              alerts: "Peringatan yang tercatat di satu titik.",
+              detail: "Kondisi terkini, riwayat, dan peringatan titik ini.",
+              overview: "Pembacaan node dan hasil model, terpisah dari informasi wilayah.",
+              map: "",
+            }[mode]}
           </p>}
         </div>
         <button
@@ -246,7 +254,7 @@ export function SensorWorkspace({
         <DataState empty="Belum ada node yang tersedia." />
       ) : (
         <>
-          {mode !== "map" && <div className="sensor-toolbar">
+          {!["map", "nodes"].includes(mode) && <div className="sensor-toolbar">
             <label>
               Node
               <MonitoringSelect label="Pilih node" value={node?.id || ""} disabled={!!id}
@@ -256,14 +264,14 @@ export function SensorWorkspace({
           </div>}
           {node ? (
             <>
-              {mode !== "map" && <div className="sensor-location">
+              {!["map", "nodes"].includes(mode) && <div className="sensor-location">
                 <MapPin size={16} />
                 <span>
                   {node.name} · {node.latitude}, {node.longitude}
                 </span>
                 <NodeStatus node={node} />
               </div>}
-              {["map", "nodes", "overview"].includes(mode) && (
+              {mode === "map" && (
                 <>
                 {mode === "map" && <div className="map-controls" data-public={mapLayer !== "sensors"}>
                   <div className="map-controls-main">
@@ -322,7 +330,7 @@ export function SensorWorkspace({
                 </Suspense>
                 </>
               )}
-              {["overview", "detail", "analytics"].includes(mode) && (
+              {mode === "detail" && (
                 <>
                   <div className="sensor-values">
                     {Object.entries(metricLabels)
@@ -351,7 +359,7 @@ export function SensorWorkspace({
                   </p>
                 </>
               )}
-              {["nodes", "map", "overview"].includes(mode) && (
+              {mode === "nodes" && (
                 <div className="live-table-wrap">
                   <table className="live-table">
                     <caption>Perangkat yang dapat Anda akses</caption>
@@ -393,14 +401,14 @@ export function SensorWorkspace({
                   scope={dashboard.data?.report_scope} userEmail={user?.email}
                   loading={(history.loading && !history.data) || (alerts.loading && !alerts.data)} />
               )}
-              {["detail", "analytics", "report"].includes(mode) && (
+              {["detail", "analytics"].includes(mode) && (
                 <section className="live-panel">
                   <div className="live-heading">
                     <div>
-                      <h2>Historis pembacaan</h2>
-                      <p>Riwayat terbaru pada lokasi terpilih.</p>
+                      <h2>{modelView ? "Historis pembacaan & model" : "Riwayat 24 jam"}</h2>
+                      <p>{modelView ? "Nilai terkoreksi, input mentah, dan estimasi GRU." : "Nilai sudah dikoreksi otomatis untuk pengaruh suhu dan kelembapan."}</p>
                     </div>
-                    {mode !== "report" && <button
+                    {modelView && <button
                       className="live-button secondary"
                       onClick={exportReadings}
                       disabled={!user || !readings.length || history.loading || !!history.error}
@@ -424,15 +432,18 @@ export function SensorWorkspace({
                           options={Object.entries(metricLabels).filter(([k]) => k !== "pm25_ug_m3" || node.pm25_validated)
                             .map(([value,[label]]) => ({value,label}))} />
                       </label>
+                      {!modelView && <HistorySummary readings={readings} metric={metric} />}
                       <Suspense fallback={<DataState loading />}>
-                        <ReadingChart data={chart} />
+                        <ReadingChart data={chart} simple={!modelView} />
                       </Suspense>
                       <p className="hub-footnote">
-                        Pembacaan sensor dan prediksi model ditampilkan terpisah.
+                        {modelView
+                          ? "Pembacaan sensor dan prediksi model ditampilkan terpisah."
+                          : "Detail model dan ekspor data tersedia untuk operator, admin, dan auditor lokasi."}
                       </p>
                     </>
                   )}
-                  {node.latest?.gru ? (
+                  {!modelView ? null : node.latest?.gru ? (
                     <dl className="model-details">
                       <div>
                         <dt>Model</dt>
@@ -537,5 +548,25 @@ export function SensorWorkspace({
         </>
       )}
     </section>
+  );
+}
+
+// Plain-language summary for guests and warga: average, highest and lowest of the shown readings.
+function HistorySummary({ readings, metric }: { readings: Reading[]; metric: string }) {
+  const points = readings
+    .filter((r) => r.quality?.invalid !== true && typeof r.metrics[metric] === "number")
+    .map((r) => ({ at: r.observed_at, value: r.metrics[metric] as number }));
+  if (!points.length) return null;
+  const [label, unit] = metricLabels[metric] || [metric, ""];
+  const avg = points.reduce((a, p) => a + p.value, 0) / points.length;
+  const high = points.reduce((a, p) => (p.value > a.value ? p : a));
+  const low = points.reduce((a, p) => (p.value < a.value ? p : a));
+  const fmt = (v: number) => v.toLocaleString("id-ID", { maximumFractionDigits: 1 });
+  return (
+    <dl className="history-summary">
+      <div><dt>Rata-rata {label.toLowerCase()}</dt><dd>{fmt(avg)} <small>{unit}</small></dd></div>
+      <div><dt>Tertinggi</dt><dd>{fmt(high.value)} <small>{unit} · {dateLabel(high.at)}</small></dd></div>
+      <div><dt>Terendah</dt><dd>{fmt(low.value)} <small>{unit} · {dateLabel(low.at)}</small></dd></div>
+    </dl>
   );
 }
