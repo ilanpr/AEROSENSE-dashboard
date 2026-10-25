@@ -30,7 +30,10 @@ export function LoginPage() {
   return (
     <div className="login-page">
       <section className="login-story">
-        <Link to={ROUTES.DASHBOARD} className="login-brand">AERO<span>SENSE</span></Link>
+        <Link to={ROUTES.DASHBOARD} className="login-brand" aria-label="AEROSENSE — Beranda">
+          <img src="/assets/brand/aerosense-mark.png" className="login-brand-icon" width="40" height="40" alt="" />
+          <span>AERO<strong>SENSE</strong></span>
+        </Link>
         <div className="login-story-copy">
           <span className="login-location"><span /> Surabaya · Indonesia</span>
           <h1>Kenali udara<br />di sekitar Anda.</h1>

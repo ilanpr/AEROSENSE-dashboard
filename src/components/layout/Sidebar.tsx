@@ -10,7 +10,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
   const { user } = useAuth();
   return <aside className="app-sidebar">
     <NavLink to={ROUTES.DASHBOARD} onClick={onClose} className="app-brand" aria-label="AEROSENSE — Beranda">
-      <span className="brand-emblem" aria-hidden="true" />
+      <img className="brand-emblem" src="/assets/brand/aerosense-mark.png" width="38" height="38" alt="" />
       <span>AERO<strong>SENSE</strong><small>Pantau lingkungan sekitar.</small></span>
     </NavLink>
     <div className="sidebar-intro"><span className="sidebar-signal" /><span>Pemantauan lingkungan</span></div>

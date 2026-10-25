@@ -37,10 +37,12 @@ export function RegisterPage() {
         <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 rounded-3xl p-7 sm:p-8 shadow-xl">
           {/* Logo / Mascot */}
           <div className="flex flex-col items-center text-center mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#086cf0] to-[#38b6ff] shadow-lg flex items-center justify-center mb-4 overflow-hidden">
+            <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mb-4">
               <img
-                src="/assets/aerobot/falcon/welcome.webp"
+                src="/assets/brand/aerosense-mark.png"
                 alt="AEROSENSE"
+                width="48"
+                height="48"
                 className="w-12 h-12 object-contain"
               />
             </div>
