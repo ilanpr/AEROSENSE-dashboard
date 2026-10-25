@@ -52,3 +52,5 @@ Sensor size/color correction: the desktop illustration stage is capped at 360 ×
 Brand mark: use the exact user-supplied blue logo (logo (1).png), exported with its native transparent background to public/assets/brand. Keep the existing Inter AEROSENSE wordmark alongside it. Navigation and authentication use the new mark; favicon and touch icon share the same silhouette. Do not substitute the mascot for the company logo.
 
 Reference-matched sensor composition: a fixed 7-degree tilt, five varied cyan spheres and a short right-hand continuation of the airflow arc. Keep the existing gentle floating cycle, pause offscreen, and disable movement for reduced motion. Verified on desktop and mobile with clear separation from metric cards.
+
+Latest sensor direction supersedes the orbital references above: remove every ring/encircling arc around the device. Keep five spaced particles and short, disconnected airflow strokes drifting gently sideways. Sensor floating animation and tilt remain; airflow and particles pause offscreen and become static under reduced motion.
