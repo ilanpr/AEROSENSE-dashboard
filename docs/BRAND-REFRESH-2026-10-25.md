@@ -42,3 +42,5 @@ Sensor size/color correction: the desktop illustration stage is capped at 360 ×
 Reference-matched sensor composition: a fixed 7-degree tilt, five varied cyan spheres and a short right-hand continuation of the airflow arc. Keep the existing gentle floating cycle, pause offscreen, and disable movement for reduced motion. Verified on desktop and mobile with clear separation from metric cards.
 
 Latest sensor direction supersedes the orbital references above: remove every ring/encircling arc around the device. Keep five spaced particles and short, disconnected airflow strokes drifting gently sideways. Sensor floating animation and tilt remain; airflow and particles pause offscreen and become static under reduced motion.
+
+Latest approved revision: remove the short airflow strokes as well as every sensor orbit. Use the five soft spheres plus seven small, scattered cyan background particles with slow staggered drifting motion. Keep the sensor tilt, size, and floating cycle; pause all decorative movement offscreen and keep it static for reduced motion. This supersedes the earlier airflow-stroke direction.

@@ -23,11 +23,9 @@ export function ConditionScene({
       {scene !== "sensor" && <span className="scene-ring" />}
       {scene === "sensor" && !small && (
         <>
-          <svg className="sensor-backdrop" viewBox="0 0 360 360" fill="none" aria-hidden="true">
-            <path className="sensor-air-current" d="M10 152C28 143 47 141 68 146M20 166C34 161 47 160 59 162" />
-            <path className="sensor-air-current air-current-two" d="M290 227C307 221 329 222 348 230" />
-            <path className="sensor-air-current air-current-three" d="M273 247C292 241 313 244 329 250" />
-          </svg>
+          {Array.from({ length: 7 }, (_, index) => (
+            <span key={index} className={`sensor-dust dust-${index + 1}`} />
+          ))}
           <span className="sensor-float-object sensor-orb-one" />
           <span className="sensor-float-object sensor-orb-two" />
           <span className="sensor-float-object sensor-orb-three" />
