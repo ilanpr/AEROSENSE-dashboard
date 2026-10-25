@@ -32,10 +32,13 @@ export function ConditionScene({
               </linearGradient>
             </defs>
             <path d="M46 278C-18 230 25 107 135 66C240 26 350 82 333 160" stroke="url(#sensor-air-ribbon)" strokeWidth="3" strokeLinecap="round" />
+            <path d="M300 91C334 107 347 153 320 190" stroke="url(#sensor-air-ribbon)" strokeWidth="2" strokeLinecap="round" />
           </svg>
           <span className="sensor-float-object sensor-orb-one" />
           <span className="sensor-float-object sensor-orb-two" />
           <span className="sensor-float-object sensor-orb-three" />
+          <span className="sensor-float-object sensor-orb-four" />
+          <span className="sensor-float-object sensor-orb-five" />
         </>
       )}
       <img
