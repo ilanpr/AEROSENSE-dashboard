@@ -39,7 +39,7 @@ export function RegisterPage() {
           <div className="flex flex-col items-center text-center mb-6">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#086cf0] to-[#38b6ff] shadow-lg flex items-center justify-center mb-4 overflow-hidden">
               <img
-                src="/assets/aerobot.svg"
+                src="/assets/aerobot/falcon/welcome.webp"
                 alt="AEROSENSE"
                 className="w-12 h-12 object-contain"
               />

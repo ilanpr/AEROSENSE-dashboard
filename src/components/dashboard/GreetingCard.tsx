@@ -64,7 +64,7 @@ export function GreetingCard() {
 
       {/* Mascot SVG image with gentle wave animation */}
       <img
-        src="/assets/aerobot.svg"
+        src="/assets/aerobot/falcon/welcome.webp"
         alt="AERO-BOT melambaikan tangan"
         className="recommend-mascot"
         width={136}

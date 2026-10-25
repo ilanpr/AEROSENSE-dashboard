@@ -188,6 +188,20 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .assist-orbit { position:absolute; z-index:-1; border:1px solid #68bffd45; border-radius:50%; pointer-events:none; }
 .assist-orbit-one { width:230px; height:230px; right:-62px; top:-82px; }
 .assist-orbit-two { width:170px; height:170px; right:8px; bottom:-105px; }
+.assist-visual { position:relative; isolation:isolate; overflow:hidden; flex-shrink:0; width:46%; max-width:360px; height:310px; }
+.aero-assist .assist-visual > .aero-mascot { position:absolute; z-index:1; width:100%; max-width:none; height:100%; object-fit:contain; scale:1.16; inset:0; margin:0; }
+.assist-airflow { position:absolute; inset:0; width:100%; height:100%; stroke:#43a9e8; stroke-width:2.5; opacity:.65; pointer-events:none; }
+.assist-airflow path { stroke-dasharray:4 9; }
+.assist-particle { position:absolute; width:12px; height:12px; border-radius:50%; background:radial-gradient(circle at 30% 25%,#fff 0 8%,#baf2ff 28%,#69c8ee 65%,#3b9ee0); box-shadow:0 8px 14px -7px #2b8ac978; animation:assist-particle-drift 7s ease-in-out infinite; pointer-events:none; }
+.particle-1 { left:10%; top:24%; width:30px; height:30px; }
+.particle-2 { left:82%; top:19%; width:18px; height:18px; animation-delay:-2s; }
+.particle-3 { left:85%; top:58%; width:36px; height:36px; animation-delay:-4s; }
+.particle-4 { left:9%; top:70%; width:19px; height:19px; animation-delay:-3s; }
+.particle-5 { left:73%; top:84%; width:16px; height:16px; animation-delay:-5s; }
+.particle-6 { left:33%; top:12%; width:10px; height:10px; animation-delay:-1s; }
+.particle-7 { left:25%; top:87%; width:24px; height:24px; animation-delay:-6s; }
+.aero-assist:has(.motion-paused) .assist-particle { animation-play-state:paused; }
+@keyframes assist-particle-drift { 0%,100% { transform:translate3d(0,0,0); opacity:.8; } 50% { transform:translate3d(6px,-12px,0); opacity:1; } }
 .assist-copy { position:relative; z-index:1; max-width:47ch; }
 .assist-copy h2 { font-size:24px; line-height:1.18; font-weight:800; letter-spacing:-.035em; max-width:19ch; color:#123d69; }
 .assist-copy p { font-size:13px; line-height:1.7; margin:12px 0 8px; max-width:35ch; color:#476b8b; }
@@ -219,6 +233,7 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
   .sensor-focus-grid .sensor-hero .panel-metrics dd { font-size:34px; }
   .aero-assist { flex-direction:column; align-items:flex-start; justify-content:space-between; padding:28px 24px 12px; }
   .aero-assist .aero-mascot { width:calc(100% + 24px); max-width:300px; height:auto; aspect-ratio:1; align-self:center; margin:12px -12px 0; }
+  .aero-assist .assist-visual { width:calc(100% + 48px); max-width:none; min-height:280px; height:320px; margin:4px -24px -12px; }
 }
 @media(max-width:600px) {
   .app-shell .panel-metrics { gap:8px; margin-top:18px; }
@@ -231,6 +246,7 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
   .assist-copy p { font-size:12px; }
   .aero-assist { flex-direction:column; align-items:flex-start; }
   .aero-assist .aero-mascot { width:200px; height:200px; align-self:center; }
+  .aero-assist .assist-visual { width:100%; max-width:340px; height:300px; align-self:center; margin:-8px 0 -12px; }
   .app-shell .sensor-hero-copy h2 { font-size:30px; }
 }
 
@@ -311,7 +327,7 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 
 @media(max-width:360px) { .sensor-node-controls { gap:4px; } .app-shell .sensor-node-controls .sensor-select { max-width:210px; } }
 @media(prefers-reduced-motion:reduce) {
-  .aero-mascot,.app-shell .sensor-hero .scene-sensor img { animation:none; }
+  .aero-mascot,.assist-particle,.app-shell .sensor-hero .scene-sensor img { animation:none; }
   .aero-mascot:not(.motion-paused),.app-shell .sensor-hero .scene-sensor:not(.scene-offscreen) img { will-change:auto; }
   .assist-link:hover { transform:none; }
 }

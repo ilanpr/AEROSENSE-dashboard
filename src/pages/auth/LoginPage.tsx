@@ -37,7 +37,7 @@ export function LoginPage() {
           <p>Kondisi node, cuaca, dan lingkungan.<br />Langsung dari satu tempat.</p>
           <Link to={ROUTES.DASHBOARD} className="guest-entry">Lihat kondisi sekarang <ArrowRight size={19} /></Link>
         </div>
-        <img className="login-scene" src="/assets/aerobot/calm.png" alt="Maskot AERO-BOT" />
+        <img className="login-scene" src="/assets/aerobot/falcon/calm.webp" alt="Maskot AERO-BOT" />
         <span className="login-story-footer">{DEMO_MODE ? "Surabaya · Data simulasi" : "AEROSENSE · Pemantauan lingkungan"}</span>
       </section>
       <section className="login-form-panel" aria-labelledby="login-heading">

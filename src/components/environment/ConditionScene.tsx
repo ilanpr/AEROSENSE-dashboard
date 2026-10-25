@@ -22,7 +22,7 @@ export function ConditionScene({
       <span className="scene-halo" />
       <span className="scene-ring" />
       <img
-        src={`/assets/environment/${scene}.webp`}
+        src={`/assets/environment/${scene === "sensor" ? "sensor-node-v3" : scene}.webp`}
         alt=""
         width="360"
         height="360"

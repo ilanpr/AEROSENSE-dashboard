@@ -226,7 +226,7 @@ export function ChatPanel() {
   return (
     <section className="live-chat" aria-label="Percakapan AERO-BOT">
       <header>
-        <img src="/assets/aerobot.svg" alt="" />
+        <img src={busy ? "/assets/aerobot/falcon/watch.webp" : "/assets/aerobot/falcon/talk.webp"} alt="" />
         <div>
           <strong>AERO-BOT</strong>
           <small>
