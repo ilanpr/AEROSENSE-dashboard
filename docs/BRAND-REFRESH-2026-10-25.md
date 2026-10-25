@@ -34,3 +34,5 @@ curl --fail http://127.0.0.1:8082/api/health
 Periksa tampilan melalui domain setelah server dan Cloudflare Tunnel kembali aktif. Paket ini tidak mengubah firmware, API, database, maupun konfigurasi tunnel.
 
 Pembaruan layout: karakter dibatasi dalam area ilustrasi tersendiri agar tidak menutupi teks atau tombol. Tujuh gelembung biru/cyan dan kurva aliran udara memperjelas latar. Diperiksa pada lebar 1440, 1100, dan 390 piksel: tidak ada overlap area teks dengan ilustrasi, tidak ada overflow horizontal, dan sensor v3 termuat.
+
+Sensor background: one open cyan airflow arc and three widely spaced bubbles, kept behind the device. No overlapping ribbons, tiles, or enclosed rings. The mobile device illustration is slightly reduced to keep it separated from the metric cards. Decorative motion pauses offscreen and is disabled under reduced motion.

@@ -21,6 +21,23 @@ export function ConditionScene({
     >
       <span className="scene-halo" />
       <span className="scene-ring" />
+      {scene === "sensor" && !small && (
+        <>
+          <svg className="sensor-backdrop" viewBox="0 0 360 360" fill="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="sensor-air-ribbon" x1="20" y1="80" x2="330" y2="300" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#e9fbff" stopOpacity=".9" />
+                <stop offset=".5" stopColor="#82edff" stopOpacity=".5" />
+                <stop offset="1" stopColor="#fff" stopOpacity=".85" />
+              </linearGradient>
+            </defs>
+            <path d="M46 278C-18 230 25 107 135 66C240 26 350 82 333 160" stroke="url(#sensor-air-ribbon)" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+          <span className="sensor-float-object sensor-orb-one" />
+          <span className="sensor-float-object sensor-orb-two" />
+          <span className="sensor-float-object sensor-orb-three" />
+        </>
+      )}
       <img
         src={`/assets/environment/${scene === "sensor" ? "sensor-node-v3" : scene}.webp`}
         alt=""

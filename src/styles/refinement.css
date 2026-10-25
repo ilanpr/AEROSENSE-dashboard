@@ -266,13 +266,21 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 .sensor-recommendation > svg { flex-shrink:0; margin-top:3px; }
 .app-shell .sensor-hero > .condition-scene.scene-sensor { width:100%; max-width:420px; height:320px; aspect-ratio:auto; }
 .app-shell .sensor-hero .scene-sensor img { scale:1.1; }
+.scene-sensor { isolation:isolate; }
+.sensor-backdrop { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.scene-sensor:not(.scene-small) > :is(.scene-ring,.scene-spark) { display:none; }
+.sensor-float-object { position:absolute; border-radius:50%; background:radial-gradient(circle at 30% 24%,#fff 0 7%,#c6f5ff 25%,#77cdef 65%,#3c98d4); box-shadow:0 9px 16px -10px #064a91; animation:assist-particle-drift 8s ease-in-out infinite; pointer-events:none; }
+.sensor-orb-one { width:24px; height:24px; left:5%; top:29%; animation-delay:-2s; }
+.sensor-orb-two { width:17px; height:17px; right:3%; bottom:18%; animation-delay:-5s; }
+.sensor-orb-three { width:9px; height:9px; right:12%; top:8%; animation-delay:-1s; }
+.scene-offscreen .sensor-float-object { animation-play-state:paused; }
 @media(min-width:1300px) {
   .sensor-focus-grid .sensor-hero { grid-template-columns:minmax(0,1fr) minmax(240px,.95fr); }
   .sensor-focus-grid .sensor-hero > .condition-scene.scene-sensor { max-width:420px; }
 }
 @media(max-width:600px) {
   .app-shell .sensor-hero > .condition-scene.scene-sensor { width:min(100%,280px); height:230px; margin:18px auto 8px; }
-  .app-shell .sensor-hero .scene-sensor img { scale:1.05; }
+  .app-shell .sensor-hero .scene-sensor img { scale:.94; }
   .app-shell .sensor-recommendation { font-size:12px; margin:14px 0 18px; }
 }
 @media(prefers-reduced-transparency:reduce) { .app-shell .panel-metrics > div { --metric-backdrop:none; backdrop-filter:none; -webkit-backdrop-filter:none; background:#155799; } }
@@ -327,7 +335,7 @@ button, a, summary, input { -webkit-tap-highlight-color:transparent; }
 
 @media(max-width:360px) { .sensor-node-controls { gap:4px; } .app-shell .sensor-node-controls .sensor-select { max-width:210px; } }
 @media(prefers-reduced-motion:reduce) {
-  .aero-mascot,.assist-particle,.app-shell .sensor-hero .scene-sensor img { animation:none; }
+  .aero-mascot,.assist-particle,.sensor-float-object,.app-shell .sensor-hero .scene-sensor img { animation:none; }
   .aero-mascot:not(.motion-paused),.app-shell .sensor-hero .scene-sensor:not(.scene-offscreen) img { will-change:auto; }
   .assist-link:hover { transform:none; }
 }

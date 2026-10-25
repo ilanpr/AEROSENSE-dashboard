@@ -44,3 +44,5 @@ Corporate report refinement: keep monitoring costs and development plans out of 
 Map marker refinement: use a 32 px circular status-color gradient with a white antenna, flame, or activity icon, a 3 px white rim and a restrained downward shadow. Selection uses a separate blue ring; preserve coordinates, anchors and semantic status colors. The legend repeats the filled-circle treatment.
 
 The sensor render uses the same smooth blue/cyan 2.5D gradient illustration style as the Falcon mascot. The homepage assistant illustration fills its own responsive visual stage, with a larger character, translucent airflow curves and seven sparse particles behind it. Particle animation pauses with the mascot and is static under reduced motion.
+
+Sensor background: one open cyan airflow arc and three widely spaced bubbles, kept behind the device. No overlapping ribbons, tiles, or enclosed rings. The mobile device illustration is slightly reduced to keep it separated from the metric cards. Decorative motion pauses offscreen and is disabled under reduced motion.
