@@ -38,7 +38,7 @@ export function LandingPage() {
           <div className="landing-hero-points"><span><Check size={15} /> Pemantauan publik</span><span><Check size={15} /> Konteks berbasis lokasi</span></div>
         </div>
         <div className="landing-hero-art" role="img" aria-label="Maskot AERO-BOT menyambut Anda">
-          <div className="landing-particles" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <span key={index} className={`landing-art-dot art-dot-${index + 1}`} />)}</div>
+          <div className="landing-particles" aria-hidden="true">{Array.from({ length: 4 }, (_, index) => <span key={index} className={`landing-art-dot art-dot-${index + 1}`} />)}</div>
           <AeroMascot pose="welcome" className="landing-hero-mascot" />
         </div>
       </section>
