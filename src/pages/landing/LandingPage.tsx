@@ -40,7 +40,6 @@ export function LandingPage() {
           <div className="landing-hero-points"><span><Check size={15} /> Pemantauan publik</span><span><Check size={15} /> Konteks berbasis lokasi</span></div>
         </div>
         <div className="landing-hero-art" aria-label="Maskot AERO-BOT dan perangkat sensor AEROSENSE">
-          <span className="landing-art-glow" aria-hidden="true" />
           <span className="landing-art-dot art-dot-one" aria-hidden="true" /><span className="landing-art-dot art-dot-two" aria-hidden="true" /><span className="landing-art-dot art-dot-three" aria-hidden="true" />
           <AeroMascot pose="welcome" className="landing-hero-mascot" />
           <img ref={sensorRef} className={`landing-hero-sensor ${sensorPlaying ? "" : "motion-paused"}`} src="/assets/environment/sensor-node-v3.webp" width="240" height="240" alt="Ilustrasi perangkat sensor AEROSENSE" />
@@ -60,15 +59,15 @@ export function LandingPage() {
 
       <section id="cara-kerja" className="landing-workflow landing-container">
         <h2>Dari lingkungan,<br /><span>menjadi dasar tindakan.</span></h2>
-        <div className="landing-workflow-steps">
-          <article><Radio size={25} /><h3>Ukur di lokasi</h3><p>Sensor merekam parameter pada titik pemasangan dan mengirimkan pembacaan ke sistem.</p></article>
-          <article><CloudSun size={25} /><h3>Pahami konteksnya</h3><p>Dashboard menghubungkan pembacaan, riwayat, dan informasi wilayah. AERO-BOT membantu menjelaskannya.</p></article>
-          <article><Settings2 size={25} /><h3>Tindak lanjuti bersama</h3><p>Pengelola meninjau peringatan, menetapkan ambang operasional, dan menyiapkan data untuk koordinasi.</p></article>
-        </div>
+        <ol className="landing-workflow-steps">
+          <li><span className="landing-step-number" aria-hidden="true">1</span><div><h3>Ukur di lokasi</h3><p>Sensor merekam parameter pada titik pemasangan dan mengirimkan pembacaan ke sistem.</p></div></li>
+          <li><span className="landing-step-number" aria-hidden="true">2</span><div><h3>Pahami konteksnya</h3><p>Dashboard menghubungkan pembacaan, riwayat, dan informasi wilayah. AERO-BOT membantu menjelaskannya.</p></div></li>
+          <li><span className="landing-step-number" aria-hidden="true">3</span><div><h3>Tindak lanjuti bersama</h3><p>Pengelola meninjau peringatan, menetapkan ambang operasional, dan menyiapkan data untuk koordinasi.</p></div></li>
+        </ol>
       </section>
 
       <section id="pengelola" className="landing-management landing-container">
-        <div><h2>Kawasan Anda.<br /><span>Pengelolaan lebih terarah.</span></h2><p>Untuk tim industri dan kader governance: kelola ambang waspada dan bahaya pada lokasi yang ditugaskan, lalu unduh data untuk evaluasi bersama.</p><div className="landing-actions"><Link className="landing-button landing-button-white" to={user ? "/management" : "/login"}>Kelola kawasan<ArrowRight size={18} /></Link><Link className="landing-management-link" to="/analytics"><FileSpreadsheet size={18} />Telusuri riwayat</Link></div></div>
+        <div><h2>Kawasan Anda.<br /><span>Pengelolaan lebih terarah.</span></h2><p>Untuk tim industri dan kader governance: kelola ambang waspada dan bahaya pada lokasi yang ditugaskan, lalu unduh data untuk evaluasi bersama.</p><div className="landing-actions"><Link className="landing-button" to={user ? "/management" : "/login"}>Kelola kawasan<ArrowRight size={18} /></Link><Link className="landing-management-link" to="/analytics"><FileSpreadsheet size={18} />Telusuri riwayat</Link></div></div>
         <div className="landing-management-details"><p><Settings2 size={21} /><span><strong>Ambang sesuai kebutuhan lokasi</strong>Waspada, bahaya, batas pulih, dan jeda notifikasi.</span></p><p><FileSpreadsheet size={21} /><span><strong>Data siap diolah</strong>Ekspor CSV untuk Excel dan Google Sheets.</span></p><p><Check size={21} /><span><strong>Akses sesuai penugasan</strong>Admin menetapkan pengelola untuk setiap lokasi.</span></p></div>
       </section>
       <aside id="tentang-data" className="landing-data-note landing-container"><strong>Memahami data dengan tepat.</strong><p>Pembacaan sensor dan estimasi wilayah ditampilkan terpisah, lengkap dengan waktu dan ketersediaannya. Ambang pengelola digunakan untuk pemantauan operasional; penilaian kepatuhan memerlukan pemeriksaan tersendiri.</p></aside>
