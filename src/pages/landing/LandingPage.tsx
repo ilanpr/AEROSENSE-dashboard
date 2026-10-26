@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpRight, Radio, CloudSun, MessageCircle, ChartNoAxesCo
 import { AeroMascot } from "@/components/environment/AeroMascot";
 import { ConditionScene } from "@/components/environment/ConditionScene";
 import { useAuth } from "@/hooks/useAuth";
+import { LandingTrend } from "./LandingTrend";
 import "@/styles/landing.css";
 
 const features = [
@@ -41,7 +42,6 @@ export function LandingPage() {
           <span className="landing-art-dot art-dot-one" aria-hidden="true" /><span className="landing-art-dot art-dot-two" aria-hidden="true" /><span className="landing-art-dot art-dot-three" aria-hidden="true" />
           <AeroMascot pose="welcome" className="landing-hero-mascot" />
           <img className="landing-hero-sensor" src="/assets/environment/sensor-node-v3.webp" width="240" height="240" alt="Ilustrasi perangkat sensor AEROSENSE" />
-          <div className="landing-art-caption"><span className="landing-caption-dot" /><div><strong>Terhubung dengan lingkungan.</strong><span>Dari titik sensor hingga informasi yang Anda pahami.</span></div></div>
         </div>
       </section>
 
@@ -51,7 +51,7 @@ export function LandingPage() {
           <div className="landing-feature-options" aria-label="Pilih fitur AEROSENSE">{features.map((item, index) => <button key={item.title} aria-pressed={active === index} onClick={() => setActive(index)}><item.icon size={22} /><span>{item.title}</span><ArrowUpRight size={17} /></button>)}</div>
           <article className="landing-feature-detail" aria-live="polite">
             <div><h3>{feature.heading}</h3><p>{feature.description}</p><ul>{feature.bullets.map(bullet => <li key={bullet}><Check size={15} />{bullet}</li>)}</ul><Link className="landing-text-link" to={feature.path}>{feature.action}<ArrowRight size={17} /></Link></div>
-            <div className="landing-feature-illustration">{feature.scene ? <ConditionScene scene={feature.scene} /> : <AeroMascot pose="watch" />}</div>
+            <div className="landing-feature-illustration">{feature.path === "/analytics" ? <LandingTrend /> : feature.scene ? <ConditionScene scene={feature.scene} /> : <AeroMascot pose="watch" />}</div>
           </article>
         </div>
       </section>
