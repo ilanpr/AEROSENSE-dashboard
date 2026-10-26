@@ -25,6 +25,7 @@ export const ROUTES = {
   NODE_MONITORING: "/nodes",
   NODE_DETAIL: "/nodes/:id",
   SYSTEM: "/system",
+  MANAGEMENT: "/management",
   ENVIRONMENT: "/environment",
 } as const;
 
@@ -44,6 +45,7 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
     icon: "LayoutGrid",
   },
   { label: "Hub lingkungan", path: ROUTES.ENVIRONMENT, icon: "Leaf" },
+  { label: "Kelola kawasan", path: ROUTES.MANAGEMENT, icon: "Settings2" },
   {
     label: "Peta sensor",
     path: ROUTES.SENSOR_MAP,

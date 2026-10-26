@@ -2,6 +2,25 @@ import type { User } from "@supabase/supabase-js";
 import { DEMO_POINTS, DEMO_NOTICE, demoNodes, demoHistory, demoEnvironment, demoRules, demoAlerts } from "./data.ts";
 import { getDemoUser } from "./session.ts";
 import type { EnvironmentResponse } from "../types/live.types.ts";
+import type { ExportRule } from "../lib/csv-export.ts";
+
+type DemoRule = ExportRule & { id: string; active: boolean };
+const ruleChanges = new Map<string, DemoRule>();
+const rulesKey = "aerosense-preview-thresholds";
+function currentRules(index: number): DemoRule[] {
+  const defaults: DemoRule[] = demoRules(index);
+  let changes = [...ruleChanges.entries()];
+  if (typeof window !== "undefined") {
+    try { changes = JSON.parse(window.sessionStorage.getItem(rulesKey) || "[]"); } catch { changes = []; }
+  }
+  for (const [key, rule] of changes) if (key.startsWith(DEMO_POINTS[index].id + ":")) {
+    const position = defaults.findIndex(r => r.metric === rule.metric);
+    const value = Number(demoHistory(index)[0].metrics[rule.metric]);
+    const current = { ...rule, active: Number.isFinite(value) && value >= rule.high };
+    if (position < 0) defaults.push(current); else defaults[position] = current;
+  }
+  return defaults;
+}
 
 async function publicData(path:string,signal?:AbortSignal|null) {
   const response=await fetch(path,{signal:signal??AbortSignal.timeout(20000)});
@@ -19,10 +38,11 @@ export async function demoRequest(endpoint:string, options:RequestInit={}, accou
   if(p==="/v1/disasters")return publicData("/demo-public/disasters",options.signal);
   const publicReads = new Set(["/v1/dashboard","/v1/nodes","/v1/history","/v1/rules","/v1/alerts","/v1/environment"]);
   if(!account && (post || !publicReads.has(p)))throw new Error("Masuk dengan akun warga atau administrator.");
-  const role=account?.app_metadata.demo_role==="admin"?"admin":"viewer";
+  const role=account?.app_metadata.demo_role==="admin"?"admin":account?.app_metadata.demo_role==="operator"?"operator":"viewer";
   const index=DEMO_POINTS.findIndex(n=>n.id===(url.searchParams.get("node_id")||body.node_id));
-  const nodes=demoNodes(role);
-  if(p==="/v1/access")return {role,can_audit_esg:role==="admin",can_view_model:role==="admin",can_manage:role==="admin"};
+  const manages = role === "admin" || role === "operator";
+  const nodes=demoNodes(role).map((n,i)=>({...n,rules:currentRules(i)}));
+  if(p==="/v1/access")return {role,can_audit_esg:role==="admin",can_view_model:manages,can_manage:manages};
   if((p==="/v1/dashboard"||p==="/v1/nodes") && !post)return {nodes,refreshed_at:new Date().toISOString()};
   if(p==="/v1/esg/report"){
     if(role!=="admin")throw new Error("Laporan lingkungan memerlukan akses administrator.");
@@ -35,14 +55,26 @@ export async function demoRequest(endpoint:string, options:RequestInit={}, accou
   }
   if(p==="/v1/history"||p==="/v1/rules"||p==="/v1/alerts"||p==="/v1/environment"){
     if(index<0)throw new Error("Pilih lokasi sensor di Surabaya.");
-    if(post)throw new Error("Aturan pada data simulasi bersifat hanya baca.");
+    if(post && p==="/v1/rules") {
+      if (!manages) throw new Error("Pengubahan ambang memerlukan akses pengelola lokasi.");
+      if (!Object.keys(demoHistory(index)[0].metrics).includes(body.metric) || !Number.isFinite(body.high) || (body.danger_high != null && (!Number.isFinite(body.danger_high) || body.danger_high <= body.high)) || !Number.isFinite(body.clear_below) || body.clear_below >= body.high || !Number.isInteger(body.cooldown_seconds) || body.cooldown_seconds < 60 || body.cooldown_seconds > 86400 || typeof body.enabled !== "boolean" || typeof body.unit !== "string") throw new Error("Periksa urutan ambang dan jeda notifikasi.");
+      // Preview changes are local to this browser session, never sent to production.
+      if (typeof window !== "undefined") {
+        try { for (const [key,value] of JSON.parse(window.sessionStorage.getItem(rulesKey)||"[]")) ruleChanges.set(key,value); } catch { /* Start from the default preview rules. */ }
+      }
+      const rule: DemoRule = { ...body, id:`demo-rule-${index}-${body.metric}`, active:false };
+      ruleChanges.set(`${DEMO_POINTS[index].id}:${body.metric}`,rule);
+      if (typeof window !== "undefined") window.sessionStorage.setItem(rulesKey, JSON.stringify([...ruleChanges.entries()]));
+      return [rule];
+    }
+    if(post)throw new Error("Tindakan ini tidak tersedia pada data simulasi.");
     if(p==="/v1/history"){
       const readings=demoHistory(index);
       // Same rule as the API: guests and warga get corrected readings only.
-      if(role==="admin")return {readings,detail:"model"};
+      if(manages)return {readings,detail:"model"};
       return {detail:"simple",readings:readings.map(r=>({id:r.id,node_id:r.node_id,observed_at:r.observed_at,metrics:r.metrics,quality:{invalid:r.quality?.invalid===true}}))};
     }
-    if(p==="/v1/rules")return {rules:demoRules(index)};
+    if(p==="/v1/rules")return {rules:currentRules(index)};
     if(p==="/v1/alerts")return {alerts:demoAlerts(index).map(a=>acknowledgements.has(a.id)?{...a,acknowledged_at:new Date().toISOString()}:a)};
     const base=demoEnvironment(index);
     const keep=(category:string)=>!["fire","earthquake"].includes(category);

@@ -23,6 +23,7 @@ const ReadingChart = lazy(() => import("./ReadingChart"));
 import { api } from "@/services/api";
 import { MonitoringScope } from "./MonitoringScope";
 import { EsgReportPanel } from "./EsgReportPanel";
+import { downloadCsv, readingsCsv } from "@/lib/csv-export";
 
 export function SensorWorkspace({
   mode = "overview",
@@ -408,7 +409,11 @@ export function SensorWorkspace({
                       <h2>{modelView ? "Historis pembacaan & model" : "Riwayat 24 jam"}</h2>
                       <p>{modelView ? "Nilai terkoreksi, input mentah, dan estimasi GRU." : "Nilai sudah dikoreksi otomatis untuk pengaruh suhu dan kelembapan."}</p>
                     </div>
-                    {modelView && <button
+                    {modelView && <div className="flex flex-wrap gap-2"><button
+                      className="live-button secondary"
+                      onClick={() => node && downloadCsv(readingsCsv(node, readings, true), `aerosense-pembacaan-${node.id}.csv`)}
+                      disabled={!user || !readings.length || history.loading || !!history.error}
+                    ><Download size={15} />Unduh CSV</button><button
                       className="live-button secondary"
                       onClick={exportReadings}
                       disabled={!user || !readings.length || history.loading || !!history.error}
@@ -416,7 +421,7 @@ export function SensorWorkspace({
                     >
                       <Download size={15} />
                       Ekspor JSON
-                    </button>}
+                    </button></div>}
                   </div>
                   {history.error ? (
                     <DataState error={history.error} retry={history.refresh} />

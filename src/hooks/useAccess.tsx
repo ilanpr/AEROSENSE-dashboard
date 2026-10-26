@@ -16,7 +16,7 @@ export const useAccess = () => useContext(AccessContext);
 export const ROLE_LABELS: Record<AccessRole, string> = {
   guest: "Tamu",
   viewer: "Warga",
-  operator: "Operator",
+  operator: "Pengelola kawasan",
   auditor: "Auditor",
   admin: "Admin",
 };

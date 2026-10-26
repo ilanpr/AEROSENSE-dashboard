@@ -2,6 +2,7 @@ import type { User } from "@supabase/supabase-js";
 
 export const DEMO_ACCOUNTS = [
   { role: "viewer", label: "Warga", email: "warga@demo.aerosense.test", password: "WargaDemo2026!" },
+  { role: "operator", label: "Pengelola", email: "pengelola@demo.aerosense.test", password: "PengelolaDemo2026!" },
   { role: "admin", label: "Admin", email: "admin@demo.aerosense.test", password: "AdminDemo2026!" },
 ] as const;
 const key = "aerosense-film-demo-account";
@@ -10,7 +11,7 @@ export function demoUser(role: string): User {
   const account = DEMO_ACCOUNTS.find(a => a.role === role);
   if (!account) throw new Error("Akun demo tidak dikenal.");
   return {
-    id: account.role === "admin" ? "demo-admin" : "demo-warga",
+    id: account.role === "admin" ? "demo-admin" : account.role === "operator" ? "demo-operator" : "demo-warga",
     aud: "authenticated", role: "authenticated", email: account.email,
     created_at: "2026-10-18T00:00:00Z",
     app_metadata: { demo_role: account.role }, user_metadata: { name: `${account.label} Demo` },

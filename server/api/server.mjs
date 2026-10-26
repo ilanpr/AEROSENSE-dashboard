@@ -1205,7 +1205,9 @@ const server = http.createServer(async (req, res) => {
           );
         }
         if (path === "/v1/rules") {
-          await member(u, p.node_id, true);
+          const ruleNode = await member(u, p.node_id, true);
+          if (p.metric === "pm25_ug_m3" && !ruleNode.pm25_validated)
+            throw Object.assign(new Error("PM2.5 belum tervalidasi untuk perangkat ini. Gunakan parameter debu optik."), { status: 400 });
           if (
             ![
               "eco2_ppm",
@@ -1226,7 +1228,7 @@ const server = http.createServer(async (req, res) => {
             typeof p.unit !== "string" ||
             p.unit.length > 20
           )
-            throw new Error("Invalid rule");
+            throw Object.assign(new Error("Periksa aturan: batas pulih harus di bawah waspada, bahaya di atas waspada, dan jeda notifikasi 60–86.400 detik."), { status: 400 });
           return send(
             res,
             200,

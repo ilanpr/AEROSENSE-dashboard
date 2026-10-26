@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { DataState } from "@/components/shared/DataState";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ROUTES } from "@/lib/constants";
 
 // Layout
@@ -10,6 +10,8 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 const LoginPage = lazy(() =>
   import("@/pages/auth/LoginPage").then((m) => ({ default: m.LoginPage })),
 );
+const LandingPage = lazy(() => import("@/pages/landing/LandingPage").then(m => ({ default: m.LandingPage })));
+const ManagementPage = lazy(() => import("@/pages/management/ManagementPage").then(m => ({ default: m.ManagementPage })));
 const RegisterPage = lazy(() =>
   import("@/pages/auth/RegisterPage").then((m) => ({
     default: m.RegisterPage,
@@ -80,6 +82,7 @@ export function AppRouter() {
           {/* Public routes — no sidebar */}
           <Route path={ROUTES.LOGIN} element={<LoginPage />} />
           <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+          <Route path={ROUTES.HOME} element={<LandingPage />} />
 
           {/* Protected routes — wrapped in dashboard layout */}
           <Route element={<DashboardLayout />}>
@@ -96,13 +99,10 @@ export function AppRouter() {
             <Route path={ROUTES.ESG_REPORTS} element={<ESGReportsPage />} />
             <Route path={ROUTES.AEROBOT} element={<AeroBotPage />} />
             <Route path={ROUTES.SYSTEM} element={<SystemPage />} />
+            <Route path={ROUTES.MANAGEMENT} element={<ManagementPage />} />
           </Route>
 
           {/* Redirects & fallback */}
-          <Route
-            path={ROUTES.HOME}
-            element={<Navigate to={ROUTES.DASHBOARD} replace />}
-          />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>

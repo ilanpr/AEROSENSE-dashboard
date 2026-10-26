@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Download, FileText, Loader2 } from "lucide-react";
+import { downloadCsv, readingsCsv } from "@/lib/csv-export";
 import type { Alert, LiveNode, Reading } from "@/types/live.types";
 import {
   buildReport, formatNumber, formatWhen, readingsFingerprintSource, sha256Hex, summarySentence, type EsgReport,
@@ -72,6 +73,7 @@ export function EsgReportPanel({ node, readings, alerts, scope, userEmail, loadi
             {busy === "pdf" ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />}
             Unduh PDF laporan
           </button>
+          <button className="live-button secondary" type="button" disabled={disabled} onClick={() => downloadCsv(readingsCsv(node, readings, true), `aerosense-pembacaan-${node.id}.csv`)}><Download size={15} />Unduh CSV</button>
 
         </div>
       </div>

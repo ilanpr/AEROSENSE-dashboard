@@ -98,3 +98,8 @@ Integrasi produksi memerlukan credential server, akses pengguna Supabase, worker
 Daftar penyedia dan kebutuhannya ada di [PUBLIC_APIS.md](docs/PUBLIC_APIS.md). IQAir memerlukan key. BMKG cuaca memerlukan kode kelurahan. SoilGrids REST sedang tidak tersedia.
 
 Prakiraan dan estimasi wilayah ditampilkan bersama sumber serta waktu datanya. US AQI berbeda dari ISPU. eCO₂ bukan pengukuran CO₂ langsung, dan sinyal debu optik memerlukan validasi sebelum disebut PM2.5. Laporan pemantauan tidak menghitung emisi atau menyatakan kepatuhan ESG.
+## Landing page dan pengelolaan kawasan
+
+Panduan halaman publik, penugasan pengelola per lokasi, pengaturan ambang,
+ekspor CSV, file Figma, dan deployment tersedia di
+[docs/landing-and-management.md](docs/landing-and-management.md).
