@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpRight, Radio, CloudSun, MessageCircle, ChartNoAxesCo
 import { AeroMascot } from "@/components/environment/AeroMascot";
 import { ConditionScene } from "@/components/environment/ConditionScene";
 import { useAuth } from "@/hooks/useAuth";
+import { useIllustrationMotion } from "@/hooks/useIllustrationMotion";
 import { LandingTrend } from "./LandingTrend";
 import "@/styles/landing.css";
 
@@ -18,6 +19,7 @@ export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState(0);
   const { user } = useAuth();
+  const { ref: sensorRef, playing: sensorPlaying } = useIllustrationMotion<HTMLImageElement>();
   const feature = features[active];
   return <div className="landing-page">
     <a className="landing-skip" href="#konten">Lewati navigasi</a>
@@ -41,7 +43,7 @@ export function LandingPage() {
           <span className="landing-art-glow" aria-hidden="true" />
           <span className="landing-art-dot art-dot-one" aria-hidden="true" /><span className="landing-art-dot art-dot-two" aria-hidden="true" /><span className="landing-art-dot art-dot-three" aria-hidden="true" />
           <AeroMascot pose="welcome" className="landing-hero-mascot" />
-          <img className="landing-hero-sensor" src="/assets/environment/sensor-node-v3.webp" width="240" height="240" alt="Ilustrasi perangkat sensor AEROSENSE" />
+          <img ref={sensorRef} className={`landing-hero-sensor ${sensorPlaying ? "" : "motion-paused"}`} src="/assets/environment/sensor-node-v3.webp" width="240" height="240" alt="Ilustrasi perangkat sensor AEROSENSE" />
         </div>
       </section>
 

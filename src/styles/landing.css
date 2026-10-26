@@ -29,7 +29,9 @@
 .landing-hero-art { position:relative; isolation:isolate; height:500px; border-radius:42% 38% 36% 42%; background:radial-gradient(circle at 78% 24%,#a4eeff,transparent 53%),linear-gradient(145deg,#f0faff,#b9e6ff 85%); }
 .landing-art-glow { position:absolute; width:230px; height:230px; left:14%; top:15%; border-radius:50%; background:#ecfbff; opacity:.7; }
 .landing-page .landing-hero-mascot { position:absolute; width:490px; max-width:none; height:490px; right:-35px; top:-44px; }
-.landing-hero-sensor { position:absolute; left:-22px; bottom:31px; width:235px; height:235px; object-fit:contain; rotate:-8deg; filter:drop-shadow(0 14px 15px #1c72ac22); }
+.landing-hero-sensor { position:absolute; left:-22px; bottom:31px; width:235px; height:235px; object-fit:contain; rotate:-8deg; filter:drop-shadow(0 14px 15px #1c72ac22); transform-origin:50% 65%; animation:landing-sensor-float 7s ease-in-out infinite; }
+.landing-hero-sensor.motion-paused { animation-play-state:paused; }
+@keyframes landing-sensor-float { 0%,100% { transform:translate3d(0,0,0) rotate(-1deg); } 50% { transform:translate3d(3px,-12px,0) rotate(1deg); } }
 .landing-art-dot { position:absolute; border-radius:50%; background:radial-gradient(circle at 28% 25%,#fff,#6ec9ed); }
 .art-dot-one { width:26px; height:26px; top:60px; left:32px; }
 .art-dot-two { width:14px; height:14px; right:10px; top:42%; }
@@ -64,14 +66,11 @@
 .landing-trend-line { fill:none; stroke:#096cf0; stroke-width:3.5; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1; stroke-dashoffset:0; }
 .landing-trend-reference { fill:none; stroke:#319fb5; stroke-width:2; stroke-dasharray:5 7; opacity:.6; }
 .landing-trend-pulse { fill:#096cf0; opacity:.12; transform-box:fill-box; transform-origin:center; }
-.landing-trend text { fill:#476b89; font:11px Inter,sans-serif; }
-.landing-trend figcaption { display:flex; justify-content:center; align-items:center; gap:8px; color:#476b89; font-size:11px; margin-top:12px; }
-.landing-trend figcaption span { width:15px; height:3px; border-radius:3px; background:#096cf0; }
 .landing-trend.is-playing .landing-trend-line { animation:landing-trend-draw 3.6s cubic-bezier(.16,1,.3,1) both; }
 .landing-trend.is-playing .landing-trend-pulse { animation:landing-trend-pulse 3s ease-out infinite; }
 @keyframes landing-trend-draw { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
 @keyframes landing-trend-pulse { 0%,100% { scale:.7; opacity:.12; } 55% { scale:1.6; opacity:0; } }
-@media(prefers-reduced-motion:reduce) { .landing-trend.is-playing :is(.landing-trend-line,.landing-trend-pulse),.landing-feature-illustration .condition-scene img { animation:none; } }
+@media(prefers-reduced-motion:reduce) { .landing-trend.is-playing :is(.landing-trend-line,.landing-trend-pulse),.landing-feature-illustration .condition-scene img,.landing-hero-sensor { animation:none; } }
 .landing-workflow { padding-block:26px 90px; }
 .landing-workflow-steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:38px; margin-top:40px; }
 .landing-workflow-steps article { padding:25px 0 0; border-top:1px solid #c9dff2; }
