@@ -68,6 +68,7 @@
 .landing-feature-illustration .condition-scene img { position:absolute; inset:18px; width:calc(100% - 36px); height:calc(100% - 36px); min-width:0; min-height:0; object-fit:contain; filter:drop-shadow(0 8px 10px rgb(17 35 50 / 10%)); animation:sensor-robot-float 6.4s ease-in-out infinite; }
 .landing-feature-illustration .scene-offscreen img { animation-play-state:paused; }
 .landing-feature-illustration .aero-mascot { object-fit:contain; }
+@media(min-width:1051px) { .landing-feature-illustration .aero-mascot { width:360px; max-width:none; height:360px; } }
 .landing-trend { width:100%; max-width:352px; margin:0; }
 .landing-trend svg { display:block; width:100%; height:auto; overflow:visible; }
 .landing-trend-grid line { stroke:#bedcf1; stroke-width:1; }
