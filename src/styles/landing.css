@@ -27,7 +27,7 @@
 .landing-hero-points { display:flex; gap:22px; flex-wrap:wrap; margin-top:30px; font-size:12px; color:var(--landing-muted); }
 .landing-hero-points span { display:flex; align-items:center; gap:7px; }
 .landing-hero-points svg { color:#096cf0; }
-.landing-hero-art { position:relative; isolation:isolate; height:500px; border-radius:42% 38% 36% 42%; background:radial-gradient(circle at 78% 24%,#a4eeff,transparent 53%),linear-gradient(145deg,#f0faff,#b9e6ff 85%); }
+.landing-hero-art { position:relative; isolation:isolate; height:500px; border-radius:46% 34% 42% 30% / 38% 43% 32% 46%; background:linear-gradient(135deg,#d4f5fb 8%,#eaf7fd 48%,#bce7fa 100%); }
 
 .landing-page .landing-hero-mascot { position:absolute; width:112%; max-width:none; height:112%; object-fit:contain; right:-5%; top:-2%; }
 .landing-hero-sensor { position:absolute; left:-22px; bottom:31px; width:235px; height:235px; object-fit:contain; rotate:-8deg; filter:drop-shadow(0 8px 12px rgb(17 35 50 / 12%)); transform-origin:50% 65%; animation:landing-sensor-float 7s ease-in-out infinite; }
