@@ -33,3 +33,6 @@ reference-ui
 # Generated document previews
 output/
 .impeccable/review/
+
+# Device Wi-Fi and MQTT secrets
+firmware/**/config.h

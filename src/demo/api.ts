@@ -28,6 +28,8 @@ async function publicData(path:string,signal?:AbortSignal|null) {
   return response.json();
 }
 
+const mistCommands=new Map<string,{id:string;action:string;state:string;duration_ms:number;issued_at:string;expires_at:string}>();
+const mistNextRun=new Map<string,number>();
 const jobs = new Map<string,{id:string;status:string;result:{text:string;denied:boolean}}>();
 const acknowledgements = new Set<string>();
 export async function demoRequest(endpoint:string, options:RequestInit={}, account:User|null=getDemoUser()):Promise<unknown> {
@@ -42,6 +44,22 @@ export async function demoRequest(endpoint:string, options:RequestInit={}, accou
   const index=DEMO_POINTS.findIndex(n=>n.id===(url.searchParams.get("node_id")||body.node_id));
   const manages = role === "admin" || role === "operator";
   const nodes=demoNodes(role).map((n,i)=>({...n,rules:currentRules(i)}));
+  if(p==="/v1/actuators"){
+    if(index<0)throw new Error("Pilih lokasi sensor.");
+    if(index>1)return {actuators:[],can_manage:manages};
+    const id=index===0?"mist-01":"mist-02",command=mistCommands.get(id),now=Date.now();
+    if(command&&command.action==='pulse'){const elapsed=now-Date.parse(command.issued_at);command.state=elapsed<600?'published':elapsed<command.duration_ms+600?'accepted':'completed';}
+    const on=command?.state==='accepted';
+    return {can_manage:manages,actuators:[{id,name:index===0?'WATERSENSE · Area Utara':'WATERSENSE · Area Selatan',enabled:true,online:index===0,can_run:index===0&&!on&&now>=(mistNextRun.get(id)||0),max_duration_ms:10000,next_run_at:mistNextRun.has(id)?new Date(mistNextRun.get(id)!).toISOString():null,status:{output:on?'on':'off',battery_v:12.1,battery_ok:true},commands:command?[command]:[]}]};
+  }
+  if(p==="/v1/actuators/commands"&&post){
+    if(!manages)throw new Error("Kontrol memerlukan akses pengelola lokasi.");
+    if(!['mist-01','mist-02'].includes(body.actuator_id)||!['pulse','stop'].includes(body.action))throw new Error("Perintah tidak valid.");
+    if(body.action==='pulse'&&(body.actuator_id!=='mist-01'||Date.now()<(mistNextRun.get(body.actuator_id)||0)))throw new Error("Perangkat offline atau masih dalam jeda operasi.");
+    const command={id:crypto.randomUUID(),action:body.action,state:body.action==='stop'?'completed':'queued',duration_ms:body.duration_ms,issued_at:new Date().toISOString(),expires_at:new Date(Date.now()+30000).toISOString()};
+    mistCommands.set(body.actuator_id,command);if(body.action==='pulse')mistNextRun.set(body.actuator_id,Date.now()+600000);
+    return {command};
+  }
   if(p==="/v1/access")return {role,can_audit_esg:role==="admin",can_view_model:manages,can_manage:manages};
   if((p==="/v1/dashboard"||p==="/v1/nodes") && !post)return {nodes,refreshed_at:new Date().toISOString()};
   if(p==="/v1/esg/report"){

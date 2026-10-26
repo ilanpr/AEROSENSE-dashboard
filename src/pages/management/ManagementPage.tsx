@@ -1,3 +1,4 @@
+import { SprinklerControl } from "@/components/live/SprinklerControl";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FileSpreadsheet, LockKeyhole, MapPin, Save, Settings2, ArrowUpRight, Loader2 } from "lucide-react";
@@ -61,9 +62,10 @@ export function ManagementPage() {
   const currentMetric = metric === "pm25_ug_m3" && !node?.pm25_validated ? "dust_ug_m3" : metric;
   const saved = rules.data?.rules.find(r => r.metric === currentMetric);
   return <section className="management-page">
-    <header className="live-heading"><div><h1>Kelola kawasan</h1><p>Ambang peringatan untuk lokasi yang menjadi tanggung jawab Anda.</p></div><Settings2 size={27} aria-hidden="true" /></header>
+    <header className="live-heading"><div><h1>Kelola kawasan</h1><p>Ambang peringatan dan kendali sprinkler pada lokasi Anda.</p></div><Settings2 size={27} aria-hidden="true" /></header>
     {auth.isLoading || (auth.user && dashboard.loading && !dashboard.data) ? <DataState loading /> : !auth.user ? <div className="management-access"><LockKeyhole size={28} /><h2>Masuk sebagai pengelola lokasi</h2><p>Tim industri dan kader governance dapat mengatur ambang setelah memperoleh penugasan lokasi dari admin.</p><Link className="live-button" to="/login">Masuk ke akun<ArrowUpRight size={16} /></Link></div> : dashboard.error ? <DataState error={dashboard.error} retry={dashboard.refresh} /> : !node ? <DataState empty="Belum ada perangkat pada lokasi akun Anda. Hubungi admin untuk penugasan lokasi." /> : <>
       <div className="management-location"><MapPin size={20} /><label>Perangkat pemantauan<MonitoringSelect label="Perangkat untuk pengelolaan" value={node.id} onValueChange={value => { setSelected(value); setMetric("dust_ug_m3"); setExportNotice(""); setSavedNotice(""); }} options={nodes.map(n => ({ value: n.id, label: n.name }))} /></label><span className="management-role"><LockKeyhole size={14} />{canManage ? "Akses pengelola lokasi" : "Akses lihat saja"}</span></div>
+      <SprinklerControl key={node.id} nodeId={node.id} />
       <div className="management-layout">
         <section className="management-rules"><div className="management-section-heading"><div><h2>Aturan peringatan</h2><p>Pilih parameter untuk melihat atau memperbarui ambangnya.</p></div></div>
           {rules.error ? <DataState error={rules.error} retry={rules.refresh} /> : rules.loading && !rules.data ? <DataState loading /> : <>

@@ -1,3 +1,4 @@
+import { actuatorRoutes } from "./actuators.mjs";
 import http from "node:http";
 import { webRoutes } from "./web.mjs";
 import { canViewModel, simpleReading } from "./access.mjs";
@@ -924,6 +925,7 @@ const browserRoutes = webRoutes({
   filter,
   env: e,
 });
+const sprinklerRoutes = actuatorRoutes({db,one,rpc,user,member,send,filter,rawBody,rate,env:e,equal});
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   const path = url.pathname;
@@ -945,6 +947,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, await news.read());
     if (await voiceRoutes(req, res, url)) return;
     if (await browserRoutes(req, res, url)) return;
+    if (await sprinklerRoutes(req, res, url)) return;
     if (path === "/webhooks/whatsapp" && req.method === "GET") {
       if (
         url.searchParams.get("hub.mode") === "subscribe" &&
