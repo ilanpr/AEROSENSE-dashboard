@@ -15,6 +15,15 @@ export interface SensorContext {
   stale: boolean;
   pm25_validated: boolean;
 }
+export interface SensorRule {
+  metric: string;
+  high: number;
+  danger_high?: number | null;
+  clear_below: number;
+  enabled: boolean;
+  active: boolean;
+  unit: string;
+}
 export interface LiveNode {
   id: string;
   name: string;
@@ -26,6 +35,7 @@ export interface LiveNode {
   calibration_version: string | null;
   role: string;
   latest: SensorContext | null;
+  rules?: SensorRule[];
 }
 export interface Reading {
   id: string;
@@ -35,6 +45,8 @@ export interface Reading {
   raw_metrics?: Record<string, number | null>;
   gru: SensorContext["gru"];
   processing?: Record<string, unknown>;
+  quality?: { invalid?: boolean; clock_source?: string; calibration_version?: string | null } | null;
+  raw_sha256?: string | null;
 }
 export interface Alert {
   id: string;
@@ -63,6 +75,11 @@ export interface EnvironmentFact {
   data_origin: string;
 }
 export interface EnvironmentResponse {
+  events?: EnvironmentEvent[];
+  event_layers?: {provider:string;category:string;radius_km:number;available:boolean;last_attempt_at:string|null;last_error:string|null;event_count:number;truncated:boolean}[];
+  facts: EnvironmentFact[];
+  insights: EnvironmentInsight[];
+  summary_method: string;
   area: {
     id: string;
     name: string;
@@ -78,6 +95,40 @@ export interface EnvironmentResponse {
     facts: EnvironmentFact[];
   }[];
   fetched_at: string;
+}
+export interface EnvironmentEvent {
+  id:string;
+  provider:string;
+  category:"fire"|"earthquake";
+  latitude:number;
+  longitude:number;
+  title:string;
+  observed_at:string;
+  fetched_at:string;
+  fresh_until:string;
+  stale:boolean;
+  distance_km:number;
+  source:string;
+  source_url:string;
+  coordinate_kind:string;
+  confidence?:string|null;
+  magnitude?:number;
+  depth_km?:number|null;
+  felt?:string|null;
+  potential?:string|null;
+}
+export interface EnvironmentInsight {
+  category: string;
+  title: string;
+  body: string;
+  action: string;
+  tone: string;
+  period: string;
+  available: boolean;
+  fact_ids: string[];
+  valid_at: string | null;
+  fresh_until: string | null;
+  method: string;
 }
 export const metricLabels: Record<string, [string, string]> = {
   dust_ug_m3: ["Debu optik", "µg/m³"],

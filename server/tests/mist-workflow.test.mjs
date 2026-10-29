@@ -1,0 +1,26 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+const code=await readFile(new URL("../../n8n/mist-decision.js",import.meta.url),"utf8");
+const decide=new Function(code.slice(0,code.indexOf('\nconst config=$('))+"\nreturn decideMist;")();
+test("mist only pulses mapped fresh confirmed dust, with bounded duration and cooldown",()=>{
+ const now=Date.now();
+ const config={node_id:"node-01",actuator_id:"mist-01",metric:"dust_ug_m3",enabled:true,dry_run:false,confirm_readings:3,max_age_seconds:120,warning_seconds:3,danger_seconds:5,cooldown_seconds:600};
+ const sample={node:{id:"node-01",enabled:true},rule:{node_id:"node-01",metric:"dust_ug_m3",enabled:true,high:40,danger_high:80,clear_below:30},readings:[0,1,2].map(i=>({id:`reading-${i}`,node_id:"node-01",observed_at:new Date(now-i*20000).toISOString(),metrics:{dust_ug_m3:85},quality:{}}))};
+ const run=(c=config,s=sample,p={})=>decide(c,s,p,now);
+ assert.equal(run().command.duration_ms,5000);assert.equal(run().command.status,"danger");assert.equal(run().publish,true);
+ assert.equal(run({...config,dry_run:true}).publish,false);assert.equal(run({...config,enabled:false}).publish,false);
+ assert.equal(run({...config,node_id:"unmapped"}).reason,"node_unavailable");
+ assert.equal(run({...config,metric:"eco2_ppm"}).reason,"unsupported_metric");
+ assert.equal(run({...config,danger_seconds:90}).reason,"invalid_duration");
+ assert.equal(run(config,sample,{reading_id:"reading-0"}).reason,"already_sent");
+ assert.equal(run(config,sample,{sent_at:now-1000}).reason,"cooldown");
+ const clone=()=>structuredClone(sample);
+ let s=clone();s.readings[0].quality.invalid=true;assert.equal(run(config,s).reason,"stale_or_invalid_reading");
+ s=clone();s.readings[2].observed_at=new Date(now-400000).toISOString();assert.equal(run(config,s).reason,"stale_or_invalid_reading");
+ s=clone();s.readings[0].metrics.dust_ug_m3=20;assert.equal(run(config,s).reason,"clear");
+ s=clone();s.readings[1].metrics.dust_ug_m3=50;assert.equal(run(config,s).command.status,"warning");
+ s=clone();s.readings[1].metrics.dust_ug_m3=35;assert.equal(run(config,s).reason,"awaiting_confirmation");
+ s=clone();s.readings[1].id=s.readings[0].id;assert.equal(run(config,s).reason,"duplicate_or_unordered_readings");
+ s=clone();s.rule.danger_high=null;assert.equal(run(config,s).reason,"rule_not_ready");
+});

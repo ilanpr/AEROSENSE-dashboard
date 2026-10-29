@@ -6,10 +6,11 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
   const uid = "00000000-0000-4000-8000-000000000001",
     other = "00000000-0000-4000-8000-000000000002";
   const area = {
-    id: "surabaya",
-    name: "Wilayah Kota Surabaya",
-    latitude: -7.24917,
-    longitude: 112.75083,
+    id: "node_n1",
+    source_node_id: "n1",
+    name: "Node asli",
+    latitude: -7.1,
+    longitude: 112.1,
     enabled: true,
   };
   const fact = {
@@ -34,7 +35,7 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     },
     {
       area_id: area.id,
-      provider: "wrong-coordinates",
+      provider: "openmeteo_weather",
       request_latitude: 0,
       request_longitude: 0,
       payload: { facts: [fact] },
@@ -42,6 +43,8 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
   ];
   const node = {
     id: "n1",
+    public_read: true,
+    gateway_id: "private-gateway",
     name: "Sensor asli",
     latitude: -7.1,
     longitude: 112.1,
@@ -57,6 +60,7 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     result: { text: "Jawaban dari worker" },
   };
   let contextReads = 0;
+  let memberRole = "viewer";
   const mock = http.createServer(async (req, res) => {
     const url = new URL(req.url, "http://x");
     let output = [];
@@ -72,7 +76,7 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
       output =
         url.searchParams.get("location_id") === "eq.L2"
           ? []
-          : [{ user_id: uid, location_id: "L1", role: "viewer" }];
+          : [{ user_id: uid, location_id: "L1", role: memberRole }];
     if (url.pathname === "/rest/v1/ae_nodes")
       output =
         url.searchParams.get("id") === "eq.n2"
@@ -92,8 +96,13 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
       ];
     }
     if (url.pathname === "/rest/v1/ae_environment_areas")
-      output = url.searchParams.get("id") === "eq.surabaya" ? [area] : [];
-    if (url.pathname === "/rest/v1/ae_environment_area_cache") output = cache;
+      output = url.searchParams.get("source_node_id") === "eq.n1" ? [area] : [];
+    if (url.pathname === "/rest/v1/ae_environment_area_cache")
+      output = url.searchParams.get("area_id") === "eq.node_n1" ? cache : [];
+    if (url.pathname === "/rest/v1/ae_disaster_news_cache") output = [{
+      provider:"gdacs", last_success_at:new Date().toISOString(), last_error:null,
+      items:[{id:"idn",country_code:"IDN",url:"https://www.gdacs.org/report.aspx?eventid=1",published_at:new Date().toISOString(),title:"Indonesia",metrics:[]}],
+    }];
     if (url.pathname === "/rest/v1/ae_jobs") {
       const candidate =
         url.searchParams.get("id") === "eq.job-own"
@@ -116,6 +125,7 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     INTERNAL_API_KEY: "internal-test",
     DEVICE_KEYS_JSON: "{}",
     WEB_ORIGINS: "https://aerosense.me",
+    DISASTER_NEWS_ENABLED: "false",
   });
   const { server } = await import("../api/server.mjs");
   if (!server.listening) await new Promise((r) => server.once("listening", r));
@@ -126,27 +136,79 @@ test("web API separates public cache, authorized sensor data, and owner-only cha
     assert.equal(config.supabase_publishable_key, "public-test");
     assert(!JSON.stringify(config).includes("private-test"));
     assert(!JSON.stringify(config).includes("internal-test"));
-    const publicResponse = await fetch(base + "/v1/environment");
+    assert.equal((await fetch(base + "/v1/voice/config")).status, 401);
+    const voiceConfig = await (await fetch(base + "/v1/voice/config", auth)).json();
+    assert.equal(voiceConfig.configured, false);
+    assert(!JSON.stringify(voiceConfig).includes("private-test"));
+    const publicResponse = await fetch(base + "/v1/environment?node_id=n1", auth);
     assert.equal(publicResponse.status, 200);
     assert.equal(publicResponse.headers.get("cache-control"), "no-store");
     const hub = await publicResponse.json();
+    assert.equal(hub.node.id, "n1");
+    assert.equal(hub.area.id, "node_n1");
     assert.equal(hub.providers[0].facts.length, 1);
     assert.equal(hub.providers[0].facts[0].stale, true);
     assert.deepEqual(hub.providers[1].facts, []);
     assert.equal(contextReads, 0);
+    const news = await (await fetch(base + "/v1/disasters")).json();
+    assert.equal(news.scope,"Indonesia");
+    assert.equal(news.items[0].country_code,"IDN");
+    assert(!JSON.stringify(news).includes("private-test"));
     assert.equal(
-      (await fetch(base + "/v1/environment?area_id=disabled")).status,
-      404,
+      (await fetch(base + "/v1/environment?node_id=n2", auth)).status,
+      403,
     );
     assert.equal(
-      (await fetch(base + "/v1/environment?area_id=bad%26filter")).status,
+      (await fetch(base + "/v1/environment?node_id=bad%26filter", auth)).status,
       400,
     );
+    assert.equal((await fetch(base + "/v1/environment?node_id=n1")).status, 401);
     assert.equal((await fetch(base + "/v1/dashboard")).status, 401);
+    const guestDash = await (await fetch(base + "/v1/public/dashboard")).json();
+    assert.equal(guestDash.nodes[0].id,"n1");
+    assert.equal(guestDash.nodes[0].role,"guest");
+    assert.equal(guestDash.nodes[0].gateway_id,undefined);
+    const guestHub = await fetch(base + "/v1/public/environment?node_id=n1");
+    assert.equal(guestHub.status,200);
+    assert.equal((await guestHub.json()).node.id,"n1");
+    assert.equal((await fetch(base + "/v1/public/alerts/ack", {method:"POST"})).status,404);
+
     const dash = await (await fetch(base + "/v1/dashboard", auth)).json();
     assert.equal(dash.nodes[0].latitude, -7.1);
     assert.equal(dash.nodes[0].role, "viewer");
     assert.equal(dash.nodes[0].latest.reading_id, null);
+    assert.equal((await fetch(base + "/v1/esg/report")).status, 401);
+    for (const role of ["viewer", "operator", "auditor"]) {
+      memberRole = role;
+      assert.equal(
+        (await (await fetch(base + "/v1/access", auth)).json()).can_audit_esg,
+        false,
+      );
+      assert.equal((await fetch(base + "/v1/esg/report", auth)).status, 403);
+    }
+    memberRole = "admin";
+    assert.equal(
+      (await (await fetch(base + "/v1/access", auth)).json()).can_audit_esg,
+      true,
+    );
+    const report = await fetch(base + "/v1/esg/report", auth);
+    assert.equal(report.status, 200);
+    const reportData = await report.json();
+    assert.equal(reportData.report_scope.type, "ambient_monitoring");
+    assert.equal(reportData.report_scope.assurance_status, "not_assured");
+    assert.equal(reportData.report_scope.source_attribution, "not_determined");
+    assert.deepEqual(reportData.report_scope.excludes, ["esg_rating", "regulatory_compliance", "corporate_emissions_inventory"]);
+    assert.equal(reportData.nodes[0].id, "n1");
+    const historyReport = await (await fetch(base + "/v1/esg/report?node_id=n1", auth)).json();
+    assert.equal(historyReport.report_scope.type, "ambient_monitoring");
+    assert.equal(historyReport.report_scope.max_readings_per_node, 288);
+    assert(Array.isArray(historyReport.readings));
+    assert.equal(
+      (await fetch(base + "/v1/esg/report?node_id=n2", auth)).status,
+      403,
+    );
+    memberRole = "viewer";
+    assert.equal((await fetch(base + "/v1/esg/report", auth)).status, 403);
     assert.equal(
       (await fetch(base + "/v1/rules?node_id=n2", auth)).status,
       403,

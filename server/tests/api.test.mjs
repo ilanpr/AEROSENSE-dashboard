@@ -69,6 +69,7 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
               url.searchParams.get("id") === "eq." + j.id),
         );
     }
+    if (url.pathname === "/rest/v1/ae_rules" && req.method === "POST") output = [p];
     if (url.pathname === "/rest/v1/rpc/ae_ingest")
       output = { reading_id: "r1", duplicate: false };
     if (url.pathname === "/rest/v1/rpc/ae_stage") {
@@ -97,6 +98,7 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
   });
   await new Promise((resolve) => mock.listen(0, "127.0.0.1", resolve));
   Object.assign(process.env, {
+    DISASTER_NEWS_ENABLED: "false",
     PORT: "0",
     SUPABASE_URL: "http://127.0.0.1:" + mock.address().port,
     SUPABASE_ANON_KEY: "anon-test",
@@ -122,6 +124,20 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
     });
   try {
     assert.equal((await fetch(base + "/v1/nodes")).status, 401);
+    const ruleBody = {node_id:"n1",metric:"dust_ug_m3",high:40,clear_below:35,danger_high:60,unit:"µg/m³",cooldown_seconds:1800,enabled:true};
+    const ruleAuth = {Authorization:"Bearer valid"};
+    const previousGeminiKey = process.env.GEMINI_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+    const unavailableVoice = await post("/v1/voice/speak", {test:true}, ruleAuth);
+    if (previousGeminiKey !== undefined) process.env.GEMINI_API_KEY = previousGeminiKey;
+    assert.equal(unavailableVoice.status,503);
+    assert.match((await unavailableVoice.json()).error,/Suara AERO-BOT belum diaktifkan/);
+
+    const savedRule = await post("/v1/rules",ruleBody,ruleAuth);
+    assert.equal(savedRule.status,200);
+    assert.equal((await savedRule.json())[0].danger_high,60);
+    for (const danger_high of [35,40,"60"]) assert.equal((await post("/v1/rules",{...ruleBody,danger_high},ruleAuth)).status,400);
+
     assert.equal(
       (
         await fetch(base + "/v1/robot/state?robot_id=missing", {

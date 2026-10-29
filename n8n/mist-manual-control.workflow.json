@@ -1,0 +1,244 @@
+{
+  "name": "AEROSENSE | WATERSENSE kontrol web dan ACK",
+  "active": false,
+  "nodes": [
+    {
+      "id": "88b2717e-2cb9-4d71-935f-c636bfb31aca",
+      "name": "Ambil perintah web tiap 5 detik",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        100
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "46c2abd1-259a-4f89-9642-9603d5f67e6e",
+      "name": "Uji antrean manual",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        280
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "a1b8594b-2cba-4e3b-83ec-7694aa4efb51",
+      "name": "Ambil antrean berizin",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://aerosense-api:8080/internal/actuators/claim",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "4c825ee5-3635-4040-b854-5dd24a306415",
+      "name": "Pisahkan perintah",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return ($input.first().json.commands || []).map(command => ({json:command,pairedItem:{item:0}}));"
+      }
+    },
+    {
+      "id": "175c04b0-59f4-405e-ab70-6a443740d0ce",
+      "name": "Kirim perintah MQTT",
+      "type": "n8n-nodes-base.mqtt",
+      "typeVersion": 1,
+      "position": [
+        720,
+        100
+      ],
+      "parameters": {
+        "topic": "={{ $json.topic }}",
+        "sendInputData": false,
+        "message": "={{ JSON.stringify($json.payload) }}",
+        "options": {
+          "qos": 1,
+          "retain": false
+        }
+      }
+    },
+    {
+      "id": "4efdc207-b98f-490a-9eac-b13fe33dfccb",
+      "name": "Catat sudah dikirim",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://aerosense-api:8080/internal/actuators/published",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {id:$(\"Pisahkan perintah\").item.json.id,token:$(\"Pisahkan perintah\").item.json.token} }}",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "85790e2c-c7cd-4e35-8b6a-3547480d669c",
+      "name": "Terima status dan konfirmasi ESP32",
+      "type": "n8n-nodes-base.mqttTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        550
+      ],
+      "parameters": {
+        "topics": "aerosense/actuators/+/ack:1,aerosense/actuators/+/status:1",
+        "options": {
+          "jsonParseBody": true,
+          "onlyMessage": false,
+          "parallelProcessing": false
+        }
+      }
+    },
+    {
+      "id": "d095b76e-e986-4000-b49f-72feab589395",
+      "name": "Simpan status perangkat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        550
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://aerosense-api:8080/internal/actuators/event",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {topic:$json.topic,message:$json.message} }}",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "d5eba948-3c72-4d94-ab6c-27ead6e9df75",
+      "name": "PANDUAN KONTROL MANUAL",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -360
+      ],
+      "parameters": {
+        "content": "## WATERSENSE · kendali web\nPilih credential Header Auth API internal pada semua node HTTP (header x-aerosense-internal-key), serta MQTT pada node kirim dan trigger. Tidak ada secret di JSON ini.\n\nWeb → API memeriksa role lokasi → antrean PostgreSQL atomik → MQTT QoS 1 tanpa retain → ESP32 → ACK/status → API → web. MQTT publish belum berarti pompa menyala.\n\nImport setelah migrasi 012 dan backend baru. Jalankan setup-mqtt.sh mist-01 di server; ESP32 memakai IP LAN server, bukan 127.0.0.1. Flash firmware watersense-mqtt dengan GPIO sesuai sketch tim.\n\nWorkflow otomatis lama tetap terpisah dan nonaktif saat commissioning manual. Jangan mengaktifkan keduanya sebelum uji arbitrasi/cooldown. Retensi perintah sukses 2 hari, gagal 7 hari; status hanya snapshot terbaru.\n\nMengaktifkan workflow ini dapat menjalankan perintah yang dikirim admin/pengelola web.",
+        "height": 370,
+        "width": 1080
+      }
+    }
+  ],
+  "connections": {
+    "Ambil perintah web tiap 5 detik": {
+      "main": [
+        [
+          {
+            "node": "Ambil antrean berizin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Uji antrean manual": {
+      "main": [
+        [
+          {
+            "node": "Ambil antrean berizin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ambil antrean berizin": {
+      "main": [
+        [
+          {
+            "node": "Pisahkan perintah",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pisahkan perintah": {
+      "main": [
+        [
+          {
+            "node": "Kirim perintah MQTT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kirim perintah MQTT": {
+      "main": [
+        [
+          {
+            "node": "Catat sudah dikirim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Terima status dan konfirmasi ESP32": {
+      "main": [
+        [
+          {
+            "node": "Simpan status perangkat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": false
+  },
+  "pinData": {}
+}

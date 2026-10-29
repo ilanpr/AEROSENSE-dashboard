@@ -1,0 +1,51 @@
+.insight-disclosure {
+  margin-top: 14px;
+  border-bottom: 1px solid var(--insight-line, #dce8f5);
+  scroll-margin-top: 20px;
+}
+.insight-disclosure summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 4px;
+  color: var(--insight-ink, #153657);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  list-style: none;
+  min-height: 48px;
+}
+.insight-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+.insight-disclosure summary > span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.insight-disclosure summary > svg {
+  flex-shrink: 0;
+  transition: transform 0.18s;
+}
+.insight-disclosure[open] summary > svg {
+  transform: rotate(180deg);
+}
+.insight-detail-body {
+  padding: 5px 4px 24px;
+  color: var(--insight-muted, #4c6782);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.insight-detail-body > p {
+  max-width: 75ch;
+  margin-bottom: 16px;
+}
+.insight-detail-body a {
+  color: var(--insight-blue, #086cfb);
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .insight-disclosure summary { font-size: 12px; }
+}

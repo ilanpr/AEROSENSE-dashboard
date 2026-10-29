@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "node --test server/tests/*.test.mjs"
+    "test": "node --test server/tests/*.test.mjs",
+    "demo:build": "tsc -b && vite build --mode demo --outDir dist-demo",
+    "demo:serve": "node scripts/serve-demo.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.0",
