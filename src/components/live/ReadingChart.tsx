@@ -8,9 +8,12 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+// simple: corrected reading only (guests and warga). Otherwise raw input and GRU are drawn too.
 export default function ReadingChart({
   data,
+  simple = false,
 }: {
+  simple?: boolean;
   data: {
     time: string;
     reading: number | null;
@@ -26,31 +29,35 @@ export default function ReadingChart({
           <XAxis dataKey="time" hide />
           <YAxis width={50} />
           <Tooltip />
-          <Legend />
+          {!simple && <Legend />}
           <Line
-            name="Pembacaan"
+            name="Pembacaan sensor"
             dataKey="reading"
             stroke="#086cfb"
             dot={false}
             connectNulls={false}
             isAnimationActive={false}
           />
-          <Line
-            name="Input mentah"
-            dataKey="raw"
-            stroke="#537496"
-            dot={false}
-            connectNulls={false}
-            isAnimationActive={false}
-          />
-          <Line
-            name="GRU (horizon 0)"
-            dataKey="gru"
-            stroke="#168466"
-            dot={false}
-            connectNulls={false}
-            isAnimationActive={false}
-          />
+          {!simple && (
+            <Line
+              name="Input mentah"
+              dataKey="raw"
+              stroke="#537496"
+              dot={false}
+              connectNulls={false}
+              isAnimationActive={false}
+            />
+          )}
+          {!simple && (
+            <Line
+              name="Estimasi GRU (waktu pembacaan)"
+              dataKey="gru"
+              stroke="#168466"
+              dot={false}
+              connectNulls={false}
+              isAnimationActive={false}
+            />
+          )}
         </LineChart>
       </ResponsiveContainer>
     </div>

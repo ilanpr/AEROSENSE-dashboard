@@ -1,9 +1,3 @@
-/**
- * ============================================
- * AEROSENSE Dashboard — Application Constants
- * ============================================
- */
-
 /** Application metadata */
 export const APP_CONFIG = {
   name: "AEROSENSE",
@@ -25,6 +19,7 @@ export const ROUTES = {
   NODE_MONITORING: "/nodes",
   NODE_DETAIL: "/nodes/:id",
   SYSTEM: "/system",
+  MANAGEMENT: "/management",
   ENVIRONMENT: "/environment",
 } as const;
 
@@ -38,24 +33,25 @@ export interface NavItemConfig {
 
 /** Navigation items for citizen-centric sidebar */
 export const NAV_ITEMS: readonly NavItemConfig[] = [
-  { label: "Hub lingkungan", path: ROUTES.ENVIRONMENT, icon: "Leaf" },
   {
     label: "Beranda",
     path: ROUTES.DASHBOARD,
     icon: "LayoutGrid",
   },
+  { label: "Hub lingkungan", path: ROUTES.ENVIRONMENT, icon: "Leaf" },
+  { label: "Kelola kawasan", path: ROUTES.MANAGEMENT, icon: "Settings2" },
   {
     label: "Peta sensor",
     path: ROUTES.SENSOR_MAP,
     icon: "Map",
   },
   {
-    label: "Analitik AI",
+    label: "Riwayat & model",
     path: ROUTES.ANALYTICS,
     icon: "LineChart",
   },
   {
-    label: "Laporan pemantauan",
+    label: "Laporan lingkungan",
     path: ROUTES.ESG_REPORTS,
     icon: "FileText",
   },
@@ -68,8 +64,6 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
     label: "Tanya AERO-BOT",
     path: ROUTES.AEROBOT,
     icon: "MessageCircle",
-    badge: "BARU",
-    badgeType: "pill",
   },
   {
     label: "Monitoring node",

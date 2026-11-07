@@ -1,46 +1,155 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { ArrowUp, Loader2, RefreshCw } from "lucide-react";
+import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { ArrowUp, Ear, Loader2, RefreshCw, Mic, MicOff, Square, Volume2 } from "lucide-react";
 import { chatService } from "@/services/chat.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
 import type { LiveNode } from "@/types/live.types";
+import { useChatVoice } from "@/hooks/useChatVoice";
+import { useHandsFreeVoice } from "@/hooks/useHandsFreeVoice";
+import type { HandsFreePhase } from "@/lib/handsfree-engine";
+import { DEMO_MODE } from "@/lib/demo-mode";
+import { configureRobotFace, publishRobotFace } from "@/lib/robot-face-bus";
+import { useAccess } from "@/hooks/useAccess";
+import { ROBOT_SLOTS, useRobotSlot } from "@/hooks/useRobotSlot";
+import { detectWakePhrase } from "@/lib/handsfree";
+import { startProcessingSound } from "@/lib/processing-sound";
+import { distanceKm, distanceLabel, validPoint, type GeoPoint } from "@/lib/nearby-nodes";
+import { WhatsAppEntry } from "@/components/live/WhatsAppEntry";
+
+const CHAT_LOCATION_RADIUS_KM = 5;
 
 interface Message {
   id: string;
   sender: "bot" | "user";
   text: string;
+  emotion?: string;
 }
+const handsFreeLabels: Record<HandsFreePhase, [string, string]> = {
+  off: ["Mode suara mati", "Aktifkan untuk bertanya tanpa menekan tombol."],
+  starting: ["Menyiapkan mode suara…", "Izinkan mikrofon jika browser meminta."],
+  blocked: [
+    "Ketuk layar atau tekan tombol apa saja",
+    "Browser perlu satu sentuhan untuk menyalakan suara.",
+  ],
+  waiting: ["Ucapkan “Halo AERO-BOT”", "Lalu langsung sampaikan pertanyaan Anda."],
+  listening: ["Mendengarkan…", "Silakan bicara. Pertanyaan terkirim otomatis saat Anda berhenti."],
+  transcribing: ["Menyalin suara…", "AERO-BOT sedang memahami pertanyaan Anda."],
+  thinking: ["Menyiapkan jawaban…", "AERO-BOT sedang memproses pertanyaan Anda."],
+  speaking: ["Membacakan jawaban", "Tekan Esc atau tombol Hentikan suara untuk berhenti."],
+};
 const suggestions = [
-  "Bagaimana cuaca Surabaya hari ini?",
-  "Bagaimana mengurangi polusi udara?",
-  "Apa beda data sensor dan data publik?",
+  "Cuaca di titik robot hari ini?",
+  "Cara mengurangi polusi?",
+  "Kabar karhutla di Indonesia?",
 ];
 export function ChatPanel() {
-  const { user, error: authError } = useAuth();
+  const { user, isLoading, error: authError } = useAuth();
   const userId = user?.id;
+  const [slot, setSlot] = useRobotSlot(userId);
+  const onChat = useLocation().pathname === "/aerobot";
+  const { canManage } = useAccess();
+  useEffect(() => {
+    configureRobotFace(userId, canManage, slot);
+    return () => configureRobotFace(undefined, false);
+  }, [userId, canManage, slot]);
   const [params] = useSearchParams();
-  const robotId = params.get("robot_id") || undefined;
-  const nodes = useLiveData<{ nodes: LiveNode[] }>(
-    user ? "/v1/dashboard" : null,
-    60000,
-  );
+  const [robotId, setRobotId] = useState<string | undefined>(params.get("robot_id") || undefined);
+  useEffect(() => {
+    if (onChat) setRobotId(params.get("robot_id") || undefined);
+  }, [onChat, params]);
+  const nodes = useLiveData<{ nodes: LiveNode[] }>(user ? "/v1/dashboard" : null, 60000);
   const [nodeId, setNodeId] = useState("");
+  const [devicePoint, setDevicePoint] = useState<{ owner: string; point: GeoPoint } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"idle" | "locating" | "unavailable">("idle");
+  const locate = useCallback(() => {
+    if (!userId || !navigator.geolocation) return;
+    setLocationStatus("locating");
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setLocationStatus(validPoint(coords) ? "idle" : "unavailable");
+        if (validPoint(coords)) {
+          setDevicePoint({ owner: userId, point: { latitude: coords.latitude, longitude: coords.longitude } });
+          setNodeId("");
+        }
+      },
+      () => setLocationStatus("unavailable"),
+      { timeout: 10000, maximumAge: 60000 },
+    );
+  }, [userId]);
+  useEffect(() => {
+    if (!userId || !onChat || robotId || !navigator.permissions || !navigator.geolocation) return;
+    let active = true;
+    void navigator.permissions
+      .query({ name: "geolocation" })
+      .then((permission) => {
+        if (active && permission.state === "granted") locate();
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [userId, onChat, robotId, locate]);
+  const availableNodes = nodes.data?.nodes || [];
+  const point = devicePoint?.owner === userId ? devicePoint?.point : undefined;
+  const nearest = point && availableNodes
+    .filter(validPoint)
+    .map((node) => ({ node, distance: distanceKm(point, node) }))
+    .filter(({ distance }) => distance <= CHAT_LOCATION_RADIUS_KM)
+    .sort((a, b) => a.distance - b.distance)[0];
+  const manual = availableNodes.find((node) => node.id === nodeId);
+  const contextNode = manual || (point ? nearest?.node : availableNodes.length === 1 ? availableNodes[0] : undefined);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       sender: "bot",
-      text: "Halo! Saya AERO-BOT. Tanyakan tentang udara, cuaca, tanah, atau cara menjaga lingkungan.",
+      text: "Halo! Ada yang ingin ditanyakan soal lingkungan?",
     },
   ]);
   const [input, setInput] = useState(params.get("question") || "");
+  useEffect(() => {
+    if (onChat && params.get("question")) setInput(params.get("question")!);
+  }, [onChat, params]);
+  const voiceJobs = useRef(new Map<string, "manual" | "handsfree">());
+  const sendRef = useRef<(text: string, fromVoice?: boolean) => Promise<string | null>>(
+    async () => null,
+  );
+  const voice = useChatVoice(userId, (text) => {
+    const wake = detectWakePhrase(text, true);
+    if (!wake.matched || !wake.remainder.trim()) {
+      setError("Awali pertanyaan suara dengan Halo AERO-BOT.");
+      return;
+    }
+    void sendRef.current(wake.remainder, true).then((id) => {
+      if (id) voiceJobs.current.set(id, "manual");
+      else setInput(text);
+    });
+  });
+  const handsFree = useHandsFreeVoice({
+    userId,
+    available: voice.configured && !DEMO_MODE,
+    onQuestion: async (text) => {
+      const id = await sendRef.current(text, true);
+      if (id) voiceJobs.current.set(id, "handsfree");
+      return !!id;
+    },
+  });
+  const handsFreeControls = handsFree.controls;
+  const voiceSpeak = useRef(voice.speak);
+  voiceSpeak.current = voice.speak;
+  const voiceStop = useRef(voice.stopSpeaker);
+  voiceStop.current = voice.stopSpeaker;
   const [pending, setPending] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if ((busy || voice.preparingSpeech) && !handsFree.active) return startProcessingSound();
+  }, [busy, voice.preparingSpeech, handsFree.active]);
   const [error, setError] = useState("");
   const [pollRun, setPollRun] = useState(0);
   const sending = useRef(false);
   const submission = useRef<{ scope: string; key: string } | null>(null);
   const end = useRef<HTMLDivElement>(null);
+  const composer = useRef<HTMLInputElement>(null);
   const owner = useRef<string | undefined>(undefined);
   const active = useRef(true);
   useEffect(() => {
@@ -55,19 +164,21 @@ export function ChatPanel() {
         {
           id: "welcome",
           sender: "bot",
-          text: "Halo! Saya AERO-BOT. Tanyakan tentang udara, cuaca, tanah, atau cara menjaga lingkungan.",
+          text: "Halo! Ada yang ingin ditanyakan soal lingkungan?",
         },
       ]);
       setPending(null);
       setBusy(false);
       setError("");
       setNodeId("");
+      setDevicePoint(null);
+      setLocationStatus("idle");
       owner.current = user?.id;
     }
   }, [user?.id]);
   useEffect(() => {
-    end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [messages, busy]);
+    if (onChat) end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [messages, busy, onChat]);
   useEffect(() => {
     if (!pending || !userId) return;
     const controller = new AbortController();
@@ -79,43 +190,64 @@ export function ChatPanel() {
       try {
         const job = await chatService.result(pending!, controller.signal);
         if (controller.signal.aborted) return;
+        const spoken = voiceJobs.current.get(job.id);
         if (job.status === "done") {
-          if (!job.result?.text)
-            throw new Error(
-              "Jawaban belum berisi teks. Periksa eksekusi worker di n8n.",
-            );
+          if (!job.result?.text) throw new Error("Jawaban belum tersedia. Coba cek lagi sebentar.");
           setMessages((prev) =>
             prev.some((m) => m.id === job.id)
               ? prev
               : [
                   ...prev,
-                  { id: job.id, sender: "bot", text: job.result!.text! },
+                  {
+                    id: job.id,
+                    sender: "bot",
+                    text: job.result!.text!,
+                    emotion: job.result!.emotion,
+                  },
                 ],
           );
           setPending(null);
           setBusy(false);
+          publishRobotFace(userId, {
+            action: "expression",
+            text: job.result.text,
+            emotion: job.result.emotion,
+          });
+          if (spoken) {
+            voiceJobs.current.delete(job.id);
+            if (spoken === "handsfree")
+              void handsFreeControls.speakAnswer(job.id, job.result!.text!, job.result!.emotion);
+            else void voiceSpeak.current(job.id, job.result!.text!, job.result!.emotion);
+          }
           return;
         }
         if (job.status === "failed") {
           setPending(null);
+          if (spoken === "handsfree") {
+            voiceJobs.current.delete(job.id);
+            void handsFreeControls.announce(
+              "Maaf, pertanyaan belum dapat dijawab. Silakan coba lagi.",
+            );
+          }
           throw new Error(
-            job.error ||
-              "Permintaan gagal diproses. Silakan kirim ulang pertanyaan.",
+            job.error || "Permintaan gagal diproses. Silakan kirim ulang pertanyaan.",
           );
         }
-        if (Date.now() - started > 120000)
+        if (Date.now() - started > 120000) {
+          if (spoken === "handsfree")
+            void handsFreeControls.announce(
+              "Jawaban masih diproses. Silakan tanyakan lagi sebentar lagi.",
+            );
           throw new Error(
             "Jawaban masih diproses. Tekan Cek jawaban untuk melanjutkan tanpa mengirim pertanyaan baru.",
           );
-        timer = setTimeout(poll, 2000);
+        }
+        // Voice users hear nothing while waiting, so check their answers more often.
+        timer = setTimeout(poll, spoken ? 700 : 2000);
       } catch (e) {
         if (!controller.signal.aborted) {
           setBusy(false);
-          setError(
-            e instanceof Error
-              ? e.message
-              : "Koneksi terputus. Cek jawaban lagi.",
-          );
+          setError(e instanceof Error ? e.message : "Koneksi terputus. Cek jawaban lagi.");
         }
       }
     }
@@ -124,24 +256,37 @@ export function ChatPanel() {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [pending, userId, pollRun]);
-  async function send(text = input) {
-    if (!text.trim() || sending.current || pending || !user) return;
+  }, [pending, userId, pollRun, handsFreeControls]);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      handsFreeControls.stopSpeaking();
+      voiceStop.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handsFreeControls]);
+  async function send(text = input, fromVoice = false): Promise<string | null> {
+    const targetNode = robotId ? undefined : contextNode?.id;
+    if (!text.trim() || sending.current || pending || !user) return null;
+    if (!fromVoice && (voice.recording || voice.transcribing)) return null;
+    voice.stopSpeaker();
     sending.current = true;
     setBusy(true);
     setError("");
     const sender = user.id;
-    const scope = JSON.stringify([sender, text.trim(), nodeId, robotId]);
+    const scope = JSON.stringify([sender, text.trim(), targetNode, robotId]);
     if (submission.current?.scope !== scope)
       submission.current = { scope, key: crypto.randomUUID() };
     try {
       const job = await chatService.send(
         text.trim(),
         submission.current!.key,
-        nodeId,
+        targetNode,
         robotId,
+        fromVoice,
       );
-      if (!active.current || owner.current !== sender) return;
+      if (!active.current || owner.current !== sender) return null;
       submission.current = null;
       setMessages((prev) => [
         ...prev,
@@ -149,121 +294,345 @@ export function ChatPanel() {
       ]);
       setInput("");
       setPending(job.id);
+      publishRobotFace(sender, { action: "thinking" });
+      return job.id;
     } catch (e) {
       if (active.current) {
         setError(e instanceof Error ? e.message : "Pesan belum terkirim.");
         setBusy(false);
       }
+      return null;
     } finally {
       sending.current = false;
     }
   }
+  sendRef.current = send;
+  const [handsFreeTitle, handsFreeHint] = handsFreeLabels[handsFree.phase];
+  if (!user) {
+    return (
+      <section className="live-chat chat-entry" aria-label="Mulai percakapan AERO-BOT">
+        {isLoading ? (
+          <p role="status">Memeriksa sesi…</p>
+        ) : (
+          <>
+            <h2>Mulai percakapan</h2>
+            <p>Masuk untuk bertanya di sini atau lanjut lewat WhatsApp.</p>
+            {authError && <p role="alert">{authError}</p>}
+            <div className="chat-entry-actions">
+              <Link className="live-button" to="/login">Masuk untuk bertanya</Link>
+              <WhatsAppEntry />
+            </div>
+          </>
+        )}
+      </section>
+    );
+  }
   return (
-    <section className="live-chat" aria-label="Percakapan AERO-BOT">
-      <header>
-        <img src="/assets/aerobot.svg" alt="" />
-        <div>
-          <strong>AERO-BOT</strong>
-          <small>
-            {robotId ? "Layar robot · " + robotId : "Asisten lingkungan"}
-          </small>
-        </div>
-        <span className="live-tag">
-          {busy
-            ? "Memproses"
-            : user
-              ? "Siap menerima pesan"
-              : "Masuk untuk bertanya"}
-        </span>
-      </header>
-      <label className="chat-scope">
-        Sumber sensor
-        <select
-          aria-label="Sumber sensor percakapan"
-          value={nodeId}
-          onChange={(e) => setNodeId(e.target.value)}
-          disabled={!!robotId || busy || !!pending}
-        >
-          <option value="">Informasi lingkungan umum dan API publik</option>
-          {nodes.data?.nodes.map((n) => (
-            <option key={n.id} value={n.id}>
-              {n.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      {nodes.error && <p className="live-notice">{nodes.error}</p>}
-      <div className="live-messages" role="log" aria-live="polite">
-        {messages.map((m) => (
-          <div className={"live-message " + m.sender} key={m.id}>
-            {m.text}
+    <>
+      <section className="live-chat" aria-label="Percakapan AERO-BOT">
+        <header>
+          <img
+            src={busy ? "/assets/aerobot/falcon/watch.webp" : "/assets/aerobot/falcon/talk.webp"}
+            alt=""
+          />
+          <div>
+            <strong>AERO-BOT</strong>
+            <small>{robotId ? "Layar robot · " + robotId : "Asisten lingkungan"}</small>
           </div>
-        ))}
-        {busy && (
-          <p className="chat-progress">
-            <Loader2 size={16} className="animate-spin" /> AERO-BOT sedang
-            menyiapkan jawaban…
+          <span className="live-tag">{busy ? "Memproses" : "Siap"}</span>
+        </header>
+        {canManage && (
+          <label className="chat-scope">
+            Layar robot
+            <select
+              value={slot}
+              onChange={(e) => setSlot(e.target.value)}
+              disabled={busy || !!pending || !!voice.speaking || handsFree.phase === "speaking"}
+            >
+              {ROBOT_SLOTS.map((id, i) => (
+                <option key={id} value={id}>
+                  Robot {i + 1}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {user && !robotId && availableNodes.length > 0 && (
+          <div className="chat-scope">
+            <span aria-live="polite">
+              {locationStatus === "locating"
+                ? "Mencari titik terdekat…"
+                : contextNode
+                  ? `Acuan: ${contextNode.name}${!manual && nearest ? ` · ${distanceLabel(nearest.distance)}` : ""}`
+                  : point
+                    ? "Tidak ada node dalam 5 km"
+                    : "Tanpa acuan lokasi"}
+              {locationStatus === "unavailable" && " · Lokasi perangkat tidak tersedia"}
+            </span>
+            {typeof navigator !== "undefined" && navigator.geolocation && (
+              <button
+                type="button"
+                className="font-semibold text-[#0059b9] underline underline-offset-2"
+                disabled={busy || !!pending || locationStatus === "locating"}
+                onClick={locate}
+              >
+                {point ? "Perbarui lokasi" : "Gunakan lokasi saya"}
+              </button>
+            )}
+            {availableNodes.length > 1 && (
+              <details className="w-full">
+                <summary className="cursor-pointer">Pilih titik lain</summary>
+                <MonitoringSelect
+                  label="Acuan percakapan"
+                  value={nodeId || "__auto__"}
+                  onValueChange={(value) => setNodeId(value === "__auto__" ? "" : value)}
+                  disabled={busy || !!pending || locationStatus === "locating"}
+                  options={[
+                    { value: "__auto__", label: "Otomatis" },
+                    ...availableNodes.map((n) => ({ value: n.id, label: n.name })),
+                  ]}
+                />
+              </details>
+            )}
+          </div>
+        )}
+        {nodes.error && <p className="live-notice">{nodes.error}</p>}
+        <div className="live-messages" role="log" aria-live="polite">
+          {messages.map((m) => (
+            <div className={"live-message " + m.sender} key={m.id}>
+              <div className="chat-message-content">
+                {(m.sender === "bot" ? m.text.trim().split(/\n\s*\n/) : [m.text]).map(
+                  (paragraph, index) => (
+                    <p
+                      key={index}
+                      className={
+                        paragraph.startsWith("Sumber:") ? "chat-message-sources" : undefined
+                      }
+                    >
+                      {paragraph}
+                    </p>
+                  ),
+                )}
+              </div>
+              {m.sender === "bot" && m.id !== "welcome" && voice.configured && (
+                <button
+                  className="chat-listen"
+                  type="button"
+                  onClick={() => void voice.speak(m.id, m.text, m.emotion)}
+                  disabled={voice.recording || voice.transcribing}
+                >
+                  {voice.speaking === m.id && voice.preparingSpeech ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : voice.speaking === m.id ? (
+                    <Square size={14} />
+                  ) : (
+                    <Volume2 size={15} />
+                  )}
+                  {voice.speaking === m.id
+                    ? voice.preparingSpeech
+                      ? "Menyiapkan suara…"
+                      : "Hentikan suara"
+                    : "Dengarkan"}
+                </button>
+              )}
+            </div>
+          ))}
+          {busy && (
+            <p className="chat-progress">
+              <Loader2 size={16} className="animate-spin" /> AERO-BOT sedang menyiapkan jawaban…
+            </p>
+          )}
+          <div ref={end} />
+        </div>
+        {error && (
+          <div className="live-notice" role="alert">
+            {error}
+            {pending && (
+              <button className="live-button secondary" onClick={() => setPollRun((n) => n + 1)}>
+                <RefreshCw size={14} />
+                Cek jawaban
+              </button>
+            )}
+          </div>
+        )}
+        <div className="chat-suggestions">
+          {suggestions.map((s) => (
+            <button
+              key={s}
+              onClick={() => {
+                setInput(s);
+                composer.current?.focus();
+              }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void send();
+          }}
+        >
+          <label className="sr-only" htmlFor="chatInput">
+            Pertanyaan lingkungan
+          </label>
+          <input
+            id="chatInput"
+            ref={composer}
+            aria-describedby={
+              voice.recording || voice.transcribing ? "chat-recording-status" : undefined
+            }
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            maxLength={2000}
+            disabled={!user || busy || !!pending || voice.recording || voice.transcribing}
+            placeholder="Tanyakan tentang lingkungan…"
+            autoComplete="off"
+          />
+          <button
+            className={`chat-composer-mic ${voice.recording ? "is-recording" : ""}`}
+            type="button"
+            onClick={() => void voice.toggleRecording()}
+            disabled={
+              !user ||
+              !voice.configured ||
+              !voice.supported ||
+              voice.transcribing ||
+              busy ||
+              !!pending ||
+              handsFree.active
+            }
+            aria-label={voice.recording ? "Selesai rekam dan kirim" : "Rekam pertanyaan"}
+            title={voice.recording ? "Selesai rekam dan kirim" : "Rekam pertanyaan"}
+            aria-pressed={voice.recording}
+          >
+            {voice.recording ? (
+              <Square size={18} />
+            ) : voice.transcribing ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Mic size={18} />
+            )}
+          </button>
+          <button
+            aria-label="Kirim pesan"
+            title="Kirim pesan"
+            disabled={
+              !user || !input.trim() || busy || !!pending || voice.recording || voice.transcribing
+            }
+          >
+            <ArrowUp size={18} />
+          </button>
+        </form>
+        {(voice.recording || voice.transcribing) && (
+          <p id="chat-recording-status" className="chat-note" role="status">
+            {voice.recording
+              ? "Merekam… Tekan tombol berhenti untuk mengirim."
+              : "AERO-BOT sedang memahami rekaman…"}
           </p>
         )}
-        <div ref={end} />
-      </div>
-      {!user && (
-        <p className="live-notice">
-          {authError ||
-            "Masuk agar pertanyaan dan jawaban hanya dapat diakses oleh akun Anda."}{" "}
-          <Link to="/login">Masuk akun</Link>
-        </p>
-      )}
-      {error && (
-        <div className="live-notice" role="alert">
-          {error}
-          {pending && (
+        {user && voice.configured && handsFree.supported && (
+          <div className={`handsfree-card is-${handsFree.phase}`}>
             <button
-              className="live-button secondary"
-              onClick={() => setPollRun((n) => n + 1)}
+              className="handsfree-toggle"
+              type="button"
+              aria-pressed={handsFree.active}
+              onClick={() =>
+                handsFree.active ? handsFreeControls.disable() : handsFreeControls.enable()
+              }
             >
-              <RefreshCw size={14} />
-              Cek jawaban
+              {handsFree.active ? <MicOff size={20} /> : <Ear size={20} />}
+              {handsFree.active ? "Matikan mode suara" : "Aktifkan mode suara"}
             </button>
-          )}
-        </div>
-      )}
-      <div className="chat-suggestions">
-        {suggestions.map((s) => (
-          <button key={s} onClick={() => setInput(s)}>
-            {s}
-          </button>
-        ))}
-      </div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void send();
-        }}
-      >
-        <label className="sr-only" htmlFor="chatInput">
-          Pertanyaan lingkungan
-        </label>
-        <input
-          id="chatInput"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          maxLength={2000}
-          disabled={!user || busy || !!pending}
-          placeholder="Tanyakan tentang lingkungan…"
-          autoComplete="off"
-        />
-        <button
-          aria-label="Kirim pesan"
-          disabled={!user || !input.trim() || busy || !!pending}
-        >
-          <ArrowUp size={18} />
-        </button>
-      </form>
-      <small className="chat-note">
-        Angka mengikuti data yang tersedia. Pembacaan sensor dan estimasi dari
-        API publik dijelaskan terpisah.
-      </small>
-    </section>
+            {handsFree.active && (
+              <div className="handsfree-status" role="status" aria-live="polite">
+                <span
+                  className="handsfree-meter"
+                  aria-hidden="true"
+                  style={{ "--level": handsFree.level } as CSSProperties}
+                >
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                <span>
+                  <strong>{handsFreeTitle}</strong>
+                  <small>{handsFree.notice || handsFreeHint}</small>
+                </span>
+              </div>
+            )}
+            {handsFree.heard && handsFree.active && (
+              <p className="handsfree-heard">Terdengar: “{handsFree.heard}”</p>
+            )}
+            {handsFree.phase === "speaking" && (
+              <button
+                className="chat-voice-button"
+                type="button"
+                onClick={() => handsFreeControls.stopSpeaking()}
+              >
+                <Square size={16} />
+                Hentikan suara
+              </button>
+            )}
+            {handsFree.phase === "blocked" && (
+              <button
+                className="chat-voice-button"
+                type="button"
+                onClick={() => handsFreeControls.resume()}
+              >
+                <Volume2 size={16} />
+                Nyalakan suara
+              </button>
+            )}
+            {handsFree.error && (
+              <p className="live-notice" role="alert">
+                {handsFree.error}
+              </p>
+            )}
+            {handsFree.active && (
+              <details className="chat-voice-privacy">
+                <summary>Privasi mikrofon</summary>
+                <p>
+                  Mikrofon aktif selama mode suara menyala. Potongan ucapan, termasuk sebelum
+                  panggilan, dikirim ke Gemini untuk transkripsi. Chat hanya memproses pertanyaan
+                  setelah “Halo AERO-BOT”. Rekaman tidak disimpan AEROSENSE.
+                </p>
+              </details>
+            )}
+          </div>
+        )}
+        {voice.error && (
+          <p className="live-notice" role="alert">
+            {voice.error}
+          </p>
+        )}
+        {voice.configured && !voice.supported && (
+          <p className="chat-note">
+            Untuk merekam, buka situs HTTPS ini di Chrome atau Edge dan izinkan mikrofon.
+          </p>
+        )}
+      </section>
+      {!onChat &&
+        (handsFree.active || voice.speaking) &&
+        createPortal(
+          <div className="robot-voice-session" role="status">
+            <Link to="/aerobot">
+              {slot.replace("robot-", "Robot ")} · {handsFreeTitle}
+            </Link>
+            <button
+              onClick={() => {
+                handsFreeControls.disable();
+                voice.stopSpeaker();
+              }}
+            >
+              Matikan suara
+            </button>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }

@@ -1,12 +1,8 @@
-import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
-import { AppRouter } from '@/config/routes'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { ToastProvider } from '@/components/shared/Toast'
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import { AppRouter } from "@/config/routes";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ToastProvider } from "@/components/shared/Toast";
 
-/**
- * Root application component.
- * Wraps the router with error boundary and global providers.
- */
 function App() {
   return (
     <ErrorBoundary>
@@ -16,7 +12,7 @@ function App() {
         </ToastProvider>
       </TooltipProvider>
     </ErrorBoundary>
-  )
+  );
 }
 
-export default App
+export default App;

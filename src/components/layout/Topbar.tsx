@@ -1,18 +1,20 @@
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
 import { NAV_ITEMS, ROUTES } from "@/lib/constants";
 import { Menu, ChevronRight, Bell } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import type { Ref } from "react";
 
 interface TopbarProps {
   onMenuClick: () => void;
+  menuButton: Ref<HTMLButtonElement>;
+  menuOpen: boolean;
 }
 
-export function Topbar({ onMenuClick }: TopbarProps) {
+export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Find active nav item or fallback label
   const currentItem = NAV_ITEMS.find((item) => item.path === location.pathname);
   const currentLabel = currentItem
     ? currentItem.label
@@ -23,13 +25,15 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         : "Workspace";
 
   return (
-    <header className="h-[72px] bg-white/90 border-b border-[#e9f0f8] flex items-center justify-between px-6 sm:px-9 sticky top-0 z-20 backdrop-blur-md">
-      {/* Left: Mobile hamburger & Breadcrumb */}
+    <header className="app-topbar h-[72px] bg-white/90 border-b border-[#e9f0f8] flex items-center justify-between px-6 sm:px-9 sticky top-0 z-20 backdrop-blur-md">
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
+          ref={menuButton}
           onClick={onMenuClick}
           aria-label="Buka menu navigasi"
+          aria-controls="mobile-navigation"
+          aria-expanded={menuOpen}
           className="md:hidden w-8 h-8 rounded-lg bg-[#e8f3ff] text-[#0870f0] grid place-items-center hover:bg-[#d9ecff] transition-colors cursor-pointer"
         >
           <Menu className="w-4 h-4 stroke-[2]" />
@@ -39,21 +43,13 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           aria-label="Breadcrumb"
           className="flex items-center gap-2 text-[#97a7bb] text-xs font-semibold"
         >
-          <span className="hidden sm:inline">Workspace</span>
+          <span className="hidden sm:inline">AEROSENSE</span>
           <ChevronRight className="hidden sm:block w-3.5 h-3.5 text-[#97a7bb]" />
           <strong className="text-[#25405f] font-bold">{currentLabel}</strong>
         </nav>
       </div>
 
-      {/* Right: Actions & Badges */}
       <div className="flex items-center gap-3 sm:gap-4">
-        {/* Data simulation badge */}
-        <span className="flex items-center gap-2 bg-[#f0f8ff] text-[#2170bd] border border-[#d7ebff] px-3 py-1.5 rounded-full text-[10px] font-black tracking-wider">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#2586ff] animate-pulse" />
-          {user ? "AKUN AKTIF" : "AKSES PUBLIK"}
-        </span>
-
-        {/* Quick alerts button with notification indicator */}
         <button
           type="button"
           onClick={() => navigate(ROUTES.ALERTS)}
@@ -63,10 +59,10 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <Bell className="w-4 h-4" />
         </button>
 
-        {/* User avatar */}
-        <div className="w-8 h-8 rounded-lg bg-[#d9ecff] border-2 border-white text-[#0470ed] text-[10px] font-black grid place-items-center shadow-2xs select-none">
-          AS
-        </div>
+        <Link className="account-link" to={user ? ROUTES.SYSTEM : ROUTES.LOGIN}>
+          {user ? "Akun saya" : "Masuk"}
+          <ChevronRight size={15} />
+        </Link>
       </div>
     </header>
   );

@@ -4,7 +4,9 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // ponytail: retain demo chunks during filming; clear dist-demo between sessions with the server stopped.
+  build: { emptyOutDir: mode !== "demo" },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
@@ -20,4 +22,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

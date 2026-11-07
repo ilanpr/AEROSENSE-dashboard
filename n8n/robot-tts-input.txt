@@ -1,0 +1,10 @@
+{{ ({
+  model: $json.speech?.model || $("Konfigurasi AEROSENSE").first().json.gemini_tts_model,
+  input: [{ type: "user_input", content: [{
+    type: "text", text: $json.answer,
+    annotations: [{ type: "speech_metadata", style: $json.speech?.style || "A cheerful, playful little robot friend speaking Indonesian. Bright, upbeat and smiling, with lively friendly intonation, like a kind children's science show host. Keep every word clear and the pace calm, never rushed." }]
+  }] }],
+  store: false,
+  response_format: { type: "audio" },
+  generation_config: { speech_config: [{ voice: $json.speech?.voice || $("Konfigurasi AEROSENSE").first().json.gemini_voice || "Puck" }] }
+}) }}

@@ -1,14 +1,13 @@
+import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
 import { api } from "@/services/api";
 import type { LiveNode } from "@/types/live.types";
+import { WhatsAppEntry } from "./WhatsAppEntry";
 export function WhatsAppSettings() {
   const { user } = useAuth();
-  const nodes = useLiveData<{ nodes: LiveNode[] }>(
-    user ? "/v1/dashboard" : null,
-    60000,
-  );
+  const nodes = useLiveData<{ nodes: LiveNode[] }>(user ? "/v1/dashboard" : null, 60000);
   const subscriptions = useLiveData<{
     subscriptions: { node_id: string; phone: string }[];
   }>(user ? "/v1/subscriptions" : null, 60000);
@@ -22,24 +21,19 @@ export function WhatsAppSettings() {
     <section className="live-panel">
       <h2>Notifikasi WhatsApp</h2>
       <p>
-        Hubungkan nomor WhatsApp ke node yang ingin dipantau. Ketik BERHENTI di
-        WhatsApp untuk menghentikan langganan.
+        Hubungkan nomor WhatsApp ke node yang ingin dipantau. Ketik BERHENTI di WhatsApp untuk
+        menghentikan langganan.
       </p>
       <div className="live-actions">
-        <select
-          aria-label="Node untuk langganan WhatsApp"
+        <MonitoringSelect
+          label="Node untuk langganan WhatsApp"
           value={id}
-          onChange={(e) => {
-            setSelected(e.target.value);
+          onValueChange={(value) => {
+            setSelected(value);
             setCommand("");
           }}
-        >
-          {nodes.data.nodes.map((n) => (
-            <option key={n.id} value={n.id}>
-              {n.name}
-            </option>
-          ))}
-        </select>
+          options={nodes.data.nodes.map((n) => ({ value: n.id, label: n.name }))}
+        />
         <button
           className="live-button"
           disabled={busy}
@@ -47,15 +41,10 @@ export function WhatsAppSettings() {
             setBusy(true);
             setError("");
             try {
-              const p = await api.post<{ command: string }>(
-                "/v1/whatsapp/pair",
-                { node_id: id },
-              );
+              const p = await api.post<{ command: string }>("/v1/whatsapp/pair", { node_id: id });
               setCommand(p.command);
             } catch (e) {
-              setError(
-                e instanceof Error ? e.message : "Kode belum dapat dibuat.",
-              );
+              setError(e instanceof Error ? e.message : "Kode belum dapat dibuat.");
             } finally {
               setBusy(false);
             }
@@ -65,10 +54,13 @@ export function WhatsAppSettings() {
         </button>
       </div>
       {command && (
-        <p className="pair-code">
-          Kirim <code>{command}</code> ke nomor WhatsApp AEROSENSE. Kode berlaku
-          10 menit.
-        </p>
+        <div className="wa-pair-actions">
+          <WhatsAppEntry command={command} label="Hubungkan WhatsApp" />
+          <details>
+            <summary>Lihat kode manual · berlaku 10 menit</summary>
+            <code>{command}</code>
+          </details>
+        </div>
       )}
       {error && <p role="alert">{error}</p>}
       {subscriptions.error && <p role="alert">{subscriptions.error}</p>}

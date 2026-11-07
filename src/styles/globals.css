@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./aerosense.css";
 @import "./live.css";
+@import "./disclosure.css";
 
 /*
  * ============================================
@@ -157,7 +158,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --font-sans:
-    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    "InterVariable", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 

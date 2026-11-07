@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom'
-import { Sparkles, ChevronRight } from 'lucide-react'
-import { ROUTES } from '@/lib/constants'
+import { Link } from "react-router-dom";
+import { Sparkles, ChevronRight } from "lucide-react";
+import { ROUTES } from "@/lib/constants";
 
 export function CommunityGuidanceCard() {
   return (
@@ -18,13 +18,16 @@ export function CommunityGuidanceCard() {
 
       <ol className="space-y-3 pl-4 list-decimal text-xs text-slate-600 dark:text-slate-300 mb-6">
         <li className="leading-relaxed">
-          <strong className="text-slate-900 dark:text-white">Cek lokasi terdekat.</strong> Lihat status node sebelum keluar rumah.
+          <strong className="text-slate-900 dark:text-white">Cek lokasi terdekat.</strong> Lihat
+          status node sebelum keluar rumah.
         </li>
         <li className="leading-relaxed">
-          <strong className="text-slate-900 dark:text-white">Sesuaikan aktivitas.</strong> Batasi waktu di luar jika udara memburuk.
+          <strong className="text-slate-900 dark:text-white">Sesuaikan aktivitas.</strong> Batasi
+          waktu di luar jika udara memburuk.
         </li>
         <li className="leading-relaxed">
-          <strong className="text-slate-900 dark:text-white">Ikuti peringatan.</strong> Gunakan tindakan yang disarankan sesuai kondisi.
+          <strong className="text-slate-900 dark:text-white">Ikuti peringatan.</strong> Gunakan
+          tindakan yang disarankan sesuai kondisi.
         </li>
       </ol>
 
@@ -36,5 +39,5 @@ export function CommunityGuidanceCard() {
         <ChevronRight className="w-4 h-4 ml-2" />
       </Link>
     </article>
-  )
+  );
 }

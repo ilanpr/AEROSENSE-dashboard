@@ -1,5 +1,5 @@
-import type { Node, NodeReading, NodeQueryParams } from './node.types'
+import type { Node, NodeReading, NodeQueryParams } from "./node.types";
 
-export type Sensor = Node
-export type SensorReading = NodeReading
-export type SensorQueryParams = NodeQueryParams
+export type Sensor = Node;
+export type SensorReading = NodeReading;
+export type SensorQueryParams = NodeQueryParams;

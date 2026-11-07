@@ -1,15 +1,15 @@
-import { useState } from 'react'
-import { useToast } from '@/components/shared/Toast'
+import { useState } from "react";
+import { useToast } from "@/components/shared/Toast";
 
 export function AlertDetailCard() {
-  const [acked, setAcked] = useState(false)
-  const { showToast } = useToast()
+  const [acked, setAcked] = useState(false);
+  const { showToast } = useToast();
 
   const handleAck = () => {
-    if (acked) return
-    setAcked(true)
-    showToast('Peringatan ditandai sudah dibaca pada sesi ini.')
-  }
+    if (acked) return;
+    setAcked(true);
+    showToast("Peringatan ditandai sudah dibaca pada sesi ini.");
+  };
 
   return (
     <article className="card p-5 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
@@ -31,12 +31,13 @@ export function AlertDetailCard() {
       </div>
 
       <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-        Nilai TVOC contoh 221 ppb. Pantau perkembangan sebelum aktivitas di area terbuka berlangsung lama.
+        Nilai TVOC contoh 221 ppb. Pantau perkembangan sebelum aktivitas di area terbuka berlangsung
+        lama.
       </p>
 
       <div className="border-t border-slate-100 dark:border-slate-800 pt-3.5 flex items-center justify-between gap-3">
         <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-          {acked ? 'Sudah dibaca' : 'Belum ditinjau'}
+          {acked ? "Sudah dibaca" : "Belum ditinjau"}
         </span>
         <button
           type="button"
@@ -44,9 +45,9 @@ export function AlertDetailCard() {
           disabled={acked}
           className="border border-sky-100 dark:border-sky-900/40 bg-sky-50/80 dark:bg-slate-800 hover:bg-sky-100 dark:hover:bg-slate-700 text-primary-600 dark:text-primary-400 rounded-lg px-3.5 py-1.5 text-xs font-extrabold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
-          {acked ? 'Sudah dibaca' : 'Tandai sudah dibaca'}
+          {acked ? "Sudah dibaca" : "Tandai sudah dibaca"}
         </button>
       </div>
     </article>
-  )
+  );
 }

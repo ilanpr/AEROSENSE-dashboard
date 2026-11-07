@@ -1,4 +1,4 @@
-import { Bell } from 'lucide-react'
+import { Bell } from "lucide-react";
 
 export function NotificationChannelsCard() {
   return (
@@ -31,5 +31,5 @@ export function NotificationChannelsCard() {
         Contoh ini memperlihatkan isi dan alur peringatan. Pengiriman otomatis belum aktif.
       </p>
     </article>
-  )
+  );
 }

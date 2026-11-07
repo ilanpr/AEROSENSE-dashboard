@@ -17,14 +17,10 @@ export function RegisterPage() {
     setBusy(true);
     setNotice("");
     try {
-      if (await authService.register(name, email, password))
-        navigate(ROUTES.DASHBOARD);
-      else
-        setNotice("Periksa email Anda untuk mengonfirmasi akun sebelum masuk.");
+      if (await authService.register(name, email, password)) navigate(ROUTES.DASHBOARD);
+      else setNotice("Periksa email Anda untuk mengonfirmasi akun sebelum masuk.");
     } catch (err) {
-      setNotice(
-        err instanceof Error ? err.message : "Pendaftaran belum berhasil.",
-      );
+      setNotice(err instanceof Error ? err.message : "Pendaftaran belum berhasil.");
     } finally {
       setBusy(false);
     }
@@ -33,24 +29,20 @@ export function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f2f8fc] via-[#e8f3fc] to-[#deeeff] dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Card */}
         <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 rounded-3xl p-7 sm:p-8 shadow-xl">
-          {/* Logo / Mascot */}
           <div className="flex flex-col items-center text-center mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#086cf0] to-[#38b6ff] shadow-lg flex items-center justify-center mb-4 overflow-hidden">
+            <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mb-4">
               <img
-                src="/assets/aerobot.svg"
+                src="/assets/brand/aerosense-mark.png"
                 alt="AEROSENSE"
+                width="48"
+                height="48"
                 className="w-12 h-12 object-contain"
               />
             </div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
               Buat Akun <span className="text-primary-600">AEROSENSE</span>
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 max-w-xs">
-              Mulai memantau kualitas udara lingkungan Anda dengan visualisasi
-              modern.
-            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,9 +69,7 @@ export function RegisterPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                Email
-              </label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-200">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
@@ -124,10 +114,7 @@ export function RegisterPage() {
           <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-center">
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Sudah memiliki akun?{" "}
-              <Link
-                to={ROUTES.LOGIN}
-                className="font-bold text-primary-600 hover:underline"
-              >
+              <Link to={ROUTES.LOGIN} className="font-bold text-primary-600 hover:underline">
                 Masuk di sini
               </Link>
             </p>

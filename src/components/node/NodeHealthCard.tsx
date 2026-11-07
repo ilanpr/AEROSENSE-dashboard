@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Wifi, Clock, ActivitySquare, Server } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Wifi, Clock, ActivitySquare, Server } from "lucide-react";
 
 export function NodeHealthCard() {
   return (
@@ -20,7 +20,7 @@ export function NodeHealthCard() {
             <p className="text-sm font-semibold text-foreground">Terhubung</p>
           </div>
         </div>
-        
+
         <div className="flex items-start gap-3">
           <div className="p-2 bg-primary-100 rounded-lg">
             <Clock className="w-4 h-4 text-primary-600" />
@@ -52,5 +52,5 @@ export function NodeHealthCard() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

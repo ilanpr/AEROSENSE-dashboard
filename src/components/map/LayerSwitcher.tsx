@@ -1,21 +1,21 @@
-import { Card } from '@/components/ui/card'
-import { Layers } from 'lucide-react'
+import { Card } from "@/components/ui/card";
+import { Layers } from "lucide-react";
 
-export type MapLayer = 'aqi' | 'pm25' | 'tvoc' | 'eco2' | 'heatmap'
+export type MapLayer = "aqi" | "pm25" | "tvoc" | "eco2" | "heatmap";
 
 interface LayerSwitcherProps {
-  activeLayer: MapLayer
-  onLayerChange: (layer: MapLayer) => void
+  activeLayer: MapLayer;
+  onLayerChange: (layer: MapLayer) => void;
 }
 
 export function LayerSwitcher({ activeLayer, onLayerChange }: LayerSwitcherProps) {
   const layers: { id: MapLayer; label: string }[] = [
-    { id: 'aqi', label: 'AQI (Indeks)' },
-    { id: 'pm25', label: 'PM2.5' },
-    { id: 'tvoc', label: 'TVOC' },
-    { id: 'eco2', label: 'eCO₂' },
-    { id: 'heatmap', label: 'Heatmap' },
-  ]
+    { id: "aqi", label: "AQI (Indeks)" },
+    { id: "pm25", label: "PM2.5" },
+    { id: "tvoc", label: "TVOC" },
+    { id: "eco2", label: "eCO₂" },
+    { id: "heatmap", label: "Heatmap" },
+  ];
 
   return (
     <Card className="absolute top-4 right-4 z-[400] w-48 bg-white/90 backdrop-blur-md shadow-lg border-border/50">
@@ -30,8 +30,8 @@ export function LayerSwitcher({ activeLayer, onLayerChange }: LayerSwitcherProps
             onClick={() => onLayerChange(layer.id)}
             className={`text-left px-3 py-2 text-sm rounded-md transition-colors ${
               activeLayer === layer.id
-                ? 'bg-primary-100 text-primary-700 font-semibold'
-                : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
+                ? "bg-primary-100 text-primary-700 font-semibold"
+                : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
             }`}
           >
             {layer.label}
@@ -39,5 +39,5 @@ export function LayerSwitcher({ activeLayer, onLayerChange }: LayerSwitcherProps
         ))}
       </div>
     </Card>
-  )
+  );
 }

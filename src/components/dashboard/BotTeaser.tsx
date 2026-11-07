@@ -1,9 +1,9 @@
-import { useNavigate } from 'react-router-dom'
-import { ROUTES } from '@/lib/constants'
-import { Sparkles } from 'lucide-react'
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/lib/constants";
+import { Sparkles } from "lucide-react";
 
 export function BotTeaser() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   return (
     <article className="p-4 rounded-[17px] bg-gradient-to-br from-[#dff3ff] to-[#d8ecff] border border-[#cce9ff] flex items-start gap-3 relative overflow-hidden shadow-2xs">
@@ -27,5 +27,5 @@ export function BotTeaser() {
         </button>
       </div>
     </article>
-  )
+  );
 }

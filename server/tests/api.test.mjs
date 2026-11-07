@@ -40,15 +40,13 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
     if (url.pathname === "/rest/v1/ae_nodes")
       output = nodes.filter(
         (n) =>
-          (!url.searchParams.get("id") ||
-            url.searchParams.get("id") === "eq." + n.id) &&
+          (!url.searchParams.get("id") || url.searchParams.get("id") === "eq." + n.id) &&
           (!url.searchParams.get("location_id") ||
             url.searchParams.get("location_id") === "eq." + n.location_id),
       );
     if (url.pathname === "/rest/v1/ae_members")
       output =
-        !url.searchParams.get("location_id") ||
-        url.searchParams.get("location_id") === "eq.L1"
+        !url.searchParams.get("location_id") || url.searchParams.get("location_id") === "eq.L1"
           ? [{ user_id: u, location_id: "L1", role: "admin" }]
           : [];
     if (url.pathname === "/rest/v1/ae_jobs") {
@@ -65,12 +63,11 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
           (j) =>
             (!url.searchParams.get("dedupe_key") ||
               url.searchParams.get("dedupe_key") === "eq." + j.dedupe_key) &&
-            (!url.searchParams.get("id") ||
-              url.searchParams.get("id") === "eq." + j.id),
+            (!url.searchParams.get("id") || url.searchParams.get("id") === "eq." + j.id),
         );
     }
-    if (url.pathname === "/rest/v1/rpc/ae_ingest")
-      output = { reading_id: "r1", duplicate: false };
+    if (url.pathname === "/rest/v1/ae_rules" && req.method === "POST") output = [p];
+    if (url.pathname === "/rest/v1/rpc/ae_ingest") output = { reading_id: "r1", duplicate: false };
     if (url.pathname === "/rest/v1/rpc/ae_stage") {
       const j = jobs.find((j) => j.id === p.p_id);
       Object.assign(j.stage, p.p_stage);
@@ -89,14 +86,13 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
           ? [{ id: "robot-test", node_id: "n1", enabled: true }]
           : [];
     if (url.pathname === "/rest/v1/ae_contacts")
-      output = [
-        { phone: "628123456789", last_inbound_at: new Date().toISOString() },
-      ];
+      output = [{ phone: "628123456789", last_inbound_at: new Date().toISOString() }];
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(output));
   });
   await new Promise((resolve) => mock.listen(0, "127.0.0.1", resolve));
   Object.assign(process.env, {
+    DISASTER_NEWS_ENABLED: "false",
     PORT: "0",
     SUPABASE_URL: "http://127.0.0.1:" + mock.address().port,
     SUPABASE_ANON_KEY: "anon-test",
@@ -111,8 +107,7 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
     WEB_ORIGINS: "",
   });
   const { server } = await import("../api/server.mjs");
-  if (!server.listening)
-    await new Promise((resolve) => server.once("listening", resolve));
+  if (!server.listening) await new Promise((resolve) => server.once("listening", resolve));
   const base = "http://127.0.0.1:" + server.address().port;
   const post = (path, p, headers = {}) =>
     fetch(base + path, {
@@ -122,6 +117,30 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
     });
   try {
     assert.equal((await fetch(base + "/v1/nodes")).status, 401);
+    const ruleBody = {
+      node_id: "n1",
+      metric: "dust_ug_m3",
+      high: 40,
+      clear_below: 35,
+      danger_high: 60,
+      unit: "µg/m³",
+      cooldown_seconds: 1800,
+      enabled: true,
+    };
+    const ruleAuth = { Authorization: "Bearer valid" };
+    const previousGeminiKey = process.env.GEMINI_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+    const unavailableVoice = await post("/v1/voice/speak", { test: true }, ruleAuth);
+    if (previousGeminiKey !== undefined) process.env.GEMINI_API_KEY = previousGeminiKey;
+    assert.equal(unavailableVoice.status, 503);
+    assert.match((await unavailableVoice.json()).error, /Suara AERO-BOT belum diaktifkan/);
+
+    const savedRule = await post("/v1/rules", ruleBody, ruleAuth);
+    assert.equal(savedRule.status, 200);
+    assert.equal((await savedRule.json())[0].danger_high, 60);
+    for (const danger_high of [35, 40, "60"])
+      assert.equal((await post("/v1/rules", { ...ruleBody, danger_high }, ruleAuth)).status, 400);
+
     assert.equal(
       (
         await fetch(base + "/v1/robot/state?robot_id=missing", {
@@ -131,13 +150,8 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
       404,
     );
     assert.equal(
-      (
-        await post(
-          "/v1/robot/touch",
-          { robot_id: "missing" },
-          { Authorization: "Bearer valid" },
-        )
-      ).status,
+      (await post("/v1/robot/touch", { robot_id: "missing" }, { Authorization: "Bearer valid" }))
+        .status,
       404,
     );
     assert.equal(
@@ -163,14 +177,8 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
       robot_id: "robot-test",
       text: "Bagaimana kondisi lingkungan?",
     };
-    assert.equal(
-      (await post("/v1/robot/touch", touch, touchHeaders)).status,
-      202,
-    );
-    assert.equal(
-      (await post("/v1/robot/touch", touch, touchHeaders)).status,
-      202,
-    );
+    assert.equal((await post("/v1/robot/touch", touch, touchHeaders)).status, 202);
+    assert.equal((await post("/v1/robot/touch", touch, touchHeaders)).status, 202);
     assert.equal(jobs.filter((j) => j.kind === "robot_chat").length, 1);
     assert.equal(jobs.find((j) => j.kind === "robot_chat").owner_id, u);
     assert.equal(
@@ -190,24 +198,12 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
     };
     const headers = { "X-Device-Id": "g1", "X-Device-Key": "gateway-test" };
     assert.equal((await post("/v1/telemetry", p, headers)).status, 200);
+    assert.equal((await post("/v1/telemetry", { ...p, node_id: "n2" }, headers)).status, 403);
     assert.equal(
-      (await post("/v1/telemetry", { ...p, node_id: "n2" }, headers)).status,
-      403,
-    );
-    assert.equal(
-      (
-        await post(
-          "/v1/telemetry",
-          { ...p, metrics: { eco2_ppm: "650" } },
-          headers,
-        )
-      ).status,
+      (await post("/v1/telemetry", { ...p, metrics: { eco2_ppm: "650" } }, headers)).status,
       400,
     );
-    assert.equal(
-      (await post("/internal/claim", { kind: "web_chat" })).status,
-      401,
-    );
+    assert.equal((await post("/internal/claim", { kind: "web_chat" })).status, 401);
     const chat = { text: "Bagaimana mengurangi polusi udara?", node_id: "n1" },
       auth = { Authorization: "Bearer valid", "Idempotency-Key": "question-1" };
     assert.equal((await post("/v1/chat", chat, auth)).status, 202);
@@ -237,8 +233,7 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
       ],
     };
     const raw = JSON.stringify(webhook);
-    const signature =
-      "sha256=" + createHmac("sha256", "meta-test").update(raw).digest("hex");
+    const signature = "sha256=" + createHmac("sha256", "meta-test").update(raw).digest("hex");
     assert.equal(
       (
         await post("/webhooks/whatsapp", webhook, {
@@ -265,8 +260,7 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
       401,
     );
     const verified = await fetch(
-      base +
-        "/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=verify-test&hub.challenge=123",
+      base + "/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=verify-test&hub.challenge=123",
     );
     assert.equal(await verified.text(), "123");
     const internal = { "X-Aerosense-Internal-Key": "internal-test" };
@@ -304,22 +298,13 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
     }
     const q = leasedJob("web_chat", "Bagaimana mengurangi polusi?");
     assert.equal(
-      (
-        await post(
-          "/internal/chat/native-context",
-          { ...q, lease_token: "invalid" },
-          internal,
-        )
-      ).status,
+      (await post("/internal/chat/native-context", { ...q, lease_token: "invalid" }, internal))
+        .status,
       400,
     );
     const context = await post("/internal/chat/native-context", q, internal);
     assert.deepEqual((await context.json()).node_ids, ["n1"]);
-    let gate = await post(
-      "/internal/chat/native-gate",
-      { ...q, decision: "allow" },
-      internal,
-    );
+    let gate = await post("/internal/chat/native-gate", { ...q, decision: "allow" }, internal);
     assert.equal((await gate.json()).permitted, true);
     let refreshed = await post(
       "/internal/chat/native-refresh",
@@ -358,11 +343,7 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
     assert.equal((await result.json()).result.denied, true);
     const curse = leasedJob("web_chat", "fuck");
     await post("/internal/chat/native-context", curse, internal);
-    gate = await post(
-      "/internal/chat/native-gate",
-      { ...curse, decision: "allow" },
-      internal,
-    );
+    gate = await post("/internal/chat/native-gate", { ...curse, decision: "allow" }, internal);
     assert.equal((await gate.json()).permitted, true);
     answer = await post(
       "/internal/chat/native-answer",
@@ -370,36 +351,19 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
       internal,
     );
     assert.match((await answer.json()).answer, /lingkungan/i);
-    const deniedResult = await post(
-      "/internal/chat/native-deliver",
-      curse,
-      internal,
-    );
+    const deniedResult = await post("/internal/chat/native-deliver", curse, internal);
     assert.equal((await deniedResult.json()).result.denied, true);
     const malformed = leasedJob("web_chat", "Bagaimana kondisi udara?");
     await post("/internal/chat/native-context", malformed, internal);
-    gate = await post(
-      "/internal/chat/native-gate",
-      { ...malformed, decision: "yes" },
-      internal,
-    );
+    gate = await post("/internal/chat/native-gate", { ...malformed, decision: "yes" }, internal);
     assert.equal((await gate.json()).permitted, false);
     const sendJob = leasedJob("wa_send", "");
     jobs.at(-1).body.text = "Kondisi udara berubah.";
-    const ready = await post(
-      "/internal/whatsapp/native-send",
-      sendJob,
-      internal,
-    );
+    const ready = await post("/internal/whatsapp/native-send", sendJob, internal);
     assert.equal((await ready.json()).payload.type, "text");
     assert.equal(
-      (
-        await post(
-          "/internal/whatsapp/native-send",
-          { ...sendJob, complete: true },
-          internal,
-        )
-      ).status,
+      (await post("/internal/whatsapp/native-send", { ...sendJob, complete: true }, internal))
+        .status,
       400,
     );
     const sent = await post(

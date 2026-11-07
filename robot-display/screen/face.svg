@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1200" viewBox="280 563 620 486" preserveAspectRatio="xMidYMid meet" fill="none" role="img" aria-label="Wajah AERO-BOT">
+  <defs>
+    <linearGradient id="eye-color" x2="0.7" y2="1">
+      <stop stop-color="#0759B7"/>
+      <stop offset="1" stop-color="#064995"/>
+    </linearGradient>
+    <linearGradient id="forelock-color" x1="550" y1="480" x2="655" y2="570" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#65BAF5"/>
+      <stop offset=".5" stop-color="#508EFF"/>
+      <stop offset="1" stop-color="#2368D7"/>
+    </linearGradient>
+    <linearGradient id="upper-color" x1="490" y1="825" x2="657" y2="966" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1678D4"/>
+      <stop offset=".48" stop-color="#0959B6"/>
+      <stop offset="1" stop-color="#08499C"/>
+    </linearGradient>
+    <linearGradient id="lower-color" x1="570" y1="920" x2="646" y2="981" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#176AC1"/>
+      <stop offset="1" stop-color="#154586"/>
+    </linearGradient>
+    <linearGradient id="inside-color" x1="600" y1="922" x2="618" y2="1007" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#082B5B"/>
+      <stop offset="1" stop-color="#14599A"/>
+    </linearGradient>
+  </defs>
+  <path id="forelock" transform="translate(0 43)" d="M482 448H704C704 478 694 501 680 515Q674 522 670 515C667 508 662 500 654 498Q647 498 645 508C638 535 620 557 600 567Q590 572 594 560C604 536 587 514 560 503C529 491 497 477 482 448Z" fill="url(#forelock-color)"/>
+  <g id="head-rig">
+    <path id="brow-left" fill="#759CD9"/>
+    <path id="brow-right" fill="#759CD9"/>
+    <path id="eye-left" fill="url(#eye-color)"/>
+    <path id="eye-right" fill="url(#eye-color)"/>
+    <path id="star-left" d="M431 690Q442 742 488 759Q442 772 431 827Q419 775 374 759Q419 745 431 690Z" fill="url(#eye-color)" opacity="0"/>
+    <path id="star-right" d="M744 681Q755 733 801 750Q755 763 744 818Q732 766 687 750Q732 736 744 681Z" fill="url(#eye-color)" opacity="0"/>
+    <path id="mouth-cavity" fill="url(#inside-color)"/>
+    <path id="lower-beak" d="M548 951Q550 950 554 945C575 925 610 908 642 920C661 928 680 929 688 918C698 946 671 973 643 978C599 986 562 969 548 951Z" fill="url(#lower-color)"/>
+    <path id="upper-beak" d="M548 951C542 951 537 943 531 936C520 922 510 918 494 912C471 907 466 899 477 881C488 865 518 857 543 839C566 823 582 813 596 818C618 826 635 844 657 857C683 873 701 891 700 905C699 917 691 921 688 918C680 929 661 928 642 920C610 908 575 925 554 945Q550 950 548 951Z" fill="url(#upper-color)"/>
+  </g>
+</svg>

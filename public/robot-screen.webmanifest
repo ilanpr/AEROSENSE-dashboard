@@ -1,0 +1,11 @@
+{
+  "name": "AERO-BOT",
+  "short_name": "AERO-BOT",
+  "start_url": "/robot-screen",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "background_color": "#edf0ff",
+  "theme_color": "#edf0ff",
+  "icons": [{"src": "/assets/brand/aerosense-touch-icon.png", "sizes": "180x180", "type": "image/png"}]
+}

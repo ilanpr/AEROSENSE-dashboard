@@ -1,3 +1,17 @@
+export interface GruResult {
+  model_version: string;
+  horizon_seconds: number;
+  target?: string;
+  value?: number;
+  task?: string;
+  mode?: string;
+  estimates?: Record<string, number>;
+  fault_scores?: Record<string, number>;
+  thresholds?: Record<string, number>;
+  suspect?: string[];
+  processed_at?: string;
+}
+
 export interface SensorContext {
   node_id: string;
   name: string;
@@ -5,15 +19,19 @@ export interface SensorContext {
   observed_at: string | null;
   received_at: string | null;
   metrics: Record<string, number | null>;
-  gru: {
-    target: string;
-    value: number;
-    model_version: string;
-    horizon_seconds: number;
-  } | null;
+  gru: GruResult | null;
   quality: Record<string, unknown>;
   stale: boolean;
   pm25_validated: boolean;
+}
+export interface SensorRule {
+  metric: string;
+  high: number;
+  danger_high?: number | null;
+  clear_below: number;
+  enabled: boolean;
+  active: boolean;
+  unit: string;
 }
 export interface LiveNode {
   id: string;
@@ -26,6 +44,7 @@ export interface LiveNode {
   calibration_version: string | null;
   role: string;
   latest: SensorContext | null;
+  rules?: SensorRule[];
 }
 export interface Reading {
   id: string;
@@ -35,6 +54,12 @@ export interface Reading {
   raw_metrics?: Record<string, number | null>;
   gru: SensorContext["gru"];
   processing?: Record<string, unknown>;
+  quality?: {
+    invalid?: boolean;
+    clock_source?: string;
+    calibration_version?: string | null;
+  } | null;
+  raw_sha256?: string | null;
 }
 export interface Alert {
   id: string;
@@ -46,6 +71,12 @@ export interface Alert {
   created_at: string;
   acknowledged_at: string | null;
 }
+export interface SoilHistoryPoint {
+  at: string;
+  moisture_pct: number | null;
+  rain_mm: number | null;
+}
+
 export interface EnvironmentFact {
   id: string;
   area_id: string;
@@ -61,8 +92,23 @@ export interface EnvironmentFact {
   kind: string;
   spatial_context: string;
   data_origin: string;
+  soil_history?: SoilHistoryPoint[];
 }
 export interface EnvironmentResponse {
+  events?: EnvironmentEvent[];
+  event_layers?: {
+    provider: string;
+    category: string;
+    radius_km: number;
+    available: boolean;
+    last_attempt_at: string | null;
+    last_error: string | null;
+    event_count: number;
+    truncated: boolean;
+  }[];
+  facts: EnvironmentFact[];
+  insights: EnvironmentInsight[];
+  summary_method: string;
   area: {
     id: string;
     name: string;
@@ -79,10 +125,43 @@ export interface EnvironmentResponse {
   }[];
   fetched_at: string;
 }
+export interface EnvironmentEvent {
+  id: string;
+  provider: string;
+  category: "fire" | "earthquake";
+  latitude: number;
+  longitude: number;
+  title: string;
+  observed_at: string;
+  fetched_at: string;
+  fresh_until: string;
+  stale: boolean;
+  distance_km: number;
+  source: string;
+  source_url: string;
+  coordinate_kind: string;
+  confidence?: string | null;
+  magnitude?: number;
+  depth_km?: number | null;
+  felt?: string | null;
+  potential?: string | null;
+}
+export interface EnvironmentInsight {
+  category: string;
+  title: string;
+  body: string;
+  action: string;
+  tone: string;
+  period: string;
+  available: boolean;
+  fact_ids: string[];
+  valid_at: string | null;
+  fresh_until: string | null;
+  method: string;
+}
 export const metricLabels: Record<string, [string, string]> = {
   dust_ug_m3: ["Debu optik", "µg/m³"],
   pm25_ug_m3: ["PM2.5 tervalidasi", "µg/m³"],
-  eco2_ppm: ["eCO₂", "ppm"],
   tvoc_ppb: ["TVOC", "ppb"],
   temperature_c: ["Suhu", "°C"],
   humidity_pct: ["Kelembapan", "%"],

@@ -20,16 +20,20 @@ grant select,insert on public.ae_model_runs to service_role;
 revoke all on public.ae_model_runs from anon;
 
 create or replace function public.ae_ingest(p jsonb) returns jsonb language plpgsql security definer set search_path=public as $$
-declare r ae_readings; n ae_nodes;
+declare r ae_readings; n ae_nodes; q jsonb;
 begin
  select * into strict n from ae_nodes where id=p->>'node_id' and enabled;
+ q:=coalesce(p->'quality','{}'::jsonb);
+ if not q ? 'calibration_version' and n.calibration_version is not null then
+  q:=q||jsonb_build_object('calibration_version',n.calibration_version);
+ end if;
  insert into ae_readings(node_id,boot_id,sequence,observed_at,metrics,gru,quality,raw_metrics,raw_payload,raw_sha256,processing)
- values(n.id,p->>'boot_id',(p->>'sequence')::bigint,(p->>'observed_at')::timestamptz,p->'metrics',p->'gru',coalesce(p->'quality','{}'),p->'raw_metrics',p->'raw_payload',p->>'raw_sha256',coalesce(p->'processing','{}'))
+ values(n.id,p->>'boot_id',(p->>'sequence')::bigint,(p->>'observed_at')::timestamptz,p->'metrics',p->'gru',q,p->'raw_metrics',p->'raw_payload',p->>'raw_sha256',coalesce(p->'processing','{}'))
  on conflict(node_id,boot_id,sequence) do nothing returning * into r;
  if r.id is null then return jsonb_build_object('duplicate',true); end if;
  if p->'gru' is not null and p->'gru'<>'null'::jsonb then
   insert into ae_model_runs(reading_id,node_id,model_version,artifact_sha256,manifest_sha256,input_features,normalized_input,input_readings,output,processed_at,predicted_for)
-  values(r.id,n.id,p->'gru'->>'model_version',p->'gru'->>'artifact_sha256',p->'gru'->>'manifest_sha256',coalesce(p->'gru'->'input_features',r.metrics),p->'gru'->'normalized_input',coalesce(p->'gru'->'input_readings','[]'),p->'gru',coalesce((p->'gru'->>'processed_at')::timestamptz,now()),r.observed_at+make_interval(secs=>(p->'gru'->>'horizon_seconds')::int));
+  values(r.id,n.id,p->'gru'->>'model_version',p->'gru'->>'artifact_sha256',p->'gru'->>'manifest_sha256',coalesce(p->'gru'->'input_features',r.metrics),p->'gru'->'normalized_input',coalesce(p->'gru'->'input_readings','[]'),p->'gru',coalesce((p->'gru'->>'processed_at')::timestamptz,now()),r.observed_at+make_interval(secs=>coalesce((p->'gru'->>'horizon_seconds')::int,0)));
  end if;
  insert into ae_latest values(n.id,r.id,r.observed_at,r.received_at,r.metrics,r.gru,r.quality)
  on conflict(node_id) do update set reading_id=excluded.reading_id,observed_at=excluded.observed_at,received_at=excluded.received_at,metrics=excluded.metrics,gru=excluded.gru,quality=excluded.quality

@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiRequest } from "@/services/api";
-export function useLiveData<T>(
-  path: string | null,
-  interval = 30000,
-  authenticated = true,
-) {
+export function useLiveData<T>(path: string | null, interval = 30000, authenticated = true) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(!!path);
@@ -30,10 +26,7 @@ export function useLiveData<T>(
         const result = await apiRequest<T>(
           path!,
           {
-            signal: AbortSignal.any([
-              controller.signal,
-              AbortSignal.timeout(20000),
-            ]),
+            signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]),
           },
           authenticated,
         );
