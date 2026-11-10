@@ -19,6 +19,9 @@ import { downloadCsv, rulesCsv, type ExportRule } from "@/lib/csv-export";
 import { metricLabels, type LiveNode } from "@/types/live.types";
 import "@/styles/management.css";
 
+// Optical dust is managed as "PM2.5 estimasi"; the description says where the number comes from.
+const ruleLabel = (key: string) => (key === "dust_ug_m3" ? "PM2.5 estimasi" : metricLabels[key][0]);
+
 interface Rule extends ExportRule {
   id: string;
 }
@@ -98,8 +101,12 @@ function ThresholdEditor({
     >
       <div className="threshold-form-heading">
         <div>
-          <h3>Ambang {metricLabels[metric][0]}</h3>
-          <p>Ambang ini untuk operasional di titik sensor. ISPU wilayah dan baku mutu dinilai terpisah.</p>
+          <h3>Ambang {ruleLabel(metric)}</h3>
+          <p>
+            {metric === "dust_ug_m3"
+              ? "Dihitung dari sensor debu optik di node. Ambang ini juga dipakai WATERSENSE untuk menyiram otomatis. ISPU wilayah dinilai terpisah."
+              : "Ambang ini untuk operasional di titik sensor. ISPU wilayah dan baku mutu dinilai terpisah."}
+          </p>
         </div>
         <span>{unit}</span>
       </div>
@@ -282,7 +289,7 @@ export function ManagementPage() {
                   <div className="management-parameters" aria-label="Pilih parameter ambang">
                     {Object.entries(metricLabels)
                       .filter(([key]) => key !== "pm25_ug_m3" || node.pm25_validated)
-                      .map(([key, [label]]) => (
+                      .map(([key]) => (
                         <button
                           key={key}
                           aria-pressed={currentMetric === key}
@@ -291,7 +298,7 @@ export function ManagementPage() {
                             setSavedNotice("");
                           }}
                         >
-                          {label}
+                          {ruleLabel(key)}
                           {rules.data?.rules.some((r) => r.metric === key && r.enabled) && (
                             <span className="rule-active-dot" aria-label="Aturan aktif" />
                           )}
