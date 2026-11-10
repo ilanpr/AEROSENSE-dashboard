@@ -60,7 +60,7 @@ void publishStatus(){
           "{\"state\":\"online\",\"actuator_id\":\"%s\",\"output\":\"%s\",\"active_command_id\":\"%s\","
           "\"battery_v\":%.2f,\"battery_ok\":%s,\"water_ok\":%s,\"manual_off\":false,\"clock_synced\":%s,"
           "\"max_session_duration_ms\":%lu,\"session_burst_ms\":%lu,\"session_pause_ms\":%lu,"
-          "\"session_active\":%s,\"espnow_capable\":true,\"espnow_paired\":%s,\"espnow_fresh\":%s,"
+          "\"session_active\":%s,\"manual_restart\":true,\"espnow_capable\":true,\"espnow_paired\":%s,\"espnow_fresh\":%s,"
           "\"espnow_policy_rev\":\"%s\",\"espnow_running\":%s,\"uptime_s\":%lu,\"at\":\"%s\"}",
           networkSettings.id,outputOn?"on":"off",activeCommand,batteryV,batteryLow?"false":"true",
           waterOk()?"true":"false",time(nullptr)>=mist::SYNCED_AFTER?"true":"false",
@@ -231,10 +231,12 @@ void onMessage(char* topic,byte* payload,unsigned int length){
   if(d.commandId[0]&&strcmp(d.reason,"wrong_actuator")!=0){mist::rememberId(state,d.commandId);saveState();ack(d.commandId,"rejected",d.reason);}
   return;
  }
- if(!d.stop&&(localLock||(localPolicy.local&&strcmp(d.status,"manual")))){
-  ack(d.commandId,"rejected",localLock?"cooldown":"espnow_policy_active");return;
+ if(!d.stop&&strcmp(d.status,"manual")!=0){
+  if(localLock||localPolicy.local){
+   ack(d.commandId,"rejected",localLock?"cooldown":"espnow_policy_active");return;
+  }
+  if(localUsed&&millis()-lastLocalStart<600000){mist::rememberId(state,d.commandId);saveState();ack(d.commandId,"rejected","cooldown");return;}
  }
- if(!d.stop&&localUsed&&millis()-lastLocalStart<600000){mist::rememberId(state,d.commandId);saveState();ack(d.commandId,"rejected","cooldown");return;}
  mist::rememberId(state,d.commandId);
  if(d.stop){state.lastStopEpoch=d.stopEpoch;saveState();finishCommand("completed","remote_stop");ack(d.commandId,"completed","remote_stop");publishStatus();return;}
  mist::rememberPulse(state,d,inputs.now);
@@ -308,8 +310,7 @@ void localButton(){
  if(millis()-lastButtonChange<40||raw==buttonStable)return;
  buttonStable=raw;if(raw!=LOW)return;
  if(activeCommand[0]){finishCommand("completed","local_stop");return;}
- if(localLock||batteryLow||!waterOk()||(localUsed&&millis()-lastLocalStart<600000))return;
- if(previousCooldown(millis()))return;
+ if(batteryLow||!waterOk())return;
  localUsed=true;lastLocalStart=millis();state.lastPulseEpoch=time(nullptr)>=mist::SYNCED_AFTER?time(nullptr):0;state.cooldownS=mist::MIN_COOLDOWN_S;saveState();
  char id[80];snprintf(id,sizeof(id),"local-%lu",(unsigned long)millis());startCommand(id,LOCAL_PULSE_MS,false,"local_button");
 }

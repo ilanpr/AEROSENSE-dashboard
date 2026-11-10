@@ -31,6 +31,7 @@ type Actuator = {
     output?: string;
     battery_v?: number;
     session_active?: boolean;
+    manual_restart?: boolean;
     max_session_duration_ms?: number;
     session_burst_ms?: number | null;
     session_pause_ms?: number | null;
@@ -59,7 +60,6 @@ function SprinklerCard({ actuator: a, canManage, nodeId }: {
     [busy, setBusy] = useState(false),
     [stopping, setStopping] = useState(false),
     [error, setError] = useState(""),
-    [notice, setNotice] = useState(""),
     [confirm, setConfirm] = useState(false),
     [pending, setPending] = useState<Command | null>(null);
   const durationMs = Number(minutes) * 60000;
@@ -80,7 +80,6 @@ function SprinklerCard({ actuator: a, canManage, nodeId }: {
     if (action === "stop") setStopping(true);
     else setBusy(true);
     setError("");
-    setNotice("");
     try {
       const result = await api.post<{ command: Command }>("/v1/actuators/commands", {
         actuator_id: a.id,
@@ -94,7 +93,6 @@ function SprinklerCard({ actuator: a, canManage, nodeId }: {
           : previous,
       );
       setConfirm(false);
-      setNotice("Perintah masuk antrean. Menunggu konfirmasi perangkat.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Perintah belum dapat dikirim.");
     } finally {
@@ -163,7 +161,7 @@ function SprinklerCard({ actuator: a, canManage, nodeId }: {
         <span>
           {!a.online
             ? "Periksa Wi-Fi dan daya WATERSENSE."
-            : !a.status.session_active && a.next_run_at && Date.parse(a.next_run_at) > Date.now()
+            : !a.status.manual_restart && !a.status.session_active && a.next_run_at && Date.parse(a.next_run_at) > Date.now()
               ? `Kendali berikutnya tersedia pukul ${new Date(a.next_run_at).toLocaleTimeString("id-ID")}.`
               : "Durasi dibatasi dan pompa berhenti otomatis."}
         </span>
@@ -236,11 +234,6 @@ function SprinklerCard({ actuator: a, canManage, nodeId }: {
       ) : (
         <p className="sprinkler-readonly">
           Kontrol memerlukan penugasan admin atau pengelola pada lokasi ini.
-        </p>
-      )}
-      {notice && (
-        <p className="sprinkler-notice" role="status">
-          {notice}
         </p>
       )}
       {error && (

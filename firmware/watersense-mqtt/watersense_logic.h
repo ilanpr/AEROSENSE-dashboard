@@ -136,7 +136,8 @@ inline Decision evaluate(const char* payload, size_t length, const Inputs& in, c
     return reject(d, "invalid_duration");
 
   if (in.pulseActive) return reject(d, "pulse_active");
-  if (!in.testNoCooldown && st.lastPulseEpoch > 0 && in.now - st.lastPulseEpoch < (st.cooldownS > MIN_COOLDOWN_S ? st.cooldownS : MIN_COOLDOWN_S))
+  if (strcmp(status,"manual") != 0 && !in.testNoCooldown && st.lastPulseEpoch > 0 &&
+      in.now - st.lastPulseEpoch < (st.cooldownS > MIN_COOLDOWN_S ? st.cooldownS : MIN_COOLDOWN_S))
     return reject(d, "cooldown");
 
   int64_t cooldown = doc["cooldown_ms"].is<uint32_t>() ? doc["cooldown_ms"].as<uint32_t>() / 1000 : 0;

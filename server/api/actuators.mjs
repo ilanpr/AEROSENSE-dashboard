@@ -30,7 +30,7 @@ export function actuatorView(a, commands = [], now = Date.now()) {
       !a.status?.manual_off &&
       a.status?.output !== "on" &&
       a.status?.session_active !== true &&
-      (!a.next_run_at || Date.parse(a.next_run_at) <= now)
+      (a.status?.manual_restart === true || !a.next_run_at || Date.parse(a.next_run_at) <= now)
     ),
   };
 }
@@ -139,6 +139,7 @@ export function actuatorRoutes({
             body.session_pause_ms >= 1000 && body.session_pause_ms <= 60000
             ? body.session_pause_ms : null,
           session_active: body.session_active === true,
+          manual_restart: body.manual_restart === true,
           espnow_paired: body.espnow_paired === true,
           espnow_fresh: body.espnow_fresh === true,
           espnow_running: body.espnow_running === true,

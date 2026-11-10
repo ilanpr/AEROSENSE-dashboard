@@ -14,6 +14,7 @@ try{
  await db.exec(await readFile(new URL('../supabase/014_watersense_auto_and_map.sql',import.meta.url),'utf8'));
  await db.exec(await readFile(new URL('../supabase/015_watersense_sessions.sql',import.meta.url),'utf8'));
  await db.exec(await readFile(new URL('../supabase/016_watersense_espnow.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/017_watersense_manual_restart.sql',import.meta.url),'utf8'));
  const owner='11111111-1111-4111-8111-111111111111',viewer='22222222-2222-4222-8222-222222222222';
  await db.query('insert into auth.users values ($1),($2)',[owner,viewer]);
  await db.exec(`insert into ae_nodes(id,location_id) values('n1','loc1'),('n2','loc2');`);
@@ -55,6 +56,15 @@ try{
  assert.equal(await ack(sessionStop.id,'completed'),true);
  assert.equal((await db.query('select state from ae_actuator_commands where id=$1',[session.id])).rows[0].state,'stopped');
  assert.ok((await db.query("select next_run_at>now()+interval '9 minutes' as reserved from ae_actuators")).rows[0].reserved);
+ await db.exec(`update ae_actuators set status=status||'{"session_active":false,"manual_restart":true}'::jsonb;`);
+ const restarted=await enqueue(owner,'session',1800000);
+ await assert.rejects(enqueue(owner,'pulse',1000),/perintah berjalan/);
+ const stopRestarted=await enqueue(owner,'stop',0);
+ await assert.rejects(enqueue(owner,'pulse',1000),/perintah berjalan/);
+ assert.equal(await ack(stopRestarted.id,'completed'),true);
+ const pulseAfterStop=await enqueue(owner,'pulse',1000);
+ assert.equal(pulseAfterStop.state,'queued');
+ assert.equal((await db.query('select state from ae_actuator_commands where id=$1',[restarted.id])).rows[0].state,'cancelled');
  await db.exec('set role authenticated');await assert.rejects(db.query('select * from ae_actuators'),/permission denied/);await assert.rejects(db.query('select ae_actuator_claim()'),/permission denied/);await db.exec('reset role');
  await db.exec(`
   delete from ae_actuator_commands;

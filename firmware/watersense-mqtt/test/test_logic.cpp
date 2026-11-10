@@ -39,13 +39,18 @@ int main(){
  input.now=0;input.batteryOk=false;input.waterOk=false;auto stop=check(payload("stop-1","stop",0));assert(stop.accept&&stop.stop&&stop.stopEpoch>mist::SYNCED_AFTER);
  state.lastStopEpoch=stop.stopEpoch;input={"mist-01",now,false,false,true,true};assert(std::string(check(payload()).reason)=="stopped_before_delivery");
  state={};mist::rememberId(state,"run-1");assert(std::string(check(payload()).reason)=="duplicate");
- state={};state.lastPulseEpoch=now-10;state.cooldownS=600;assert(std::string(check(payload()).reason)=="cooldown");assert(check(payload("stop-2","stop",0)).accept);
+ state={};state.lastPulseEpoch=now-10;state.cooldownS=600;
+ assert(check(payload("manual-restart","session",1800000)).accept);
+ auto automatic=payload("automatic-cooldown");
+ automatic.replace(automatic.find("\"status\":\"manual\""),17,"\"status\":\"danger\"");
+ assert(std::string(check(automatic).reason)=="cooldown");
+ assert(check(payload("stop-2","stop",0)).accept);
  // Explicit test mode bypasses even an old persisted cooldown, but keeps other gates.
- input.testNoCooldown=true;auto testRun=check(payload("test-run"));assert(testRun.accept&&testRun.cooldownS==0);
+ input.testNoCooldown=true;auto testRun=check(automatic);assert(testRun.accept&&testRun.cooldownS==0);
  input.pulseActive=true;assert(std::string(check(payload("busy-test")).reason)=="pulse_active");input.pulseActive=false;
  input.batteryOk=false;assert(std::string(check(payload("battery-test")).reason)=="battery_low");input.batteryOk=true;
  assert(std::string(check(payload("long-test","pulse",11000)).reason)=="invalid_duration");
- mist::rememberId(state,"test-run");assert(std::string(check(payload("test-run")).reason)=="duplicate");input.testNoCooldown=false;
+ mist::rememberId(state,"automatic-cooldown");assert(std::string(check(automatic).reason)=="duplicate");input.testNoCooldown=false;
  state={};input.now=now+31;assert(std::string(check(payload()).reason)=="expired");input.now=0;assert(std::string(check(payload()).reason)=="clock_not_synced");
  std::cout<<"PASS: pulse and session durations, timer wrap, stop, battery, dedup, TTL, clock and cooldown\n";
 }
