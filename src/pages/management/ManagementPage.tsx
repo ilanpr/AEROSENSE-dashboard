@@ -19,8 +19,11 @@ import { downloadCsv, rulesCsv, type ExportRule } from "@/lib/csv-export";
 import { metricLabels, type LiveNode } from "@/types/live.types";
 import "@/styles/management.css";
 
-// Optical dust is managed as "PM2.5 estimasi"; the description says where the number comes from.
-const ruleLabel = (key: string) => (key === "dust_ug_m3" ? "PM2.5 estimasi" : metricLabels[key][0]);
+// What each threshold is based on, shown under its heading.
+const ruleNote: Record<string, string> = {
+  dust_ug_m3: "Dari sensor debu optik di node. Ambang ini juga dipakai WATERSENSE untuk menyiram otomatis.",
+  pm25_ug_m3: "Estimasi PM2.5 dari tegangan sensor Sharp memakai rumus konversi dari studi literatur. Belum dipakai WATERSENSE.",
+};
 
 interface Rule extends ExportRule {
   id: string;
@@ -101,11 +104,10 @@ function ThresholdEditor({
     >
       <div className="threshold-form-heading">
         <div>
-          <h3>Ambang {ruleLabel(metric)}</h3>
+          <h3>Ambang {metricLabels[metric][0]}</h3>
           <p>
-            {metric === "dust_ug_m3"
-              ? "Dihitung dari sensor debu optik di node. Ambang ini juga dipakai WATERSENSE untuk menyiram otomatis. ISPU wilayah dinilai terpisah."
-              : "Ambang ini untuk operasional di titik sensor. ISPU wilayah dan baku mutu dinilai terpisah."}
+            {ruleNote[metric] ?? "Ambang ini untuk operasional di titik sensor."} ISPU wilayah dan baku mutu dinilai
+            terpisah.
           </p>
         </div>
         <span>{unit}</span>
@@ -298,7 +300,7 @@ export function ManagementPage() {
                             setSavedNotice("");
                           }}
                         >
-                          {ruleLabel(key)}
+                          {metricLabels[key][0]}
                           {rules.data?.rules.some((r) => r.metric === key && r.enabled) && (
                             <span className="rule-active-dot" aria-label="Aturan aktif" />
                           )}

@@ -136,7 +136,7 @@ function SprinklerCard({ actuator: a, canManage, nodeId }: {
         </div>
         <div>
           <dt>Aktivasi otomatis</dt>
-          <dd>{a.auto_metric && a.enabled ? (a.espnow_auto ? "ESP-NOW · PM2.5 estimasi" : a.auto_metric === "pm25_ug_m3" ? "PM2.5 tervalidasi" : "PM2.5 estimasi") : "Nonaktif"}</dd>
+          <dd>{a.auto_metric && a.enabled ? (a.espnow_auto ? "ESP-NOW · debu optik" : a.auto_metric === "pm25_ug_m3" ? "PM2.5 estimasi" : "Debu optik") : "Nonaktif"}</dd>
         </div>
         {a.espnow_auto && (
           <div>
@@ -316,8 +316,8 @@ function SprinklerSettings({ nodeId, actuators, pm25 }: {
             <label>Aktivasi otomatis
               <select name="auto_metric" defaultValue={actuator.auto_metric ?? ""}>
                 <option value="">Nonaktif</option>
-                <option value="dust_ug_m3">Ambang PM2.5 estimasi (debu optik)</option>
-                {pm25 && <option value="pm25_ug_m3">Ambang PM2.5 tervalidasi</option>}
+                <option value="dust_ug_m3">Ambang debu optik</option>
+                {pm25 && <option value="pm25_ug_m3">Ambang PM2.5 estimasi</option>}
               </select>
             </label>
             <label className="sprinkler-settings-switch"><input name="enabled" type="checkbox" defaultChecked={actuator.enabled} /> Izinkan kendali perangkat</label>

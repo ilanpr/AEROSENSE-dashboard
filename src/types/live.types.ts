@@ -161,7 +161,7 @@ export interface EnvironmentInsight {
 }
 export const metricLabels: Record<string, [string, string]> = {
   dust_ug_m3: ["Debu optik", "µg/m³"],
-  pm25_ug_m3: ["PM2.5 tervalidasi", "µg/m³"],
+  pm25_ug_m3: ["PM2.5 estimasi", "µg/m³"],
   tvoc_ppb: ["TVOC", "ppb"],
   temperature_c: ["Suhu", "°C"],
   humidity_pct: ["Kelembapan", "%"],

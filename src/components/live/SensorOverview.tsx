@@ -72,7 +72,6 @@ export function SensorOverview() {
   const pm25 = reading?.metrics.pm25_ug_m3;
   const showPm25 = node?.pm25_validated === true && typeof pm25 === "number" && Number.isFinite(pm25);
   const keys = [showPm25 ? "pm25_ug_m3" : "dust_ug_m3", "temperature_c", "humidity_pct"];
-  const heroLabels: Record<string, string> = { dust_ug_m3: "Debu (estimasi PM2.5)" };
   return (
     <section className="insights-hub sensor-overview">
       <header className="insights-heading">
@@ -156,7 +155,7 @@ export function SensorOverview() {
                     const value = reading?.metrics[key];
                     return (
                       <div key={key} style={{ backdropFilter: "var(--metric-backdrop)" }}>
-                        <dt>{heroLabels[key] ?? metricLabels[key][0]}</dt>
+                        <dt>{metricLabels[key][0]}</dt>
                         <dd>
                           {typeof value === "number" && Number.isFinite(value) &&
                           (key === "temperature_c" || value >= 0)
