@@ -227,7 +227,8 @@ export function ManagementPage() {
   const [exportNotice, setExportNotice] = useState("");
   const [savedNotice, setSavedNotice] = useState("");
   const canManage = !!node && ["admin", "operator"].includes(node.role);
-  const currentMetric = metric === "pm25_ug_m3" && !node?.pm25_validated ? "dust_ug_m3" : metric;
+  const currentMetric =
+    metric === "tvoc_ppb" || (metric === "pm25_ug_m3" && !node?.pm25_validated) ? "dust_ug_m3" : metric;
   const saved = rules.data?.rules.find((r) => r.metric === currentMetric);
   return (
     <section className="management-page">
@@ -290,7 +291,8 @@ export function ManagementPage() {
                 <>
                   <div className="management-parameters" aria-label="Pilih parameter ambang">
                     {Object.entries(metricLabels)
-                      .filter(([key]) => key !== "pm25_ug_m3" || node.pm25_validated)
+                      // TVOC alerts are not managed here any more; disable an existing TVOC rule before hiding it.
+                      .filter(([key]) => key !== "tvoc_ppb" && (key !== "pm25_ug_m3" || node.pm25_validated))
                       .map(([key]) => (
                         <button
                           key={key}
