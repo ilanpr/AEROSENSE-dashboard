@@ -49,11 +49,14 @@ export function actuatorRoutes({
 }) {
   async function localPolicy(a) {
     const local = a.espnow_auto === true;
-    const node = local && a.enabled && a.auto_metric === "dust_ug_m3"
+    // The node sends its Sharp reading over ESP-NOW; WATERSENSE compares it with the thresholds of the metric
+    // chosen for automatic activation. Both particulate metrics are the same Sharp conversion on this gateway.
+    const metric = ["dust_ug_m3", "pm25_ug_m3"].includes(a.auto_metric) ? a.auto_metric : null;
+    const node = local && a.enabled && metric
       ? await one("ae_nodes", "id=eq." + filter(a.node_id) + "&select=enabled")
       : null;
     const rule = node?.enabled === true
-      ? await one("ae_rules", "node_id=eq." + filter(a.node_id) + "&metric=eq.dust_ug_m3")
+      ? await one("ae_rules", "node_id=eq." + filter(a.node_id) + "&metric=eq." + metric)
       : null;
     const enabled = rule?.enabled === true && Number.isFinite(rule.high) &&
       Number.isFinite(rule.danger_high) && rule.high >= 0 && rule.danger_high > rule.high &&
@@ -230,7 +233,7 @@ export function actuatorRoutes({
       const espnowAuto = !creating && (p.espnow_auto ?? existing.espnow_auto) === true;
       const espnowDuration = p.espnow_duration_ms ?? existing?.espnow_duration_ms ?? 1800000;
       if (![1800000, 2700000, 3600000].includes(espnowDuration)) fail("Durasi ESP-NOW tidak valid.");
-      if (espnowAuto && autoMetric !== "dust_ug_m3") fail("ESP-NOW memakai ambang debu optik.");
+      if (espnowAuto && !autoMetric) fail("Pilih ambang partikulat untuk ESP-NOW.");
       const values = { name, latitude: p.latitude, longitude: p.longitude,
         enabled: !creating && p.enabled, auto_metric: autoMetric,
         espnow_auto: espnowAuto, espnow_duration_ms: espnowDuration };

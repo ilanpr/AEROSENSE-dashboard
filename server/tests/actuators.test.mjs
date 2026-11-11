@@ -7,6 +7,7 @@ function setup() {
     response,
     writes = [],
     role = "operator";
+  const ruleQueries = [];
   const a = { id: "mist-01", node_id: "n1", enabled: true, max_duration_ms: 10000, status: {} };
   const route = actuatorRoutes({
     db: async (t, q, m, b) => {
@@ -20,7 +21,11 @@ function setup() {
         return [{ ...a, name: "Utara", latitude: -7.2, longitude: 112.7 }];
       return [];
     },
-    one: async (table) => table === "ae_rules" ? { enabled: true, high: 40, danger_high: 80 } : a,
+    one: async (table, q) => {
+      if (table !== "ae_rules") return a;
+      ruleQueries.push(q);
+      return { enabled: true, high: 40, danger_high: 80 };
+    },
     rpc: async (name, args) => {
       writes.push({ name, args });
       return { id, state: "queued" };
@@ -46,7 +51,8 @@ function setup() {
     set: (p) => (payload = p),
     role: (r) => (role = r),
     enableSessions: () => (a.status.max_session_duration_ms = 3600000),
-    enableEspnow: () => Object.assign(a, { espnow_auto: true, auto_metric: "dust_ug_m3" }),
+    enableEspnow: (metric = "dust_ug_m3") => Object.assign(a, { espnow_auto: true, auto_metric: metric }),
+    ruleQueries,
     response: () => response,
     writes,
   };
@@ -196,4 +202,16 @@ test("workflow uses internal API queue, explicit QoS and non-retained commands",
       .parameters.topics.includes("/ack:1"),
   );
   assert(!JSON.stringify(w).includes("service_role"));
+});
+
+test("ESP-NOW policy uses the thresholds of the chosen particulate metric (PM2.5 estimasi or optical dust)", async () => {
+  for (const metric of ["pm25_ug_m3", "dust_ug_m3"]) {
+    const t = setup();
+    t.enableEspnow(metric);
+    t.set({ topic: "aerosense/actuators/mist-01/status",
+      message: { actuator_id: "mist-01", state: "online", at: new Date().toISOString(), espnow_capable: true } });
+    await t.run("/internal/actuators/event", "POST", { "x-aerosense-internal-key": "secret" });
+    assert.match(t.ruleQueries.at(-1), new RegExp("&metric=eq\\." + metric + "$"));
+    assert.equal(t.response().body.policy_message.payload.enabled, true);
+  }
 });

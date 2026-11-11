@@ -136,7 +136,7 @@ function SprinklerCard({ actuator: a, canManage, nodeId }: {
         </div>
         <div>
           <dt>Aktivasi otomatis</dt>
-          <dd>{a.auto_metric && a.enabled ? (a.espnow_auto ? "ESP-NOW · debu optik" : a.auto_metric === "pm25_ug_m3" ? "PM2.5 estimasi" : "Debu optik") : "Nonaktif"}</dd>
+          <dd>{a.auto_metric && a.enabled ? (a.espnow_auto ? (a.auto_metric === "pm25_ug_m3" ? "ESP-NOW · PM2.5 estimasi" : "ESP-NOW · debu optik") : a.auto_metric === "pm25_ug_m3" ? "PM2.5 estimasi" : "Debu optik") : "Nonaktif"}</dd>
         </div>
         {a.espnow_auto && (
           <div>
