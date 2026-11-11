@@ -200,8 +200,8 @@ export function sensorSummary(
   if (critical)
     return {
       label: "Bahaya",
-      title: "Perlu segera diperiksa.",
-      body: "Ambang bahaya sensor terlewati. Periksa lokasi dan perangkat.",
+      title: "Udara tidak sehat.",
+      body: "Kadar di titik ini melewati batas bahaya.",
       tone: "danger",
     };
   const raised = usable.find(
@@ -212,14 +212,14 @@ export function sensorSummary(
   if (raised)
     return {
       label: "Waspada",
-      title: "Periksa kondisi udara.",
-      body: "Ada parameter yang melewati ambang peringatan.",
+      title: "Udara kurang sehat.",
+      body: "Kadar di titik ini melewati batas waspada.",
       tone: "warning",
     };
   if (usable.length && usable.length === configured.length)
     return {
       label: "Terpantau baik",
-      title: "Terpantau baik.",
+      title: "Udara dalam batas baik.",
       body: "",
       tone: "calm",
     };

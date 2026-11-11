@@ -44,16 +44,16 @@ export function SensorOverview() {
         : "calm";
   const recommendation =
     summary.tone === "danger"
-      ? "Minta pengelola memeriksa lokasi dan sensor."
+      ? "Tetap di dalam ruangan. Pakai masker KN95/N95 bila harus keluar."
       : summary.tone === "warning"
-        ? "Cek titik terdekat dan perubahan di lokasi."
+        ? "Kurangi aktivitas berat di luar dan pakai masker bila perlu."
         : stale || invalid
           ? "Kondisi terkini di titik ini belum diketahui."
           : !hasReading
             ? "Pembacaan pertama akan muncul saat node mulai mengirim data."
             : summary.tone === "pending"
               ? "Status belum dapat dinilai dari pembacaan ini."
-              : "Pantau lagi jika kondisi sekitar berubah.";
+              : "Kadar masih di bawah batas waspada. Tetap hindari asap dan pembakaran.";
   const heroTitle = !node
     ? "Node belum tersedia."
     : !hasReading
@@ -63,7 +63,7 @@ export function SensorOverview() {
         : invalid
           ? "Pembacaan tidak valid."
           : summary.tone === "calm"
-            ? "Pembacaan dalam batas."
+            ? "Udara dalam batas baik."
             : summary.title;
   const titleParts = heroTitle.trim().split(/\s+/);
   const titleAccent = titleParts.pop();
