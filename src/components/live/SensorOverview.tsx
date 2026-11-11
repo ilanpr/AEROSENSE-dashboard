@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
 import { DataState } from "@/components/shared/DataState";
 import { ConditionScene } from "@/components/environment/ConditionScene";
-import { sensorSummary, type SensorRule } from "@/lib/environment-presentation";
+import { sensorSummary, TEMP_STATUS_PM25_ONLY, type SensorRule } from "@/lib/environment-presentation";
 import { dateLabel, metricLabels, type LiveNode } from "@/types/live.types";
 import "@/styles/insights.css";
 
@@ -70,7 +70,9 @@ export function SensorOverview() {
   // Hero focuses on dust, temperature and humidity. Validated PM2.5 is shown only when the node is validated AND
   // actually reports it; otherwise the optical dust value is shown, labelled as an estimate from an uncalibrated sensor.
   const pm25 = reading?.metrics.pm25_ug_m3;
-  const showPm25 = node?.pm25_validated === true && typeof pm25 === "number" && Number.isFinite(pm25);
+  // TEMP_STATUS_PM25_ONLY: always show PM2.5 estimasi while the gateway does not send dust_ug_m3.
+  const showPm25 = TEMP_STATUS_PM25_ONLY ||
+    (node?.pm25_validated === true && typeof pm25 === "number" && Number.isFinite(pm25));
   const keys = [showPm25 ? "pm25_ug_m3" : "dust_ug_m3", "temperature_c", "humidity_pct"];
   return (
     <section className="insights-hub sensor-overview">

@@ -152,7 +152,17 @@ export function environmentHighlights(
   });
 }
 
-export function sensorSummary(node: LiveNode | undefined, rules: SensorRule[] = node?.rules || []) {
+// TEMPORARY (Nov 2026): the gateway sends PM2.5 estimasi (pm25_ug_m3, Sharp nominal conversion) but not
+// dust_ug_m3, so node status is judged on PM2.5 estimasi alone and the hero shows only that value.
+// To go back to the full rule set (Debu optik + TVOC + validated PM2.5): set this to false, or revert the commit
+// "TEMP: status from PM2.5 estimasi only". Keep the dust_ug_m3 rule enabled: WATERSENSE ESP-NOW uses it.
+export const TEMP_STATUS_PM25_ONLY = true;
+
+export function sensorSummary(
+  node: LiveNode | undefined,
+  rules: SensorRule[] = node?.rules || [],
+  pm25Only: boolean = TEMP_STATUS_PM25_ONLY,
+) {
   const pending = {
     label: "Data belum cukup",
     title: "Menunggu pembacaan.",
@@ -164,11 +174,10 @@ export function sensorSummary(node: LiveNode | undefined, rules: SensorRule[] = 
   const configured = rules.filter(
     (r) =>
       r.enabled &&
-      [
-        "dust_ug_m3",
-        "tvoc_ppb",
-        ...(node?.pm25_validated ? ["pm25_ug_m3"] : []),
-      ].includes(r.metric),
+      (pm25Only
+        ? ["pm25_ug_m3"]
+        : ["dust_ug_m3", "tvoc_ppb", ...(node?.pm25_validated ? ["pm25_ug_m3"] : [])]
+      ).includes(r.metric),
   );
   const usable = configured.filter(
     (r) =>

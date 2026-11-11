@@ -3,11 +3,13 @@ import assert from "node:assert/strict";
 import {
   conditionScene,
   environmentHighlights,
-  sensorSummary,
+  sensorSummary as sensorSummaryDefault,
 } from "../../src/lib/environment-presentation.ts";
 import { visibleSensorResponse } from "../../src/lib/sensor-display.ts";
 import { summarizeEnvironment } from "../api/environment-insights.mjs";
 
+// Existing cases cover the full rule set (TEMP_STATUS_PM25_ONLY = false); the temporary mode has its own test.
+const sensorSummary = (node, rules, pm25Only = false) => sensorSummaryDefault(node, rules, pm25Only);
 const now = Date.now();
 const fact = (changes = {}) => ({
   id: "temperature",
@@ -217,4 +219,21 @@ test("displayed and exported sensor data omit legacy eCO2 while retaining TVOC a
   assert.equal(filtered.readings[0].gru, null);
   assert.equal(filtered.readings[1].gru.value, 16);
   assert.equal(metrics.eco2_ppm, 400);
+});
+
+test("temporary PM2.5-only status: judged on PM2.5 estimasi, a missing dust_ug_m3 no longer blocks it", () => {
+  const dust = { metric: "dust_ug_m3", enabled: true, active: false, high: 50, danger_high: null, clear_below: 35 };
+  const pm25 = { metric: "pm25_ug_m3", enabled: true, active: false, high: 55.4, danger_high: 150, clear_below: 35 };
+  const node = (value) => ({
+    pm25_validated: false,
+    latest: { reading_id: "r1", stale: false, metrics: { pm25_ug_m3: value, temperature_c: 28 } },
+  });
+  // Production shape on 2026-11-11: dust rule enabled, no dust_ug_m3 in the reading.
+  assert.equal(sensorSummary(node(41.8), [dust, pm25]).label, "Data belum cukup");
+  assert.equal(sensorSummary(node(41.8), [dust, pm25], true).label, "Terpantau baik");
+  assert.equal(sensorSummary(node(60), [dust, pm25], true).label, "Waspada");
+  assert.equal(sensorSummary(node(160), [dust, pm25], true).label, "Bahaya");
+  assert.equal(sensorSummary(node(null), [dust, pm25], true).label, "Data belum cukup");
+  assert.equal(sensorSummary(node(41.8), [dust], true).label, "Data belum cukup");
+  assert.equal(sensorSummaryDefault(node(41.8), [dust, pm25]).label, "Terpantau baik");
 });
