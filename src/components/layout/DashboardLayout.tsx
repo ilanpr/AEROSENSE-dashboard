@@ -6,6 +6,7 @@ import { AccessProvider } from "./AccessProvider";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { DemoBanner } from "@/components/shared/DemoBanner";
 import { X } from "lucide-react";
+import { RoleRequestDialog } from "@/components/account/RoleRequestDialog";
 const AeroBotPage = lazy(() =>
   import("@/pages/aerobot/AeroBotPage").then((m) => ({ default: m.AeroBotPage })),
 );
@@ -57,6 +58,7 @@ function DashboardShell() {
       className={`app-shell flex min-h-screen bg-[#f3f8ff] text-[#11223D] ${DEMO_MODE ? "demo-shell" : ""}`}
     >
       {DEMO_MODE && <DemoBanner />}
+      {!DEMO_MODE && <RoleRequestDialog />}
 
       <div className="hidden md:block">
         <Sidebar />

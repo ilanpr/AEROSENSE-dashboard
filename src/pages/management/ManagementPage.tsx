@@ -18,6 +18,7 @@ import { api } from "@/services/api";
 import { downloadCsv, rulesCsv, type ExportRule } from "@/lib/csv-export";
 import { metricLabels, type LiveNode } from "@/types/live.types";
 import "@/styles/management.css";
+import { RoleRequestsPanel } from "@/components/account/RoleRequestsPanel";
 
 // What each threshold is based on, shown under its heading.
 const ruleNote: Record<string, string> = {
@@ -242,16 +243,18 @@ export function ManagementPage() {
         <div className="management-access">
           <LockKeyhole size={28} />
           <h2>Masuk sebagai pengelola lokasi</h2>
-          <p>Minta admin memberi akses pengelola untuk lokasi Anda.</p>
+          <p>Daftar lalu ajukan peran pengelola. Tim AEROSENSE memverifikasi permintaan Anda.</p>
           <Link className="live-button" to="/login">
             Masuk ke akun
             <ArrowUpRight size={16} />
           </Link>
         </div>
-      ) : dashboard.error ? (
+      ) : null}
+      {auth.user && <RoleRequestsPanel />}
+      {!auth.user || auth.isLoading || (auth.user && dashboard.loading && !dashboard.data) ? null : dashboard.error ? (
         <DataState error={dashboard.error} retry={dashboard.refresh} />
       ) : !node ? (
-        <DataState empty="Belum ada perangkat pada lokasi akun Anda. Hubungi admin untuk penugasan lokasi." />
+        <DataState empty="Belum ada node publik maupun node pada lokasi akun Anda." />
       ) : (
         <>
           <div className="management-location">

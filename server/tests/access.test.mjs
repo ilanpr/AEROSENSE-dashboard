@@ -132,3 +132,32 @@ test("/v1/access and the ESG report follow the roles; model output is hidden fro
   });
   assert.equal((await operator("/v1/esg/report")).status, 403);
 });
+
+test("published nodes are readable by any account; writes and private nodes need a membership", async () => {
+  const { nodeAccess } = await import("../api/access.mjs");
+  const nodes = {
+    pub: { id: "pub", location_id: "L1", public_read: true, enabled: true },
+    priv: { id: "priv", location_id: "L1", public_read: false, enabled: true },
+  };
+  const members = { "op:L1": { role: "operator" } };
+  const one = async (t, q) =>
+    t === "ae_nodes" ? nodes[q.slice(6)] : members[q.match(/user_id=eq\.(\w+)/)[1] + ":L1"];
+  const deps = { one, filter: (v) => v };
+  const pub = await nodeAccess(deps, "warga", "pub", { allowPublic: true });
+  assert.equal(pub.member_role, "viewer");
+  assert.equal(pub.public_access, true);
+  await assert.rejects(nodeAccess(deps, "warga", "priv", { allowPublic: true }), { status: 403 });
+  await assert.rejects(nodeAccess(deps, "warga", "pub", { write: true, allowPublic: true }), { status: 403 });
+  await assert.rejects(nodeAccess(deps, "warga", "pub"), { status: 403 });
+  assert.equal((await nodeAccess(deps, "op", "priv", { write: true })).member_role, "operator");
+});
+
+test("sign-up profile is optional, cleaned, and never grants a role", async () => {
+  const { cleanProfile, normalizePhone } = await import("../api/accounts.mjs");
+  assert.equal(normalizePhone("0812-3456 7890"), "6281234567890");
+  assert.equal(normalizePhone(""), null);
+  assert.throws(() => normalizePhone("12"), /telepon/);
+  const p = cleanProfile({ name: " Budi <b> ", organization: "", latitude: "-7.2", longitude: "112.7", role: "admin" }, "a@b.id");
+  assert.deepEqual(p, { email: "a@b.id", full_name: "Budi b", organization: null, phone: null, address: null, latitude: -7.2, longitude: 112.7 });
+  assert.throws(() => cleanProfile({ latitude: 1 }), /belum lengkap/);
+});

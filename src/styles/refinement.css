@@ -2034,3 +2034,64 @@ input {
     align-self: center;
   }
 }
+
+/* Register, email confirmation, role verification. Same palette as the login page. */
+.register-inner { max-width: 440px; }
+.register-form fieldset { border: 0; padding: 0; margin: 26px 0 0; }
+.register-form legend { font-size: 13px; font-weight: 700; color: #173a57; padding: 0; margin-bottom: 2px; }
+.register-form legend span { font-weight: 500; color: #7890a5; margin-left: 6px; }
+.register-form fieldset > label { display: block; font-size: 12px; font-weight: 550; color: #385670; margin: 16px 0 8px; }
+.register-address { display: flex; gap: 8px; }
+.register-address .login-input { flex: 1; min-width: 0; }
+.register-search {
+  display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; min-height: 52px; border-radius: 13px;
+  border: 1px solid #d6e2ed; background: #eef5fd; color: #0863ca; font-weight: 600; font-size: 13px; cursor: pointer;
+}
+.register-search:disabled { opacity: 0.6; cursor: progress; }
+.register-places { list-style: none; margin: 8px 0 0; padding: 0; border: 1px solid #d6e2ed; border-radius: 13px; overflow: hidden; }
+.register-places button { width: 100%; text-align: left; padding: 10px 14px; font-size: 12.5px; color: #193b58; background: #fff; border: 0; border-bottom: 1px solid #edf2f7; cursor: pointer; }
+.register-places li:last-child button { border-bottom: 0; }
+.register-places button:hover, .register-places button:focus-visible { background: #eef5fd; outline: none; }
+.register-map { height: 190px; margin-top: 10px; border-radius: 13px; overflow: hidden; border: 1px solid #d6e2ed; }
+.register-hint { font-size: 12px; color: #657c91; margin-top: 8px; line-height: 1.5; }
+.register-select, .register-note {
+  width: 100%; border: 1px solid #d6e2ed; background: #fbfdff; border-radius: 13px; padding: 14px 15px;
+  font: inherit; font-size: 14px; color: #193b58;
+}
+.register-select { min-height: 52px; }
+.register-select:focus, .register-note:focus { outline: none; border-color: #3085e6; box-shadow: 0 0 0 3px #3085e610; }
+.register-verify { font-size: 12.5px; color: #8a5300; background: #fff4e0; border-radius: 11px; padding: 10px 12px; margin-top: 10px; line-height: 1.5; }
+.register-sent { display: grid; gap: 14px; color: #385670; font-size: 14px; line-height: 1.6; }
+.register-sent > svg { color: #0967e9; }
+.register-sent .login-submit { margin-top: 8px; text-decoration: none; }
+
+.confirm-page { min-height: 100vh; display: grid; place-items: center; padding: 24px max(16px, env(safe-area-inset-left, 0px)); background: linear-gradient(160deg, #f2f8fc, #e3efff); }
+.confirm-card { width: 100%; max-width: 460px; background: #fff; border: 1px solid #dce8f4; border-radius: 26px; padding: 34px 30px; display: grid; gap: 14px; box-shadow: 0 18px 50px #0b3a6b14; }
+.confirm-brand { color: #173a57; text-decoration: none; margin-bottom: 8px; }
+.confirm-brand strong { color: #0967e9; }
+.confirm-card h1 { font-size: 27px; font-weight: 650; letter-spacing: -0.04em; color: #173a57; margin: 0; }
+.confirm-card p { color: #385670; font-size: 14px; line-height: 1.6; margin: 0; }
+.confirm-icon.ok { color: #0f8a5f; }
+.confirm-icon.bad { color: #c8333d; }
+.confirm-icon.spin { color: #0967e9; animation: confirm-spin 1s linear infinite; }
+@keyframes confirm-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .confirm-icon.spin { animation: none; } }
+.confirm-note { background: #fff4e0; color: #6b4300 !important; border-radius: 12px; padding: 11px 13px; }
+.confirm-sub { color: #657c91 !important; font-size: 13px !important; }
+.confirm-actions { display: grid; gap: 10px; }
+.confirm-actions .login-submit { margin-top: 8px; text-decoration: none; }
+.confirm-secondary { text-align: center; font-size: 13px; font-weight: 600; color: #0863ca; padding: 8px; }
+
+.role-dialog { max-width: 440px; width: calc(100% - 32px); border: 0; border-radius: 22px; padding: 26px; color: #385670; box-shadow: 0 24px 70px #0b3a6b33; }
+.role-dialog::backdrop { background: #0b1f3866; }
+.role-dialog h2 { font-size: 20px; font-weight: 700; color: #173a57; margin: 0 0 10px; letter-spacing: -0.02em; }
+.role-dialog p, .role-dialog li { font-size: 14px; line-height: 1.6; }
+.role-dialog ul { margin: 10px 0 18px; padding-left: 18px; display: grid; gap: 4px; }
+.role-requests { margin-bottom: 20px; }
+.role-request { border: 1px solid #dce8f4; border-radius: 16px; padding: 16px; margin-top: 14px; display: grid; gap: 10px; }
+.role-request dl { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: 13.5px; }
+.role-request dt { color: #657c91; }
+.role-request dd { margin: 0; color: #193b58; overflow-wrap: anywhere; }
+.role-request label { display: grid; gap: 6px; font-size: 12.5px; font-weight: 600; color: #385670; }
+.role-request input, .role-request select { border: 1px solid #d6e2ed; border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 14px; }
+.role-request-actions { display: flex; gap: 10px; flex-wrap: wrap; }

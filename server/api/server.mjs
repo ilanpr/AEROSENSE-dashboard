@@ -3,8 +3,9 @@ import { robotFaceRelay } from "./robot-face-relay.mjs";
 import { nodeRoutes } from "./nodes.mjs";
 import http from "node:http";
 import { webRoutes } from "./web.mjs";
-import { canViewModel, simpleReading } from "./access.mjs";
+import { canViewModel, nodeAccess, PUBLIC_NODE_FIELDS, simpleReading } from "./access.mjs";
 import { browserVoiceRoutes, defaultStyle } from "./browser-voice.mjs";
+import { accountRoutes } from "./accounts.mjs";
 import { disasterNews } from "./disaster-news.mjs";
 import { normalizeGowa, sendGowa, gowaChoiceIds } from "./gowa.mjs";
 import { randomUUID, randomBytes } from "node:crypto";
@@ -336,15 +337,11 @@ async function user(req) {
   return u;
 }
 async function member(u, nodeId, write = false) {
-  const n = await one("ae_nodes", "id=eq." + filter(nodeId));
-  const m =
-    n &&
-    (await one("ae_members", "user_id=eq." + u.id + "&location_id=eq." + filter(n.location_id)));
-  if (!m || (write && !["operator", "admin"].includes(m.role)))
-    throw Object.assign(new Error("Akses lokasi tidak diizinkan"), {
-      status: 403,
-    });
-  return Object.assign(n, { member_role: m.role });
+  return nodeAccess({ one, filter }, u.id, nodeId, { write });
+}
+// Read access: members, plus any signed-in account on a published (public_read) node.
+async function reader(u, nodeId) {
+  return nodeAccess({ one, filter }, u.id, nodeId, { allowPublic: true });
 }
 function device(req, type) {
   const id = req.headers["x-device-id"];
@@ -502,7 +499,7 @@ async function inbox(j) {
           "ae_members",
           "user_id=eq." + s.user_id + "&location_id=eq." + filter(n.location_id),
         ));
-      if (membership) ids.push(s.node_id);
+      if (membership || (n?.public_read === true && n.enabled === true)) ids.push(s.node_id);
     }
     await enqueue("wa_chat", "chat:" + j.id, {
       phone,
@@ -777,7 +774,7 @@ async function nativeSend(j, p) {
       "phone=eq." + filter(b.phone) + "&node_id=eq." + filter(b.node_id) + "&active=eq.true",
     );
     if (!sub) return { ...(await finish(j, { skipped: "Opt-out" })), send: false };
-    await member({ id: sub.user_id }, b.node_id);
+    await reader({ id: sub.user_id }, b.node_id);
   }
   if (j.stage.provider_id)
     return {
@@ -858,7 +855,7 @@ async function internal(path, p) {
   const j = await leased(p);
   try {
     if (j.owner_id)
-      for (const node of j.body.node_ids || []) await member({ id: j.owner_id }, node);
+      for (const node of j.body.node_ids || []) await reader({ id: j.owner_id }, node);
     if (j.kind === "wa_chat")
       for (const node of j.body.node_ids || []) {
         const s = await one(
@@ -866,7 +863,7 @@ async function internal(path, p) {
           "phone=eq." + filter(j.body.phone) + "&node_id=eq." + filter(node) + "&active=eq.true",
         );
         if (!s) throw new Error("WhatsApp node access revoked");
-        await member({ id: s.user_id }, node);
+        await reader({ id: s.user_id }, node);
       }
     if (["web_chat", "wa_chat", "robot_chat"].includes(j.kind)) {
       if (path === "/internal/chat/native-context") return await nativeContext(j, p);
@@ -909,12 +906,23 @@ async function internal(path, p) {
 const news = disasterNews({ db });
 const faceRelay = robotFaceRelay({ user, db, filter, rawBody, send, rate });
 const registrationRoutes = nodeRoutes({ db, user, send, filter, rawBody, rate, devices });
-const voiceRoutes = browserVoiceRoutes({ env: e, user, one, member, rate, rawBody, send, gemini });
+const voiceRoutes = browserVoiceRoutes({
+  env: e,
+  user,
+  one,
+  member: reader,
+  rate,
+  rawBody,
+  send,
+  gemini,
+});
+const accounts = accountRoutes({ db, one, rpc, user, send, filter, rawBody, rate, request });
 const browserRoutes = webRoutes({
   db,
   one,
   user,
   member,
+  reader,
   send,
   filter,
   env: e,
@@ -950,6 +958,7 @@ const server = http.createServer(async (req, res) => {
     if (await faceRelay(req, res, url)) return;
     if (await registrationRoutes(req, res, url)) return;
     if (await voiceRoutes(req, res, url)) return;
+    if (await accounts(req, res, url)) return;
     if (await browserRoutes(req, res, url)) return;
     if (await sprinklerRoutes(req, res, url)) return;
     if (path === "/webhooks/whatsapp" && req.method === "GET") {
@@ -1071,6 +1080,11 @@ const server = http.createServer(async (req, res) => {
               "location_id=eq." + filter(m.location_id) + "&enabled=eq.true",
             )),
           );
+        // Published nodes are listed for every account, with public fields only.
+        const own = new Set(nodes.map((n) => n.id));
+        for (const n of await db("ae_nodes", "public_read=eq.true&enabled=eq.true"))
+          if (!own.has(n.id) && n.public_read === true)
+            nodes.push(Object.fromEntries(PUBLIC_NODE_FIELDS.map((k) => [k, n[k]])));
         return send(res, 200, { nodes });
       }
       const nodeId = url.searchParams.get("node_id");
@@ -1091,11 +1105,11 @@ const server = http.createServer(async (req, res) => {
         });
       }
       if (path === "/v1/latest" && req.method === "GET") {
-        await member(u, nodeId);
+        await reader(u, nodeId);
         return send(res, 200, { data: await context([nodeId]) });
       }
       if (path === "/v1/history" && req.method === "GET") {
-        const n = await member(u, nodeId);
+        const n = await reader(u, nodeId);
         const rows = await db(
           "ae_readings",
           "node_id=eq." + filter(nodeId) + "&order=observed_at.desc&limit=288",
@@ -1108,12 +1122,16 @@ const server = http.createServer(async (req, res) => {
         });
       }
       if (path === "/v1/alerts" && req.method === "GET") {
-        await member(u, nodeId);
+        const n = await reader(u, nodeId);
+        const alerts = await db(
+          "ae_alerts",
+          "node_id=eq." + filter(nodeId) + "&order=created_at.desc&limit=100",
+        );
+        // Non-members of a published node get the alert itself, not who reviewed it.
         return send(res, 200, {
-          alerts: await db(
-            "ae_alerts",
-            "node_id=eq." + filter(nodeId) + "&order=created_at.desc&limit=100",
-          ),
+          alerts: n.public_access
+            ? alerts.map(({ acknowledged_by, reading_id, rule_id, ...a }) => a)
+            : alerts,
         });
       }
       if (path === "/v1/jobs" && req.method === "GET") {
@@ -1125,7 +1143,7 @@ const server = http.createServer(async (req, res) => {
             u.id +
             "&kind=in.(web_chat,robot_chat)",
         );
-        if (j) for (const node of j.body.node_ids || []) await member(u, node);
+        if (j) for (const node of j.body.node_ids || []) await reader(u, node);
         return j
           ? send(res, 200, {
               id: j.id,
@@ -1139,7 +1157,7 @@ const server = http.createServer(async (req, res) => {
         const p = JSON.parse(await rawBody(req, 10000));
         if (path === "/v1/chat") {
           rate("chat:" + u.id, 8);
-          if (p.node_id) await member(u, p.node_id);
+          if (p.node_id) await reader(u, p.node_id);
           const key = req.headers["idempotency-key"] || randomUUID();
           if (!/^[a-zA-Z0-9_-]{1,80}$/.test(key)) throw new Error("Invalid idempotency key");
           const j = await enqueue(
@@ -1155,7 +1173,7 @@ const server = http.createServer(async (req, res) => {
           return send(res, 202, { id: j.id, status: j.status });
         }
         if (path === "/v1/whatsapp/pair") {
-          await member(u, p.node_id);
+          await reader(u, p.node_id);
           rate("pair:" + u.id, 5, 600000);
           const code = randomBytes(8).toString("hex");
           await db("ae_pair_codes", "", "POST", {

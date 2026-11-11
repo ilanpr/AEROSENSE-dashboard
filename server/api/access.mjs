@@ -24,3 +24,27 @@ export const simpleReading = (r) => ({
   metrics: r.metrics ?? {},
   quality: { invalid: r.quality?.invalid === true },
 });
+
+const denied = () => Object.assign(new Error("Akses lokasi tidak diizinkan"), { status: 403 });
+
+// Access to one node. An assigned member gets the role of that location. With allowPublic, any signed-in
+// account may READ a node its admin published (public_read) as a viewer: no assignment needed.
+// Writes always need an operator or admin membership.
+export async function nodeAccess(
+  { one, filter },
+  userId,
+  nodeId,
+  { write = false, allowPublic = false } = {},
+) {
+  const n = await one("ae_nodes", "id=eq." + filter(nodeId));
+  const m =
+    n &&
+    (await one("ae_members", "user_id=eq." + userId + "&location_id=eq." + filter(n.location_id)));
+  if (m && (!write || canManage(m.role))) return Object.assign(n, { member_role: m.role });
+  if (!m && !write && allowPublic && n?.public_read === true && n.enabled === true)
+    return Object.assign(n, { member_role: "viewer", public_access: true });
+  throw denied();
+}
+
+// What a non-member may see of a published node: no gateway, location or internal fields.
+export const PUBLIC_NODE_FIELDS = ["id", "name", "latitude", "longitude", "pm25_validated"];

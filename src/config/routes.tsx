@@ -14,6 +14,9 @@ const LandingPage = lazy(() =>
 const ManagementPage = lazy(() =>
   import("@/pages/management/ManagementPage").then((m) => ({ default: m.ManagementPage })),
 );
+const AuthConfirmPage = lazy(() =>
+  import("@/pages/auth/AuthConfirmPage").then((m) => ({ default: m.AuthConfirmPage })),
+);
 const RegisterPage = lazy(() =>
   import("@/pages/auth/RegisterPage").then((m) => ({
     default: m.RegisterPage,
@@ -76,6 +79,7 @@ export function AppRouter() {
         <Routes>
           <Route path={ROUTES.LOGIN} element={<LoginPage />} />
           <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+          <Route path="/auth/confirm" element={<AuthConfirmPage />} />
           <Route path={ROUTES.HOME} element={<LandingPage />} />
           <Route path="/robot-screen" element={<RobotScreenPage />} />
 

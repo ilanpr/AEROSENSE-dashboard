@@ -1,7 +1,7 @@
 import { readEventLayers } from "./environment-events.mjs";
 import { summarizeEnvironment, orderEnvironmentFacts } from "./environment-insights.mjs";
 import { publicMonitoring } from "./public-monitoring.mjs";
-import { canAuditEsg, canManage, canViewModel, highestRole } from "./access.mjs";
+import { canAuditEsg, canManage, canViewModel, highestRole, PUBLIC_NODE_FIELDS } from "./access.mjs";
 const reportScope = {
   type: "ambient_monitoring",
   assurance_status: "not_assured",
@@ -10,7 +10,7 @@ const reportScope = {
   excludes: ["esg_rating", "regulatory_compliance", "corporate_emissions_inventory"],
 };
 // Browser routes share the ae_ tables and the existing authorization checks.
-export function webRoutes({ db, one, user, member, send, filter, env }) {
+export function webRoutes({ db, one, user, member, reader = member, send, filter, env }) {
   return async (req, res, url) => {
     const path = url.pathname;
     if (await publicMonitoring({ db, one, send, filter, readEnvironment }, req, res, url))
@@ -31,7 +31,7 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
         return true;
       }
       const account = await user(req);
-      const node = await member(account, nodeId);
+      const node = await reader(account, nodeId);
       send(res, 200, await readEnvironment({ db, one, node }));
       return true;
     }
@@ -70,6 +70,20 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
         "location_id=eq." + filter(m.location_id) + "&enabled=eq.true",
       );
       nodes.push(...found.map((n) => ({ ...n, role: m.role })));
+    }
+    // Transparency: every signed-in account also sees published nodes, as a viewer with public fields.
+    if (path !== "/v1/esg/report") {
+      const own = new Set(nodes.map((n) => n.id));
+      for (const n of await db("ae_nodes", "public_read=eq.true&enabled=eq.true"))
+        if (!own.has(n.id) && n.public_read === true && n.enabled === true) {
+          own.add(n.id);
+          nodes.push({
+            ...Object.fromEntries(PUBLIC_NODE_FIELDS.map((k) => [k, n[k]])),
+            enabled: true,
+            role: "viewer",
+            public_access: true,
+          });
+        }
     }
     if (path === "/v1/dashboard" || path === "/v1/esg/report") {
       const requested = url.searchParams.get("node_id");
@@ -139,7 +153,7 @@ export function webRoutes({ db, one, user, member, send, filter, env }) {
       return true;
     }
     const nodeId = url.searchParams.get("node_id");
-    await member(u, nodeId);
+    await reader(u, nodeId);
     send(res, 200, {
       rules: await db("ae_rules", "node_id=eq." + filter(nodeId)),
     });
