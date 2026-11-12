@@ -7,6 +7,7 @@ import { canViewModel, nodeAccess, PUBLIC_NODE_FIELDS, simpleReading } from "./a
 import { browserVoiceRoutes, defaultStyle } from "./browser-voice.mjs";
 import { accountRoutes } from "./accounts.mjs";
 import { heatmapRoutes } from "./heatmap.mjs";
+import { startRobotMood } from "./robot-mood.mjs";
 import { disasterNews } from "./disaster-news.mjs";
 import { normalizeGowa, sendGowa, gowaChoiceIds } from "./gowa.mjs";
 import { randomUUID, randomBytes } from "node:crypto";
@@ -257,6 +258,46 @@ async function speech(text) {
   );
   return wavAudio(response);
 }
+// Speak command for a robot: cloud TTS audio in storage plus the text and face. Used by chat replies and robot mood.
+async function robotSpeak(robot, key, { text, face, severity = null, nativeAudio, priority = 10, ttlMs = 180000 }) {
+  let path = null;
+  if (!robot.quiet) {
+    try {
+      const wav = nativeAudio === undefined ? await speech(text) : wavAudio(nativeAudio);
+      path = "commands/" + key.replace(/[^a-zA-Z0-9_-]/g, "_") + ".wav";
+      const r = await fetch(e.SUPABASE_URL + "/storage/v1/object/aerosense-audio/" + path, {
+        method: "POST",
+        headers: { ...jsonHeaders, "Content-Type": "audio/wav", "x-upsert": "true" },
+        body: wav,
+        signal: AbortSignal.timeout(60000),
+      });
+      if (!r.ok) throw new Error("Audio upload failed");
+    } catch {
+      path = null;
+    }
+  }
+  await db(
+    "ae_commands",
+    "on_conflict=dedupe_key",
+    "POST",
+    {
+      robot_id: robot.id,
+      dedupe_key: key,
+      priority,
+      expires_at: new Date(Date.now() + ttlMs).toISOString(),
+      body: {
+        action: "speak",
+        text,
+        face,
+        ...(severity ? { severity } : {}),
+        audio_path: path,
+        muted: robot.quiet,
+        fallback: path ? null : "unavailable",
+      },
+    },
+    "resolution=ignore-duplicates,return=representation",
+  );
+}
 async function deliver(j, nativeAudio) {
   if (!j.stage.answer) throw new Error("Answer stage missing");
   const text = j.stage.answer;
@@ -265,46 +306,11 @@ async function deliver(j, nativeAudio) {
   if (j.kind === "robot_chat") {
     const robot = await one("ae_robots", "id=eq." + filter(j.body.robot_id));
     if (!robot?.enabled) throw new Error("Robot disabled");
-    let path = null;
-    if (!robot.quiet) {
-      try {
-        const audio = nativeAudio === undefined ? await speech(text) : wavAudio(nativeAudio);
-        path = "commands/" + j.id + ".wav";
-        const r = await fetch(e.SUPABASE_URL + "/storage/v1/object/aerosense-audio/" + path, {
-          method: "POST",
-          headers: {
-            ...jsonHeaders,
-            "Content-Type": "audio/wav",
-            "x-upsert": "true",
-          },
-          body: audio,
-          signal: AbortSignal.timeout(60000),
-        });
-        if (!r.ok) throw new Error("Audio upload failed");
-      } catch {
-        path = null;
-      }
-    }
-    await db(
-      "ae_commands",
-      "on_conflict=dedupe_key",
-      "POST",
-      {
-        robot_id: robot.id,
-        dedupe_key: "reply:" + j.id,
-        priority: 10,
-        expires_at: new Date(Date.now() + 180000).toISOString(),
-        body: {
-          action: "speak",
-          text,
-          face: j.stage.emotion || "neutral",
-          audio_path: path,
-          muted: robot.quiet,
-          fallback: path ? null : "unavailable",
-        },
-      },
-      "resolution=ignore-duplicates,return=representation",
-    );
+    await robotSpeak(robot, "reply:" + j.id, {
+      text,
+      face: j.stage.emotion || "neutral",
+      nativeAudio,
+    });
   }
   return finish(j, {
     text,
@@ -1354,7 +1360,20 @@ if (e.DISASTER_NEWS_ENABLED !== "false") {
   newsTimer = setInterval(refreshNews, 15 * 60000);
   newsTimer.unref();
 }
-server.on("close", () => clearInterval(newsTimer));
+// Robot mood every 15 minutes. Disable with ROBOT_MOOD_ENABLED=false.
+const moodTimer =
+  e.ROBOT_MOOD_ENABLED === "false"
+    ? null
+    : startRobotMood({
+        db,
+        filter,
+        speak: (robot, key, mood) =>
+          robotSpeak(robot, key, { ...mood, priority: 5, ttlMs: 600000 }),
+      });
+server.on("close", () => {
+  clearInterval(newsTimer);
+  clearInterval(moodTimer);
+});
 server.listen(Number(e.PORT || 8080), "0.0.0.0", () =>
   console.log("AEROSENSE API listening on " + (e.PORT || 8080)),
 );
