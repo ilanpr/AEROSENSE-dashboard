@@ -261,7 +261,9 @@ async function speech(text) {
 // Speak command for a robot: cloud TTS audio in storage plus the text and face. Used by chat replies and robot mood.
 async function robotSpeak(robot, key, { text, face, severity = null, nativeAudio, priority = 10, ttlMs = 180000 }) {
   let path = null;
-  if (!robot.quiet) {
+  // ROBOT_TTS=local: no cloud audio; the robot mini PC speaks the text with Wibowo (open-source, no tokens).
+  const localTts = e.ROBOT_TTS === "local";
+  if (!robot.quiet && !localTts) {
     try {
       const wav = nativeAudio === undefined ? await speech(text) : wavAudio(nativeAudio);
       path = "commands/" + key.replace(/[^a-zA-Z0-9_-]/g, "_") + ".wav";
@@ -292,7 +294,7 @@ async function robotSpeak(robot, key, { text, face, severity = null, nativeAudio
         ...(severity ? { severity } : {}),
         audio_path: path,
         muted: robot.quiet,
-        fallback: path ? null : "unavailable",
+        fallback: path ? null : localTts ? "local_tts" : "unavailable",
       },
     },
     "resolution=ignore-duplicates,return=representation",
