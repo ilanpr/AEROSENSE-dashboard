@@ -96,6 +96,21 @@ export function SensorWorkspace({
       : null,
     60000,
   );
+  // US AQI estimate for the selected node's area, for the map heatmap. Current values only.
+  const aqiFact = environment.data?.facts?.find(
+    (f) =>
+      f.category === "air_quality" &&
+      /AQI US|US AQI/i.test(f.label) &&
+      !f.stale &&
+      !["forecast", "historical"].includes(f.kind) &&
+      typeof f.value === "number" &&
+      Number.isFinite(f.value),
+  );
+  const area = environment.data?.area;
+  const regionalAqi =
+    aqiFact && area && Number.isFinite(area.latitude) && Number.isFinite(area.longitude)
+      ? { latitude: area.latitude, longitude: area.longitude, value: aqiFact.value as number, source: aqiFact.source }
+      : null;
   const events = (environment.data?.events || []).filter(
     (e) => eventType === "all" || e.category === eventType,
   );
@@ -420,6 +435,7 @@ export function SensorWorkspace({
                       events={mode === "map" && mapLayer !== "sensors" ? events : []}
                       watersense={user ? watersense.data?.actuators : undefined}
                       focusedWatersense={mapParams.get("watersense")}
+                      regionalAqi={mode === "map" ? regionalAqi : null}
                     />
                   </Suspense>
                 </>

@@ -365,3 +365,46 @@
     font-size: 10px;
   }
 }
+
+.live-map {
+  position: relative;
+}
+.heat-toggle {
+  position: absolute;
+  bottom: 12px;
+  left: 10px;
+  z-index: 500;
+  padding: 6px 12px;
+  border: 1px solid #dbe6f2;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.95);
+  color: #4b5e74;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgb(15 40 80 / 0.12);
+}
+.heat-toggle.is-on {
+  border-color: #f59e0b;
+  color: #9a5b00;
+}
+.heat-toggle:focus-visible {
+  outline: 2px solid #0b6fe5;
+  outline-offset: 2px;
+}
+.heat-legend {
+  position: absolute;
+  bottom: 48px;
+  left: 10px;
+  z-index: 500;
+  max-width: 230px;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.95);
+  color: #4b5e74;
+  font-size: 11px;
+  line-height: 1.4;
+  box-shadow: 0 2px 8px rgb(15 40 80 / 0.12);
+  pointer-events: none;
+}
