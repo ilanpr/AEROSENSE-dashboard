@@ -4,10 +4,11 @@ import { nodeRoutes } from "./nodes.mjs";
 import http from "node:http";
 import { webRoutes } from "./web.mjs";
 import { canViewModel, nodeAccess, PUBLIC_NODE_FIELDS, simpleReading } from "./access.mjs";
-import { browserVoiceRoutes, defaultStyle } from "./browser-voice.mjs";
+import { browserVoiceRoutes, defaultStyle, speechText } from "./browser-voice.mjs";
 import { accountRoutes } from "./accounts.mjs";
 import { heatmapRoutes } from "./heatmap.mjs";
 import { startRobotMood } from "./robot-mood.mjs";
+import { useWibowo, wibowoSpeech } from "./wibowo.mjs";
 import { disasterNews } from "./disaster-news.mjs";
 import { normalizeGowa, sendGowa, gowaChoiceIds } from "./gowa.mjs";
 import { randomUUID, randomBytes } from "node:crypto";
@@ -228,6 +229,8 @@ async function answer(j) {
   return stage(j, { answer: text });
 }
 async function speech(text) {
+  // Same text the web player speaks: no "Sumber:" lines.
+  if (useWibowo(e)) return wibowoSpeech(e, speechText(text));
   if (!e.GEMINI_TTS_MODEL) throw new Error("TTS model not configured");
   const response = await gemini(
     "",
@@ -265,7 +268,11 @@ async function robotSpeak(robot, key, { text, face, severity = null, nativeAudio
   const localTts = e.ROBOT_TTS === "local";
   if (!robot.quiet && !localTts) {
     try {
-      const wav = nativeAudio === undefined ? await speech(text) : wavAudio(nativeAudio);
+      // Wibowo: always speak on the server. Gemini: reuse the audio n8n already made, if any.
+      const wav =
+        useWibowo(e) || !nativeAudio || !Object.keys(nativeAudio).length
+          ? await speech(text)
+          : wavAudio(nativeAudio);
       path = "commands/" + key.replace(/[^a-zA-Z0-9_-]/g, "_") + ".wav";
       const r = await fetch(e.SUPABASE_URL + "/storage/v1/object/aerosense-audio/" + path, {
         method: "POST",

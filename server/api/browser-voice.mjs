@@ -1,3 +1,4 @@
+import { useWibowo, wibowoSpeech } from "./wibowo.mjs";
 import { cleanText, modelText, wavAudio, sha } from "./core.mjs";
 import { voiceTemplates } from "./voice-templates.mjs";
 
@@ -112,6 +113,7 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
         env.GEMINI_TTS_MODEL,
         env.GEMINI_TTS_VOICE,
         env.GEMINI_TTS_STYLE,
+        env.TTS_PROVIDER,
       ]),
     );
     for (const [id, cached] of audioCache) if (cached.expires < Date.now()) audioCache.delete(id);
@@ -120,6 +122,7 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
       let task = pendingAudio.get(key);
       if (!task) {
         task = (async () => {
+          if (useWibowo(env)) return wibowoSpeech(env, text, 45000);
           const response = await gemini(
             "",
             [
@@ -167,7 +170,7 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
       send(res, 200, {
         configured,
         transcription: configured,
-        speech: configured,
+        speech: configured || useWibowo(env),
         voice: env.GEMINI_TTS_VOICE || "Puck",
         max_recording_seconds: 20,
       });
@@ -296,7 +299,8 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
     return true;
   };
   route.prefetch = (ownerId, text) => {
-    if (!env.GEMINI_API_KEY) return;
+    // Wibowo runs on the server CPU: speak only when someone presses play.
+    if (!env.GEMINI_API_KEY || useWibowo(env)) return;
     const first = answerChunks(text)[0];
     if (first) void audioFor(ownerId, first).catch(() => {});
   };
