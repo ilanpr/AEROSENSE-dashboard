@@ -579,7 +579,7 @@
 .landing-management-details span {
   display: block;
   color: var(--landing-muted);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.8;
 }
 .landing-management-details strong {
@@ -600,7 +600,7 @@
 .landing-data-note p {
   max-width: 75ch;
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--landing-muted);
   line-height: 1.8;
 }
@@ -619,7 +619,7 @@
   align-items: center;
   gap: 8px;
   color: #1267c9;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
   text-decoration: none;
 }
@@ -814,5 +814,23 @@
   .landing-hero-sensor {
     width: 150px;
     height: 150px;
+  }
+}
+
+/* "Cara kerja": a short lead under the title, kept in view beside the steps. */
+.landing-workflow-intro {
+  position: sticky;
+  top: 96px;
+}
+.landing-workflow-intro p {
+  margin: 14px 0 0;
+  max-width: 32ch;
+  color: var(--landing-muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+@media (max-width: 1050px) {
+  .landing-workflow-intro {
+    position: static;
   }
 }

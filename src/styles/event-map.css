@@ -404,12 +404,12 @@
   bottom: 52px;
   left: 10px;
   z-index: 500;
-  width: min(260px, calc(100% - 20px));
-  padding: 8px 10px;
+  width: min(230px, calc(100% - 20px));
+  padding: 7px 9px;
   border-radius: 10px;
   background: rgb(255 255 255 / 0.95);
   color: #4b5e74;
-  font-size: 11px;
+  font-size: 10.5px;
   line-height: 1.35;
   box-shadow: 0 2px 8px rgb(15 40 80 / 0.14);
   pointer-events: none;

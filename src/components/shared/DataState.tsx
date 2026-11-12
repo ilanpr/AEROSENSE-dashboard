@@ -4,7 +4,9 @@ export function DataState({
   error,
   empty,
   retry,
+  title,
 }: {
+  title?: string;
   loading?: boolean;
   error?: string;
   empty?: string;
@@ -13,7 +15,9 @@ export function DataState({
   return (
     <div className="live-state" role={error ? "alert" : "status"}>
       <strong>
-        {loading ? "Memuat data…" : error ? "Data belum dapat dimuat" : empty || "Belum ada data"}
+        {loading
+          ? "Memuat data…"
+          : title || (error ? "Data belum dapat dimuat" : empty || "Belum ada data")}
       </strong>
       {error && <p>{error}</p>}
       {error && (

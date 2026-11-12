@@ -69,20 +69,26 @@
 }
 .sprinkler-facts {
   display: grid;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid #e3ebf3;
+  border-radius: 14px;
+  background: #e3ebf3;
   font-size: 13px;
 }
 .sprinkler-facts > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  background: #fff;
 }
 .sprinkler-facts dt {
-  color: #42627b;
+  color: #5b7389;
+  font-size: 12px;
 }
 .sprinkler-facts dd {
   color: #173d63;
-  text-align: right;
   font-weight: 650;
 }
 .sprinkler-command-status {

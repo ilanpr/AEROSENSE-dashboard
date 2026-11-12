@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
   CheckCircle2,
+  Clock3,
   ChevronDown,
   LocateFixed,
   MapPin,
@@ -181,6 +182,9 @@ export function NearbyAlerts() {
           <div className={`nearby-summary ${raised.length ? "has-alerts" : ""}`} aria-live="polite">
             {raised.length ? (
               <TriangleAlert size={28} aria-hidden="true" />
+            ) : !nodes.length || pending.length === nodes.length ? (
+              // No readings is not "all clear": no check mark.
+              <Clock3 size={28} aria-hidden="true" />
             ) : (
               <CheckCircle2 size={28} aria-hidden="true" />
             )}
@@ -199,8 +203,8 @@ export function NearbyAlerts() {
                   "Coba radius yang lebih luas."
                 ) : (
                   <>
-                    <strong>{danger.length} bahaya</strong> · {warning.length} waspada ·{" "}
-                    {nodes.length} node terjangkau
+                    {danger.length ? <strong>{danger.length} bahaya</strong> : "0 bahaya"} ·{" "}
+                    {warning.length} waspada · {nodes.length} node terjangkau
                     {pending.length ? ` · ${pending.length} menunggu data` : ""}
                   </>
                 )}
@@ -259,9 +263,7 @@ export function NearbyAlerts() {
             node yang dipublikasikan pengelola. Status mengikuti pembacaan terbaru dan ambang
             sensor; data lama atau tidak valid ditandai menunggu data.
           </p>
-          <p>
-            Status sensor bukan AQI, jaminan kesehatan, atau bukti sumber pencemar.
-          </p>
+          <p>Status sensor bukan AQI, jaminan kesehatan, atau bukti sumber pencemar.</p>
           {point && (
             <p>
               {source === "demo" ? "Titik contoh" : "Lokasi perangkat"}: {point.latitude.toFixed(4)}

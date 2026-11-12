@@ -420,6 +420,7 @@ export function SensorWorkspace({
                       events={mode === "map" && mapLayer !== "sensors" ? events : []}
                       watersense={user ? watersense.data?.actuators : undefined}
                       focusedWatersense={mapParams.get("watersense")}
+                      heatmap={mode === "map"}
                     />
                   </Suspense>
                 </>

@@ -107,6 +107,7 @@ export function LiveMap({
   autoLocate = false,
   watersense = [],
   focusedWatersense,
+  heatmap = false,
 }: {
   nodes: LiveNode[];
   selected: string;
@@ -121,10 +122,16 @@ export function LiveMap({
   autoLocate?: boolean;
   watersense?: WatersensePoint[];
   focusedWatersense?: string | null;
+  /** Model heatmap controls; only the full sensor map has room for them. */
+  heatmap?: boolean;
 }) {
   const [devicePoint, setDevicePoint] = useState<GeoPoint | null>(null);
-  const [heat, setHeat] = useState<HeatLayerKey | "off">("temperature");
-  const [heatInfo, setHeatInfo] = useState<{ source: string; valid_at: string | null; error?: string } | null>(null);
+  const [heat, setHeat] = useState<HeatLayerKey | "off">(heatmap ? "temperature" : "off");
+  const [heatInfo, setHeatInfo] = useState<{
+    source: string;
+    valid_at: string | null;
+    error?: string;
+  } | null>(null);
   const locationPoint = userLocation || devicePoint;
   const valid = nodes.filter(
     (n) =>
@@ -146,19 +153,21 @@ export function LiveMap({
     return <p className="live-notice">Koordinat node belum tersedia.</p>;
   return (
     <div className="live-map">
-      <div className="heat-controls" role="group" aria-label="Lapisan heatmap">
-        {(["off", ...Object.keys(HEAT_LAYERS)] as (HeatLayerKey | "off")[]).map((k) => (
-          <button
-            key={k}
-            type="button"
-            aria-pressed={heat === k}
-            className={heat === k ? "is-on" : ""}
-            onClick={() => setHeat(k)}
-          >
-            {k === "off" ? "Mati" : HEAT_LAYERS[k].label}
-          </button>
-        ))}
-      </div>
+      {heatmap && (
+        <div className="heat-controls" role="group" aria-label="Lapisan heatmap">
+          {(["off", ...Object.keys(HEAT_LAYERS)] as (HeatLayerKey | "off")[]).map((k) => (
+            <button
+              key={k}
+              type="button"
+              aria-pressed={heat === k}
+              className={heat === k ? "is-on" : ""}
+              onClick={() => setHeat(k)}
+            >
+              {k === "off" ? "Mati" : HEAT_LAYERS[k].label}
+            </button>
+          ))}
+        </div>
+      )}
       {heat !== "off" && <HeatLegend layer={heat} info={heatInfo} />}
       <MapContainer
         center={
@@ -168,7 +177,10 @@ export function LiveMap({
         }
         zoom={13}
         minZoom={7}
-        maxBounds={[[-85.05, -180], [85.05, 180]]}
+        maxBounds={[
+          [-85.05, -180],
+          [85.05, 180],
+        ]}
         maxBoundsViscosity={1}
         className="h-full w-full"
       >
@@ -180,7 +192,9 @@ export function LiveMap({
           <Focus node={active} nodes={valid} />
         )}
         {!userLocation && showNodes && <SelectionFocus node={highlighted} />}
-        {showNodes && <WatersenseFocus point={watersense.find((point) => point.id === focusedWatersense)} />}
+        {showNodes && (
+          <WatersenseFocus point={watersense.find((point) => point.id === focusedWatersense)} />
+        )}
         {locateUser && (
           <DeviceLocation point={devicePoint} onPoint={setDevicePoint} autoLocate={autoLocate} />
         )}
@@ -261,19 +275,28 @@ export function LiveMap({
               </Popup>
             </Marker>
           ))}
-        {showNodes && watersense.map((point) => (
-          <Marker key={"watersense-" + point.id} position={[point.latitude, point.longitude]}
-            title={point.name} alt={`WATERSENSE ${point.name}`}
-            icon={mapIcon("watersense", "watersense", point.id === focusedWatersense)}
-            zIndexOffset={point.id === focusedWatersense ? 1500 : 500}>
-            <Tooltip direction="top" offset={[0, -18]}>{point.name}</Tooltip>
-            <Popup className="node-reading-popup">
-              <strong className="node-popup-title">{point.name}</strong>
-              <p>WATERSENSE · {point.online ? "Terhubung" : "Offline"}</p>
-              <p>{point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}</p>
-            </Popup>
-          </Marker>
-        ))}
+        {showNodes &&
+          watersense.map((point) => (
+            <Marker
+              key={"watersense-" + point.id}
+              position={[point.latitude, point.longitude]}
+              title={point.name}
+              alt={`WATERSENSE ${point.name}`}
+              icon={mapIcon("watersense", "watersense", point.id === focusedWatersense)}
+              zIndexOffset={point.id === focusedWatersense ? 1500 : 500}
+            >
+              <Tooltip direction="top" offset={[0, -18]}>
+                {point.name}
+              </Tooltip>
+              <Popup className="node-reading-popup">
+                <strong className="node-popup-title">{point.name}</strong>
+                <p>WATERSENSE · {point.online ? "Terhubung" : "Offline"}</p>
+                <p>
+                  {point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}
+                </p>
+              </Popup>
+            </Marker>
+          ))}
         {eventPoints.map((e) => (
           <Marker
             key={e.id}

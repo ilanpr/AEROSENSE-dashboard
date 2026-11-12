@@ -44,8 +44,7 @@ const features = [
     title: "Tanyakan pada AERO-BOT",
     icon: MessageCircle,
     heading: "Tanya AERO-BOT lewat teks atau suara",
-    description:
-      "Tanyakan arti pembacaan sensor atau kondisi lingkungan di sekitar Anda.",
+    description: "Tanyakan arti pembacaan sensor atau kondisi lingkungan di sekitar Anda.",
     path: "/aerobot",
     action: "Temui AERO-BOT",
     scene: null,
@@ -112,7 +111,8 @@ export function LandingPage() {
               <span>Tindakan lebih terarah.</span>
             </h1>
             <p>
-              Pantau kualitas udara di titik sensor, cek kondisi wilayah, atau tanyakan hasilnya ke AERO-BOT.
+              Pantau kualitas udara di titik sensor, cek kondisi wilayah, atau tanyakan hasilnya ke
+              AERO-BOT.
             </p>
             <div className="landing-actions">
               <Link className="landing-button" to="/dashboard">
@@ -176,7 +176,10 @@ export function LandingPage() {
         </section>
 
         <section id="cara-kerja" className="landing-workflow landing-container">
-          <h2>Cara kerja</h2>
+          <div className="landing-workflow-intro">
+            <h2>Cara kerja</h2>
+            <p>Dari sensor di lokasi sampai tindakan pengelola, dalam tiga langkah.</p>
+          </div>
           <ol className="landing-workflow-steps">
             <li>
               <span className="landing-step-number" aria-hidden="true">
@@ -184,9 +187,7 @@ export function LandingPage() {
               </span>
               <div>
                 <h3>Ukur di lokasi</h3>
-                <p>
-                  Sensor mengirim pembacaan udara dan cuaca mikro dari titik pemasangan.
-                </p>
+                <p>Sensor mengirim pembacaan udara dan cuaca mikro dari titik pemasangan.</p>
               </div>
             </li>
             <li>
@@ -195,9 +196,7 @@ export function LandingPage() {
               </span>
               <div>
                 <h3>Cek kondisi sekitar</h3>
-                <p>
-                  Lihat pembacaan sensor, riwayat, dan estimasi wilayah di dashboard.
-                </p>
+                <p>Lihat pembacaan sensor, riwayat, dan estimasi wilayah di dashboard.</p>
               </div>
             </li>
             <li>
@@ -206,9 +205,7 @@ export function LandingPage() {
               </span>
               <div>
                 <h3>Tinjau peringatan</h3>
-                <p>
-                  Pengelola meninjau peringatan dan mengatur tindak lanjut.
-                </p>
+                <p>Pengelola meninjau peringatan dan mengatur tindak lanjut.</p>
               </div>
             </li>
           </ol>
@@ -217,9 +214,7 @@ export function LandingPage() {
         <section id="pengelola" className="landing-management landing-container">
           <div>
             <h2>Kelola kawasan</h2>
-            <p>
-              Atur ambang peringatan pada lokasi yang ditugaskan dan unduh data untuk evaluasi.
-            </p>
+            <p>Atur ambang peringatan pada lokasi yang ditugaskan dan unduh data untuk evaluasi.</p>
             <div className="landing-actions">
               <Link className="landing-button" to={user ? "/management" : "/login"}>
                 Kelola kawasan
@@ -235,8 +230,7 @@ export function LandingPage() {
             <p>
               <Settings2 size={21} />
               <span>
-                <strong>Ambang peringatan</strong>Waspada, bahaya, batas pulih, dan
-                jeda notifikasi.
+                <strong>Ambang peringatan</strong>Waspada, bahaya, batas pulih, dan jeda notifikasi.
               </span>
             </p>
             <p>
@@ -248,8 +242,7 @@ export function LandingPage() {
             <p>
               <LockKeyhole size={21} />
               <span>
-                <strong>Akses per lokasi</strong>Admin menetapkan pengelola untuk setiap
-                lokasi.
+                <strong>Akses per lokasi</strong>Admin menetapkan pengelola untuk setiap lokasi.
               </span>
             </p>
           </div>
@@ -257,8 +250,8 @@ export function LandingPage() {
         <aside id="tentang-data" className="landing-data-note landing-container">
           <strong>Tentang data</strong>
           <p>
-            Pembacaan sensor dan estimasi wilayah ditampilkan terpisah. Ambang pengelola
-            digunakan untuk pemantauan operasional.
+            Pembacaan sensor dan estimasi wilayah ditampilkan terpisah. Ambang pengelola digunakan
+            untuk pemantauan operasional.
           </p>
         </aside>
       </main>
