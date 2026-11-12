@@ -2,6 +2,7 @@ import { sensorSummary } from "@/lib/environment-presentation";
 import { NodeStatus } from "./NodeStatus";
 import { NodeReadings } from "./NodeReadings";
 import { mapIcon } from "./map-icons";
+import { HeatField, HeatLegend, HEAT_LAYERS, type HeatLayerKey } from "./HeatField";
 import { DeviceLocation } from "./DeviceLocation";
 import { Link } from "react-router-dom";
 import type { GeoPoint } from "@/lib/nearby-nodes";
@@ -82,48 +83,6 @@ function LocationFocus({ point, radiusKm }: { point: GeoPoint; radiusKm: number 
   }, [map, point.latitude, point.longitude, radiusKm]);
   return null;
 }
-// Heatmap: soft rings around each node, colored by its current status. Pending or stale nodes get none.
-const HEAT: Record<string, string> = { calm: "#22c55e", warning: "#f59e0b", danger: "#ef4444" };
-const HEAT_RINGS = [1400, 950, 550, 250];
-function HeatLayer({ nodes }: { nodes: LiveNode[] }) {
-  return (
-    <>
-      {nodes.flatMap((n) => {
-        const color = HEAT[sensorSummary(n).tone];
-        return color
-          ? HEAT_RINGS.map((r) => (
-              <Circle
-                key={`heat-${n.id}-${r}`}
-                center={[n.latitude, n.longitude]}
-                radius={r}
-                interactive={false}
-                pathOptions={{ stroke: false, fillColor: color, fillOpacity: 0.12 }}
-              />
-            ))
-          : [];
-      })}
-    </>
-  );
-}
-// Regional estimate from the public API (US AQI, Open-Meteo/CAMS), drawn wider and fainter than the sensors.
-export type RegionalAqi = GeoPoint & { value: number; source: string };
-const aqiColor = (v: number) =>
-  v <= 50 ? "#22c55e" : v <= 100 ? "#eab308" : v <= 150 ? "#f97316" : v <= 200 ? "#ef4444" : v <= 300 ? "#8b5cf6" : "#7f1d1d";
-function RegionalHeat({ aqi }: { aqi: RegionalAqi }) {
-  return (
-    <>
-      {[5000, 3500, 2000].map((r) => (
-        <Circle
-          key={`aqi-${r}`}
-          center={[aqi.latitude, aqi.longitude]}
-          radius={r}
-          interactive={false}
-          pathOptions={{ stroke: false, fillColor: aqiColor(aqi.value), fillOpacity: 0.14 }}
-        />
-      ))}
-    </>
-  );
-}
 function SelectionFocus({ node }: { node?: LiveNode }) {
   const map = useMap();
   const lastId = useRef(node?.id);
@@ -148,7 +107,6 @@ export function LiveMap({
   autoLocate = false,
   watersense = [],
   focusedWatersense,
-  regionalAqi,
 }: {
   nodes: LiveNode[];
   selected: string;
@@ -163,10 +121,10 @@ export function LiveMap({
   autoLocate?: boolean;
   watersense?: WatersensePoint[];
   focusedWatersense?: string | null;
-  regionalAqi?: RegionalAqi | null;
 }) {
   const [devicePoint, setDevicePoint] = useState<GeoPoint | null>(null);
-  const [heat, setHeat] = useState(true);
+  const [heat, setHeat] = useState<HeatLayerKey | "off">("temperature");
+  const [heatInfo, setHeatInfo] = useState<{ source: string; valid_at: string | null; error?: string } | null>(null);
   const locationPoint = userLocation || devicePoint;
   const valid = nodes.filter(
     (n) =>
@@ -188,27 +146,20 @@ export function LiveMap({
     return <p className="live-notice">Koordinat node belum tersedia.</p>;
   return (
     <div className="live-map">
-      {showNodes && (
-        <button
-          type="button"
-          className={"heat-toggle" + (heat ? " is-on" : "")}
-          aria-pressed={heat}
-          onClick={() => setHeat((v) => !v)}
-        >
-          Heatmap {heat ? "aktif" : "mati"}
-        </button>
-      )}
-      {showNodes && heat && (
-        <p className="heat-legend">
-          Lingkaran kecil: sensor node.
-          {regionalAqi && (
-            <>
-              <br />
-              Lingkaran besar: AQI US wilayah {Math.round(regionalAqi.value)} ({regionalAqi.source}), estimasi model.
-            </>
-          )}
-        </p>
-      )}
+      <div className="heat-controls" role="group" aria-label="Lapisan heatmap">
+        {(["off", ...Object.keys(HEAT_LAYERS)] as (HeatLayerKey | "off")[]).map((k) => (
+          <button
+            key={k}
+            type="button"
+            aria-pressed={heat === k}
+            className={heat === k ? "is-on" : ""}
+            onClick={() => setHeat(k)}
+          >
+            {k === "off" ? "Mati" : HEAT_LAYERS[k].label}
+          </button>
+        ))}
+      </div>
+      {heat !== "off" && <HeatLegend layer={heat} info={heatInfo} />}
       <MapContainer
         center={
           userLocation
@@ -277,8 +228,7 @@ export function LiveMap({
             </CircleMarker>
           </>
         )}
-        {showNodes && heat && regionalAqi && <RegionalHeat aqi={regionalAqi} />}
-        {showNodes && heat && <HeatLayer nodes={valid} />}
+        {heat !== "off" && <HeatField layer={heat} onInfo={setHeatInfo} />}
         {showNodes &&
           valid.map((n) => (
             <Marker

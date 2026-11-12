@@ -70,6 +70,7 @@ export async function demoRequest(
   const post = options.method && options.method !== "GET";
   const body = options.body ? JSON.parse(String(options.body)) : {};
   if (p === "/v1/disasters") return publicData("/demo-public/disasters", options.signal);
+  if (p === "/v1/heatmap") return demoHeatmap(url.searchParams);
   const publicReads = new Set([
     "/v1/dashboard",
     "/v1/nodes",
@@ -302,4 +303,25 @@ export async function demoRequest(
     return job;
   }
   throw new Error("Tindakan ini tidak tersedia pada data simulasi.");
+}
+
+// Synthetic smooth field for the map heatmap (simulation, not model data).
+function demoHeatmap(q: URLSearchParams) {
+  const n = (k: string) => Number(q.get(k));
+  const step = Math.max(0.1, Math.ceil((Math.max(n("north") - n("south"), n("east") - n("west")) / 10) * 20) / 20);
+  const south = Math.floor(n("south") / step) * step,
+    west = Math.floor(n("west") / step) * step;
+  const rows = Math.min(12, Math.ceil((n("north") - south) / step) + 1),
+    cols = Math.min(12, Math.ceil((n("east") - west) / step) + 1);
+  const layer = q.get("layer") || "temperature";
+  const values = Array.from({ length: rows }, (_, i) =>
+    Array.from({ length: cols }, (_, j) => {
+      const lat = south + i * step,
+        lon = west + j * step;
+      const wave = Math.sin(lat * 9) * Math.cos(lon * 7);
+      const v = layer === "temperature" ? 29 + 3 * wave : layer === "pm25" ? 30 + 18 * wave : 80 + 40 * wave;
+      return Math.round(v * 10) / 10;
+    }),
+  );
+  return { layer, south, west, step, rows, cols, values, source: "Simulasi demo", valid_at: new Date().toISOString() };
 }

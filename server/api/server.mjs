@@ -6,6 +6,7 @@ import { webRoutes } from "./web.mjs";
 import { canViewModel, nodeAccess, PUBLIC_NODE_FIELDS, simpleReading } from "./access.mjs";
 import { browserVoiceRoutes, defaultStyle } from "./browser-voice.mjs";
 import { accountRoutes } from "./accounts.mjs";
+import { heatmapRoutes } from "./heatmap.mjs";
 import { disasterNews } from "./disaster-news.mjs";
 import { normalizeGowa, sendGowa, gowaChoiceIds } from "./gowa.mjs";
 import { randomUUID, randomBytes } from "node:crypto";
@@ -917,6 +918,7 @@ const voiceRoutes = browserVoiceRoutes({
   gemini,
 });
 const accounts = accountRoutes({ db, one, rpc, user, send, filter, rawBody, rate, request });
+const heatmap = heatmapRoutes({ send, rate, request });
 const browserRoutes = webRoutes({
   db,
   one,
@@ -958,6 +960,7 @@ const server = http.createServer(async (req, res) => {
     if (await faceRelay(req, res, url)) return;
     if (await registrationRoutes(req, res, url)) return;
     if (await voiceRoutes(req, res, url)) return;
+    if (await heatmap(req, res, url)) return;
     if (await accounts(req, res, url)) return;
     if (await browserRoutes(req, res, url)) return;
     if (await sprinklerRoutes(req, res, url)) return;
