@@ -308,7 +308,10 @@ export async function demoRequest(
 // Synthetic smooth field for the map heatmap (simulation, not model data).
 function demoHeatmap(q: URLSearchParams) {
   const n = (k: string) => Number(q.get(k));
-  const step = Math.max(0.1, Math.ceil((Math.max(n("north") - n("south"), n("east") - n("west")) / 10) * 20) / 20);
+  const step = Math.max(
+    0.1,
+    Math.ceil((Math.max(n("north") - n("south"), n("east") - n("west")) / 10) * 20) / 20,
+  );
   const south = Math.floor(n("south") / step) * step,
     west = Math.floor(n("west") / step) * step;
   const rows = Math.min(12, Math.ceil((n("north") - south) / step) + 1),
@@ -319,9 +322,35 @@ function demoHeatmap(q: URLSearchParams) {
       const lat = south + i * step,
         lon = west + j * step;
       const wave = Math.sin(lat * 9) * Math.cos(lon * 7);
-      const v = layer === "temperature" ? 29 + 3 * wave : layer === "pm25" ? 30 + 18 * wave : 80 + 40 * wave;
+      const v =
+        layer === "temperature"
+          ? 29 + 3 * wave
+          : layer === "pm25"
+            ? 30 + 18 * wave
+            : layer === "wind"
+              ? 14 + 8 * wave
+              : 80 + 40 * wave;
       return Math.round(v * 10) / 10;
     }),
   );
-  return { layer, south, west, step, rows, cols, values, source: "Simulasi demo", valid_at: new Date().toISOString() };
+  const direction =
+    layer === "wind"
+      ? values.map((row, i) =>
+          row.map((_, j) =>
+            Math.round(110 + 35 * Math.sin((south + i * step) * 6 + (west + j * step) * 4)),
+          ),
+        )
+      : undefined;
+  return {
+    layer,
+    south,
+    west,
+    step,
+    rows,
+    cols,
+    values,
+    ...(direction ? { direction } : {}),
+    source: "Simulasi demo",
+    valid_at: new Date().toISOString(),
+  };
 }

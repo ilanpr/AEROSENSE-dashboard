@@ -50,6 +50,22 @@ export const HEAT_LAYERS = {
       [300, "#6e2240"],
     ] as Stop[],
   },
+  wind: {
+    label: "Angin",
+    unit: "km/jam",
+    format: (v: number) => String(Math.round(v)),
+    stops: [
+      [0, "#7fb3d9"],
+      [5, "#5aa0d6"],
+      [10, "#4f8fd0"],
+      [15, "#4fb39a"],
+      [20, "#9ac94a"],
+      [30, "#e8c23d"],
+      [40, "#ea8b37"],
+      [55, "#d9483a"],
+      [70, "#a8326e"],
+    ] as Stop[],
+  },
 } as const;
 export type HeatLayerKey = keyof typeof HEAT_LAYERS;
 type Grid = {
@@ -59,6 +75,8 @@ type Grid = {
   rows: number;
   cols: number;
   values: (number | null)[][];
+  /** Wind only: direction the wind comes from, degrees. */
+  direction?: (number | null)[][];
   source: string;
   valid_at: string | null;
 };
@@ -139,7 +157,147 @@ function sample(g: Grid, v: number[][], lat: number, lng: number) {
 }
 
 type Layer = { id: number; url: string; bounds: [[number, number], [number, number]] };
-type Field = { g: Grid; v: number[][]; zoom: number; covers: [[number, number], [number, number]] };
+type Field = {
+  g: Grid;
+  v: number[][];
+  zoom: number;
+  covers: [[number, number], [number, number]];
+  /** Wind only: flow components in km/h, u towards east, v towards north. */
+  uv?: { u: number[][]; v: number[][] };
+};
+
+// Speed and "from" direction to the components of the flow (towards), used by labels and particles.
+function windComponents(g: Grid, speed: number[][]) {
+  const u: number[][] = [],
+    v: number[][] = [];
+  for (let i = 0; i < g.rows; i++) {
+    u.push([]);
+    v.push([]);
+    for (let j = 0; j < g.cols; j++) {
+      const d = g.direction?.[i]?.[j];
+      const rad = ((typeof d === "number" ? d : 0) * Math.PI) / 180;
+      const sp = typeof d === "number" ? speed[i][j] : 0;
+      u[i].push(-sp * Math.sin(rad));
+      v[i].push(-sp * Math.cos(rad));
+    }
+  }
+  return { u, v };
+}
+const ARROWS = ["→", "↗", "↑", "↖", "←", "↙", "↓", "↘"];
+const arrow = (u: number, v: number) =>
+  ARROWS[((Math.round(Math.atan2(v, u) / (Math.PI / 4)) % 8) + 8) % 8];
+
+// Particles drawn on a canvas over the map, carried by the wind field like a weather map.
+// Paused while the map moves; off when the viewer asks for reduced motion.
+function WindParticles({ field }: { field: Field }) {
+  const map = useMap();
+  useEffect(() => {
+    const uv = field.uv;
+    if (!uv || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const canvas = document.createElement("canvas");
+    canvas.className = "wind-canvas";
+    map.getContainer().appendChild(canvas);
+    const ctx = canvas.getContext("2d")!;
+    const CELL = 8,
+      SPEED = 0.12, // pixels per frame for each km/h
+      LIFE = 90;
+    let raf = 0,
+      W = 0,
+      H = 0,
+      cw = 0,
+      ch = 0;
+    let cells = new Float32Array(0),
+      px = new Float32Array(0),
+      py = new Float32Array(0),
+      age = new Uint16Array(0);
+    // Flow sampled on a coarse screen grid once per view, so each frame is a cheap lookup.
+    const build = () => {
+      const size = map.getSize();
+      W = size.x;
+      H = size.y;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cw = Math.ceil(W / CELL) + 1;
+      ch = Math.ceil(H / CELL) + 1;
+      cells = new Float32Array(cw * ch * 2);
+      for (let y = 0; y < ch; y++)
+        for (let x = 0; x < cw; x++) {
+          const ll = map.containerPointToLatLng([x * CELL, y * CELL]);
+          const u = sample(field.g, uv.u, ll.lat, ll.lng),
+            v = sample(field.g, uv.v, ll.lat, ll.lng);
+          const k = (y * cw + x) * 2;
+          cells[k] = u ?? NaN;
+          cells[k + 1] = v ?? NaN;
+        }
+      const n = Math.min(1800, Math.round((W * H) / 900));
+      px = new Float32Array(n);
+      py = new Float32Array(n);
+      age = new Uint16Array(n);
+      for (let i = 0; i < n; i++) reset(i);
+    };
+    const reset = (i: number) => {
+      px[i] = Math.random() * W;
+      py[i] = Math.random() * H;
+      age[i] = Math.floor(Math.random() * LIFE);
+    };
+    const frame = () => {
+      // Fade the previous frame to leave short trails.
+      ctx.globalCompositeOperation = "destination-in";
+      ctx.fillStyle = "rgba(0,0,0,0.9)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = "rgba(255,255,255,0.8)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      for (let i = 0; i < px.length; i++) {
+        const cx = Math.round(px[i] / CELL),
+          cy = Math.round(py[i] / CELL);
+        if (++age[i] > LIFE || cx < 0 || cy < 0 || cx >= cw || cy >= ch) {
+          reset(i);
+          continue;
+        }
+        const k = (cy * cw + cx) * 2,
+          u = cells[k],
+          v = cells[k + 1];
+        if (!Number.isFinite(u) || !Number.isFinite(v)) {
+          reset(i);
+          continue;
+        }
+        const nx = px[i] + u * SPEED,
+          ny = py[i] - v * SPEED;
+        ctx.moveTo(px[i], py[i]);
+        ctx.lineTo(nx, ny);
+        px[i] = nx;
+        py[i] = ny;
+      }
+      ctx.stroke();
+      raf = requestAnimationFrame(frame);
+    };
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      ctx.clearRect(0, 0, W, H);
+    };
+    const start = () => {
+      stop();
+      build();
+      raf = requestAnimationFrame(frame);
+    };
+    start();
+    map.on("movestart zoomstart", stop);
+    map.on("moveend resize", start);
+    return () => {
+      stop();
+      map.off("movestart zoomstart", stop);
+      map.off("moveend resize", start);
+      canvas.remove();
+    };
+  }, [map, field]);
+  return null;
+}
 
 // Label spacing in degrees: a round step giving about three rows of labels in the view.
 const STEPS = [0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 1, 2, 5];
@@ -158,6 +316,7 @@ export function HeatField({
     [],
   );
   const field = useRef<Field | null>(null);
+  const [wind, setWind] = useState<Field | null>(null);
   const info = useRef(onInfo);
   info.current = onInfo;
   useEffect(() => {
@@ -165,6 +324,7 @@ export function HeatField({
     let abort: AbortController | null = null;
     let seq = 0;
     field.current = null;
+    setWind(null);
     setLayers([]);
     setLabels([]);
     // Labels sit on fixed coordinates (multiples of a round step), so they move with the map;
@@ -187,12 +347,14 @@ export function HeatField({
           if (p.x < 24 || p.y < 24 || p.x > size.x - 24 || p.y > size.y - 24) continue;
           if (p.x < 260 && p.y > size.y - 200) continue;
           const value = sample(f.g, f.v, lat, lng);
-          if (value != null)
-            out.push({
-              key: `${lat.toFixed(3)},${lng.toFixed(3)}`,
-              position: [lat, lng],
-              text: HEAT_LAYERS[layer].format(value),
-            });
+          if (value == null) continue;
+          let text = HEAT_LAYERS[layer].format(value);
+          if (f.uv) {
+            const u = sample(f.g, f.uv.u, lat, lng) ?? 0,
+              v = sample(f.g, f.uv.v, lat, lng) ?? 0;
+            if (Math.hypot(u, v) >= 1) text += " " + arrow(u, v);
+          }
+          out.push({ key: `${lat.toFixed(3)},${lng.toFixed(3)}`, position: [lat, lng], text });
         }
       setLabels(out.slice(0, 40));
     };
@@ -234,7 +396,14 @@ export function HeatField({
             [g.south, g.west],
             [g.south + (g.rows - 1) * g.step, g.west + (g.cols - 1) * g.step],
           ];
-          field.current = { g, v, zoom: map.getZoom(), covers: bounds };
+          field.current = {
+            g,
+            v,
+            zoom: map.getZoom(),
+            covers: bounds,
+            ...(g.direction ? { uv: windComponents(g, v) } : {}),
+          };
+          setWind(field.current.uv ? field.current : null);
           // New image fades in over the old one; the old one is removed once it is covered.
           setLayers((old) => [
             ...old.slice(-1),
@@ -273,6 +442,7 @@ export function HeatField({
   );
   return (
     <>
+      {wind && <WindParticles field={wind} />}
       {layers.map((l) => (
         <ImageOverlay
           key={l.id}
