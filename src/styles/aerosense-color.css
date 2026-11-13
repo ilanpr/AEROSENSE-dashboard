@@ -1,0 +1,151 @@
+.landing-page {
+  --landing-ink: #102a42;
+  --landing-blue: #0755c9;
+  background: #f8fbff;
+}
+
+.landing-page .landing-header {
+  min-height: clamp(68px, 7vw, 94px);
+}
+
+.landing-page .landing-hero {
+  gap: clamp(24px, 5vw, 72px);
+  padding-block: clamp(30px, 5vw, 66px) clamp(44px, 7vw, 92px);
+}
+
+.landing-page .landing-hero h1 {
+  font-size: clamp(37px, 4.65vw, 68px);
+  line-height: 1.05;
+}
+
+.landing-page .landing-hero h1 span {
+  color: var(--landing-blue);
+}
+
+.landing-page .landing-hero-art {
+  background: radial-gradient(ellipse at 25% 15%, #defaff 0, transparent 62%),
+    linear-gradient(138deg, #a5e9fb, #b5c8ff 78%);
+}
+
+.landing-page .landing-feature-detail {
+  --feature-surface: #eaf4ff;
+  background: var(--feature-surface);
+  border-color: transparent;
+}
+
+.landing-page .landing-feature-detail[data-feature="/environment"] { --feature-surface: #e5f7ef; }
+.landing-page .landing-feature-detail[data-feature="/aerobot"] { --feature-surface: #efeaff; }
+.landing-page .landing-feature-detail[data-feature="/analytics"] { --feature-surface: #fff2da; }
+
+.landing-page .landing-feature-options button[aria-pressed="true"] {
+  background: #e4eeff;
+  color: #104da7;
+}
+
+.landing-page .landing-management {
+  background: #e5efff;
+}
+
+.app-shell {
+  --ui-surface-gradient: #edf3fc;
+  background: #f4f8fe;
+}
+
+.app-shell .app-topbar {
+  background: #fcfdff;
+}
+
+.app-shell .nav-entry.active {
+  background: #e8efff;
+  color: #104da7;
+}
+
+.app-shell .nav-entry.active svg {
+  color: #185bd4;
+}
+
+.app-shell :is(.live-heading h1, .insights-heading h1, .page-heading h1) {
+  text-wrap: balance;
+}
+
+.environment-hub[data-topic="weather"], .insight-topics [data-topic="weather"] {
+  --topic-tint: #e5f2ff;
+  --topic-ink: #144a9a;
+  --topic-dark: #083785;
+  --topic-light: #1769c0;
+}
+.environment-hub[data-topic="air_quality"], .insight-topics [data-topic="air_quality"] {
+  --topic-tint: #ddf5ef;
+  --topic-ink: #096252;
+  --topic-dark: #07504b;
+  --topic-light: #087d72;
+}
+.environment-hub[data-topic="soil"], .insight-topics [data-topic="soil"] {
+  --topic-tint: #edf4df;
+  --topic-ink: #42601b;
+  --topic-dark: #314e21;
+  --topic-light: #587e34;
+}
+.environment-hub[data-topic="fire"], .insight-topics [data-topic="fire"] {
+  --topic-tint: #fff0df;
+  --topic-ink: #963b18;
+  --topic-dark: #773217;
+  --topic-light: #ae5126;
+}
+.environment-hub[data-topic="flood"], .insight-topics [data-topic="flood"] {
+  --topic-tint: #e0f5fb;
+  --topic-ink: #12647a;
+  --topic-dark: #124b68;
+  --topic-light: #137c96;
+}
+.environment-hub[data-topic="earthquake"], .insight-topics [data-topic="earthquake"] {
+  --topic-tint: #efe9ff;
+  --topic-ink: #5d3a91;
+  --topic-dark: #483075;
+  --topic-light: #7650a9;
+}
+
+.app-shell .environment-hub[data-topic] .insight-lead {
+  background: radial-gradient(ellipse at 86% 17%, #ffffff25, transparent 47%),
+    linear-gradient(125deg, var(--topic-dark, #083785) 24%, var(--topic-light, #1769c0));
+}
+
+.app-shell .environment-hub[data-topic] .panel-metrics {
+  background: rgb(9 24 54 / 38%);
+}
+
+.app-shell .insight-topics button {
+  color: var(--topic-ink, #104da7);
+  background: var(--topic-tint, #e5f2ff);
+  border: 1px solid transparent;
+}
+
+.app-shell .insight-topics button[aria-pressed="true"] {
+  background: var(--topic-ink, #104da7);
+  color: #fff;
+}
+
+.app-shell .insight-topics button[aria-pressed="false"]:hover {
+  border-color: currentColor;
+}
+
+.app-shell .chat-source-panel {
+  background: linear-gradient(150deg, #162b70, #2d52a4 70%, #305cb4);
+}
+
+.app-shell .live-chat > header {
+  background: #163e94;
+}
+
+.app-shell :is(.map-controls, .sensor-toolbar, .nearby-location) {
+  background: #e9f3ff;
+}
+
+@media (max-width: 600px) {
+  .landing-page .landing-hero {
+    gap: 26px;
+  }
+  .app-shell .insight-topics button {
+    min-height: 44px;
+  }
+}

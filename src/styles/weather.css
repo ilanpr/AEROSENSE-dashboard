@@ -79,6 +79,20 @@
   line-height: 1.55;
   color: #26476b;
 }
+.wx-next-rain {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0 0;
+  max-width: 47ch;
+  color: #153f73;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.wx-next-rain svg {
+  flex: none;
+  margin-top: 2px;
+}
 .wx-today-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -117,7 +131,7 @@
 /* Warnings: tinted card, icon chip, mitigation in plain words. */
 .wx-alerts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: 10px;
   margin: 0;
   padding: 0;
@@ -174,133 +188,236 @@
   font-weight: 750;
   color: #11223d;
 }
-
-/* Hour chart */
-.wx-chart {
-  overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #bfd8f1 transparent;
-}
-.wx-chart svg {
-  display: block;
-}
-.wx-t-temp,
-.wx-t-rain,
-.wx-t-hour {
-  text-anchor: middle;
-  font-variant-numeric: tabular-nums;
-}
-.wx-t-temp {
-  font-size: 12px;
-  font-weight: 700;
-  fill: #11223d;
-}
-.wx-t-rain {
-  font-size: 10.5px;
-  fill: #7b8ea6;
-}
-.wx-t-rain.is-wet {
-  fill: #1f6fd1;
-  font-weight: 700;
-}
-.wx-t-hour {
-  font-size: 11px;
-  fill: #4c6782;
-}
-.wx-bar {
-  fill: #dbe9f8;
-}
-.wx-bar.is-wet {
-  fill: #4f9be8;
-}
-.wx-bar.is-storm {
-  fill: #7a5ad8;
-}
-.wx-chart-key {
+.wx-panel-heading {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 10px;
-  margin: 6px 0 0;
-  font-size: 11.5px;
-  color: #4c6782;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
 }
-.wx-chart-key span {
-  display: inline-block;
-  width: 14px;
-  height: 6px;
-  border-radius: 999px;
-  margin-left: 4px;
-}
-.key-temp {
-  background: #f08a24;
-}
-.key-rain {
-  background: #4f9be8;
-}
-.key-storm {
-  background: #7a5ad8;
+.wx-panel-heading span {
+  color: #45627b;
+  font-size: 12px;
 }
 
-/* Seven days as cards in one row; scrolls on phones. */
+.wx-hours,
 .wx-days {
   display: grid;
-  grid-template-columns: repeat(7, minmax(104px, 1fr));
   gap: 10px;
   margin: 0;
-  padding: 2px 2px 6px;
+  padding: 4px 4px 10px;
   list-style: none;
   overflow-x: auto;
   scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: #96b6d5 transparent;
 }
+.wx-hours {
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(110px, 1fr);
+}
+.wx-days {
+  grid-template-columns: repeat(7, minmax(115px, 1fr));
+}
+.wx-hours li,
 .wx-days li {
-  display: grid;
-  justify-items: center;
-  gap: 4px;
-  padding: 14px 8px;
-  border-radius: 18px;
-  background: #f4f9ff;
-  text-align: center;
   scroll-snap-align: start;
 }
-.wx-days li.is-today {
-  background: linear-gradient(160deg, #e6f2ff, #d3e8ff);
-  box-shadow: inset 0 0 0 1.5px #9cc6f5;
+.wx-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto 2.6em auto auto;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  padding: 12px 8px;
+  border: 1px solid #dbe8f5;
+  border-radius: 14px;
+  color: #173654;
+  background: #eef6ff;
+  cursor: pointer;
+  text-align: center;
+  transition: translate 160ms ease, border-color 160ms ease;
 }
+.wx-card .wx-art {
+  filter: none;
+}
+.wx-card-arrow {
+  position: absolute;
+  inset: auto 5px 8px auto;
+  color: #375e86;
+}
+.wx-card:hover {
+  border-color: #689acf;
+  translate: 0 -2px;
+}
+.wx-today-link:focus-visible,
+.wx-close:focus-visible {
+  outline: 2px solid #0759bc;
+  outline-offset: 2px;
+}
+.wx-card:focus-visible {
+  outline: 2px solid #0759bc;
+  outline-offset: -3px;
+}
+.wx-card.tone-clear, .wx-card.tone-partly,
+.wx-detail-head.tone-clear, .wx-detail-head.tone-partly { background: #fff3da; }
+.wx-card.tone-fog, .wx-detail-head.tone-fog { background: #edf2f5; }
+.wx-card.tone-drizzle, .wx-detail-head.tone-drizzle { background: #e3f6f7; }
+.wx-card.tone-thunder, .wx-detail-head.tone-thunder,
+.wx-card.tone-heavy-rain, .wx-detail-head.tone-heavy-rain { background: #eee9ff; }
 .wx-day-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 750;
-  color: #11223d;
+  font-variant-numeric: tabular-nums;
+}
+.wx-hour-date {
+  position: absolute;
+  right: 6px;
+  top: 4px;
+  font-size: 9px;
+  color: #45627b;
 }
 .wx-day-label {
-  min-height: 2.6em;
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.3;
-  color: #4c6782;
+  color: #37546e;
 }
 .wx-day-temp {
   font-size: 13px;
-  color: #6b819b;
+  color: #45627b;
   font-variant-numeric: tabular-nums;
 }
 .wx-day-temp strong {
-  font-size: 16px;
+  font-size: 17px;
   color: #11223d;
 }
 .wx-chip {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   padding: 3px 8px;
   border-radius: 999px;
   background: #fff;
   font-size: 11px;
   font-weight: 650;
-  color: #6b819b;
+  color: #37546e;
 }
 .wx-chip.is-wet {
   background: #dcecff;
-  color: #1f6fd1;
+  color: #0759ae;
+}
+.wx-today-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  color: #0759ae;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.wx-today-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.wx-today-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.wx-today:has(.wx-today-link:focus-visible) {
+  outline: 2px solid #0759bc;
+  outline-offset: 3px;
+}
+.wx-detail[data-slot="dialog-content"] {
+  width: min(540px, calc(100% - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+  gap: 14px;
+  border-radius: 18px;
+  color: #173654;
+}
+.wx-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 48px 20px 12px;
+  background: #eef6ff;
+  border-radius: 12px;
+}
+.wx-detail-head .wx-art {
+  flex: 0 0 auto;
+  width: clamp(58px, 16vw, 96px);
+  height: auto;
+}
+.wx-detail-head h2 {
+  font-size: clamp(22px, 5vw, 28px);
+  line-height: 1.15;
+  margin-top: 4px;
+}
+.wx-detail-head p,
+.wx-muted,
+.wx-detail-source {
+  color: #3c5975;
+  font-size: 13px;
+}
+.wx-close {
+  position: absolute;
+  inset: 18px 18px auto auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+.wx-detail-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 4px 12px;
+}
+.wx-detail-stats dt {
+  color: #3c5975;
+  font-size: 13px;
+}
+.wx-detail-stats dd {
+  margin: 2px 0 0;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.wx-rain-times {
+  padding: 12px;
+  border-block: 1px solid #dbe8f5;
+}
+.wx-rain-times h3 {
+  font-weight: 750;
+}
+.wx-rain-times ul {
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+.wx-rain-times li {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px 16px;
+  flex-wrap: wrap;
+  padding: 6px 0;
+  font-size: 14px;
+}
+.wx-rain-times .wx-muted {
+  margin-top: 5px;
+}
+.wx-detail-source {
+  margin: 0 12px 6px;
 }
 
 /* Cyclones and earthquakes */
@@ -344,7 +461,7 @@
   color: #7a4512;
 }
 .wx-hazards li.is-muted {
-  color: #6b819b;
+  color: #45627b;
 }
 .wx-hazards strong {
   display: block;
@@ -352,6 +469,70 @@
 }
 .wx-hazards p {
   margin: 2px 0 0;
+}
+.wx-hazard-panel {
+  scroll-margin-top: 90px;
+}
+.wx-hazard-panel h3 {
+  font-size: 18px;
+  margin-bottom: 14px;
+}
+.wx-hazards .wx-quake {
+  gap: 14px;
+  padding: 14px;
+  background: #f8f5ff;
+  color: #23364f;
+}
+.wx-quake-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  color: #6339a0;
+  background: #ebe3fa;
+  border-radius: 10px;
+}
+.wx-quake-icon svg {
+  margin: 0;
+}
+.wx-quake-content {
+  flex: 1;
+  min-width: 0;
+}
+.wx-quake-title, .wx-quake-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 5px 14px;
+  flex-wrap: wrap;
+}
+.wx-quake-title {
+  justify-content: space-between;
+}
+.wx-quake-title strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.wx-magnitude {
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  background: #eee6fc;
+  color: #54327c;
+  padding: 3px 8px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+.wx-magnitude.is-emphasis {
+  background: #ffead3;
+  color: #803b0e;
+}
+.wx-quake-meta {
+  margin-top: 4px;
+  color: #40566f;
+}
+.wx-quake-content .wx-quake-note {
+  margin-top: 5px;
+  color: #40566f;
 }
 .wx-foot {
   display: flex;
@@ -363,7 +544,7 @@
 }
 .wx-foot small {
   font-size: 11.5px;
-  color: #6b819b;
+  color: #45627b;
 }
 
 /* Beranda: the same pieces, tighter. */
@@ -400,11 +581,17 @@
     padding: 16px;
   }
   .wx-days {
-    grid-template-columns: repeat(7, 96px);
+    grid-template-columns: repeat(7, 115px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .wx-skeleton {
     animation: none;
+  }
+  .wx-card {
+    transition: none;
+  }
+  .wx-card:hover {
+    translate: none;
   }
 }

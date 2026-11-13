@@ -738,13 +738,13 @@
   width: 3px;
   height: 3px;
 }
-:is(.scene-steady-rain, .scene-rain-night) img {
+:is(.scene-drizzle, .scene-drizzle-night, .scene-light-rain, .scene-light-rain-night, .scene-steady-rain, .scene-rain-night) img {
   animation: rain-hover 4s ease-in-out infinite;
 }
-.scene-storm img {
+:is(.scene-storm, .scene-storm-night) img {
   animation: storm-hover 6s ease-in-out infinite;
 }
-:is(.scene-air, .scene-haze, .scene-fog-night) img {
+:is(.scene-air, .scene-haze, .scene-fog, .scene-fog-night) img {
   animation: air-hover 8s ease-in-out infinite;
 }
 .scene-soil img {

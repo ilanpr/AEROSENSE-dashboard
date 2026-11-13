@@ -19,6 +19,7 @@ const forecast = {
     weather_code: hours.map((_, i) => (i === 15 ? 95 : 2)),
     cape: hours.map(() => 400),
     wind_gusts_10m: hours.map(() => 30),
+    is_day: hours.map((_, i) => i % 24 >= 6 && i % 24 < 18 ? 1 : 0),
   },
   daily: {
     time: ["2026-11-13", "2026-11-14", "2026-11-15", "2026-11-16"],
@@ -36,11 +37,20 @@ test("forecast starts at the current local hour and explains warnings", () => {
   const o = parseForecast(forecast, now);
   assert.equal(o.hourly.length, 24);
   assert.equal(o.hourly[0].time, "2026-11-13T10:00");
+  assert.equal(o.day_hours[0].is_day, true);
+  assert.equal(o.day_hours.at(-1).time, "2026-11-14T23:00");
+  assert.equal(o.day_hours.at(-1).is_day, false);
   assert.equal(o.current.label, "Berawan sebagian");
   assert.equal(o.daily[0].label, "Hujan petir");
   const types = o.alerts.map((a) => a.type);
   assert.deepEqual(types, ["thunder", "heavy_rain", "uv"]);
   assert.match(o.alerts[0].text, /15\.00 WIB/);
+});
+
+test("expired hourly forecast does not reuse past hours", () => {
+  const o = parseForecast(forecast, Date.parse("2026-11-15T03:20:00Z"));
+  assert.deepEqual(o.hourly, []);
+  assert.deepEqual(o.day_hours, []);
 });
 
 test("labels cover thunderstorm codes", () => {

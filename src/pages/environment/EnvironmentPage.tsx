@@ -147,7 +147,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
     );
   }
   return (
-    <section className={`environment-hub insights-hub ${compact ? "insights-compact" : ""}`}>
+    <section className={`environment-hub insights-hub ${compact ? "insights-compact" : ""}`} data-topic={category}>
       <header className="insights-heading">
         <div>
           <Heading>
@@ -228,6 +228,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           {categories.map((c) => (
             <button
               key={c.id}
+              data-topic={c.id}
               aria-pressed={category === c.id}
               onClick={() => updateParams({ topic: c.id })}
             >

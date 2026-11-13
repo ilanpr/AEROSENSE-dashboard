@@ -6,6 +6,7 @@ export interface WeatherHour {
   code: number | null;
   cape: number | null;
   gust: number | null;
+  is_day?: boolean | null;
   label: string;
   icon: string;
 }
@@ -47,6 +48,7 @@ export interface WeatherOutlook {
     icon: string;
   };
   hourly: WeatherHour[];
+  day_hours?: WeatherHour[];
   daily: WeatherDay[];
   alerts: WeatherAlert[];
 }

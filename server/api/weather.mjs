@@ -85,8 +85,8 @@ export function parseForecast(data, now = Date.now()) {
   if (!c || !Array.isArray(h?.time) || !Array.isArray(d?.time)) throw fail("Format prakiraan berubah.", 502);
   // Times are local (Asia/Jakarta, UTC+7) without an offset.
   const local = new Date(now + 7 * 3600000).toISOString().slice(0, 13);
-  const start = Math.max(0, h.time.findIndex((t) => t.slice(0, 13) >= local));
-  const hourly = h.time.slice(start, start + 24).map((time, k) => {
+  const start = h.time.findIndex((t) => t.slice(0, 13) >= local);
+  const dayHours = start === -1 ? [] : h.time.slice(start).map((time, k) => {
     const i = start + k;
     return {
       time,
@@ -96,9 +96,11 @@ export function parseForecast(data, now = Date.now()) {
       code: h.weather_code?.[i] ?? null,
       cape: round(h.cape?.[i]),
       gust: round(h.wind_gusts_10m?.[i]),
+      is_day: h.is_day?.[i] === 1 ? true : h.is_day?.[i] === 0 ? false : null,
       ...weatherLabel(h.weather_code?.[i]),
     };
   });
+  const hourly = dayHours.slice(0, 24);
   const daily = d.time.map((date, i) => ({
     date,
     code: d.weather_code?.[i] ?? null,
@@ -129,6 +131,7 @@ export function parseForecast(data, now = Date.now()) {
       ...weatherLabel(c.weather_code),
     },
     hourly,
+    day_hours: dayHours,
     daily,
     alerts: weatherAlerts(hourly, daily),
   };
@@ -267,7 +270,7 @@ export function weatherFacts(outlook, hazards, area, now = Date.now()) {
 
 const FORECAST =
   "https://api.open-meteo.com/v1/forecast?current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day" +
-  "&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,cape,wind_gusts_10m" +
+  "&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,cape,wind_gusts_10m,is_day" +
   "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_gusts_10m_max,uv_index_max" +
   "&timezone=Asia%2FJakarta&forecast_days=7";
 const GDACS = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=TC";

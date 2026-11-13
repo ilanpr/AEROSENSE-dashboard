@@ -45,9 +45,10 @@ test("condition illustration follows fresh weather evidence, not temperature alo
   const current = fact({ ...midday, value: 24 });
   for (const [code, scene] of [
     [3, "cloudy"],
-    [45, "cloudy"],
+    [45, "fog"],
+    [51, "drizzle"],
     [63, "steady-rain"],
-    [80, "steady-rain"],
+    [80, "light-rain"],
     [95, "storm"],
     [97, "storm"],
   ]) {
@@ -86,7 +87,7 @@ test("weather illustrations use both the condition and the reading's time in WIB
     ["2026-11-06T05:00:00Z", 2, "sunny-dusk", "Cuaca terasa hangat"],
     ["2026-11-06T05:00:00Z", 2, "sunny", "Cuaca terasa panas"],
     ["2026-11-07T00:00:00Z", 3, "sunny-dusk", "Cuaca terasa hangat"],
-    ["2026-11-06T05:00:00Z", 45, "cloudy", "Cuaca terasa hangat"],
+    ["2026-11-06T05:00:00Z", 45, "fog", "Cuaca terasa hangat"],
     ["2026-11-06T10:00:00Z", 0, "sunny-dusk"],
     ["2026-11-06T10:00:00Z", 63, "steady-rain"],
     ["2026-11-06T11:00:00Z", 2, "sunny-night"],
@@ -95,7 +96,9 @@ test("weather illustrations use both the condition and the reading's time in WIB
     ["2026-11-06T13:00:00Z", 3, "cloudy-night"],
     ["2026-11-06T13:00:00Z", 45, "fog-night"],
     ["2026-11-06T13:00:00Z", 63, "rain-night"],
-    ["2026-11-06T13:00:00Z", 95, "storm", "Cuaca terasa hangat"],
+    ["2026-11-06T13:00:00Z", 51, "drizzle-night"],
+    ["2026-11-06T13:00:00Z", 80, "light-rain-night"],
+    ["2026-11-06T13:00:00Z", 95, "storm-night", "Cuaca terasa hangat"],
   ]) {
     const checkedAt = Date.parse(validAt) + 60000;
     const weather = fact({

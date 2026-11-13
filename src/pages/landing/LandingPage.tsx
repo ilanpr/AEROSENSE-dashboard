@@ -154,7 +154,7 @@ export function LandingPage() {
                 </button>
               ))}
             </div>
-            <article className="landing-feature-detail" aria-live="polite">
+            <article className="landing-feature-detail" data-feature={feature.path} aria-live="polite">
               <div>
                 <h3>{feature.heading}</h3>
                 <p>{feature.description}</p>

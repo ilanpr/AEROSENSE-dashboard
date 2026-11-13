@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import type { Scene } from "@/lib/environment-presentation";
 import { useIllustrationMotion } from "@/hooks/useIllustrationMotion";
+import { conditionArtUrl } from "@/lib/condition-art";
 
 export function ConditionScene({
   scene,
@@ -34,7 +35,7 @@ export function ConditionScene({
         </>
       )}
       <img
-        src={`/assets/environment/${scene === "sensor" ? "sensor-node-v3" : scene}.webp?v=20261107b`}
+        src={conditionArtUrl(scene === "sensor" ? "sensor-node-v3" : scene)}
         alt=""
         width="360"
         height="360"
