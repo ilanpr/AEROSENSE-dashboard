@@ -749,8 +749,8 @@ async function nativeAnswer(j, p) {
       ? "concerned"
       : "neutral";
   await stage(j, { answer: text, denied, emotion });
-  if (j.kind === "web_chat" && j.body.voice === true && j.owner_id)
-    voiceRoutes.prefetch(j.owner_id, text);
+  // Prepare the first spoken part of every web answer, so "Dengarkan" starts at once.
+  if (j.kind === "web_chat" && j.owner_id && !denied) voiceRoutes.prefetch(j.owner_id, text);
   const robot =
     j.kind === "robot_chat" ? await one("ae_robots", "id=eq." + filter(j.body.robot_id)) : null;
   return {
@@ -1369,7 +1369,7 @@ if (e.DISASTER_NEWS_ENABLED !== "false") {
   newsTimer = setInterval(refreshNews, 15 * 60000);
   newsTimer.unref();
 }
-// Robot mood every 15 minutes. Disable with ROBOT_MOOD_ENABLED=false.
+// Robot mood every 30 minutes. Disable with ROBOT_MOOD_ENABLED=false.
 const moodTimer =
   e.ROBOT_MOOD_ENABLED === "false"
     ? null

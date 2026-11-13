@@ -270,7 +270,7 @@ export function speechText(text: string): string {
     .join(" ");
 }
 
-export function answerChunks(text: string, first = 140, rest = 280): string[] {
+export function answerChunks(text: string, first = 100, rest = 280): string[] {
   const sentences = speechText(text.normalize("NFKC"))
     .replace(/\s+/g, " ")
     .trim()

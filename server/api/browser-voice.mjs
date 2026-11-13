@@ -27,7 +27,8 @@ export function speechText(text) {
     .join(" ");
 }
 
-export function answerChunks(text, first = 140, rest = 280) {
+// A short first part makes speech start sooner; later parts are made while earlier ones play.
+export function answerChunks(text, first = 100, rest = 280) {
   const sentences = speechText(text.normalize("NFKC"))
     .replace(/\s+/g, " ")
     .trim()

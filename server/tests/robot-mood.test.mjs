@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { moodFor, awakeHour, startRobotMood } from "../api/robot-mood.mjs";
+import { moodFor, awakeHour, startRobotMood, MOOD_EVERY_MS } from "../api/robot-mood.mjs";
 
 const now = Date.parse("2026-11-12T03:00:00Z"); // 10.00 WIB
 const latest = (pm25, extra = {}) => ({
@@ -65,5 +65,5 @@ test("quiet hours and offline robots are skipped; one command per robot per slot
   }
   tick();
   await new Promise((r) => setTimeout(r, 20));
-  assert.deepEqual(spoken, [["r1", "mood:r1:" + Math.floor(now / 900000), "danger"]]);
+  assert.deepEqual(spoken, [["r1", "mood:r1:" + Math.floor(now / MOOD_EVERY_MS), "danger"]]);
 });

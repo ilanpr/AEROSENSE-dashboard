@@ -181,17 +181,24 @@ export function useChatVoice(userId: string | undefined, onTranscript: (text: st
           "blob",
         );
       setPreparingSpeech(true);
-      let next = fetchPart(0);
+      // Ask for the first two parts at once; each later part is requested while the one before plays.
+      const pending = new Map<number, Promise<Blob>>();
+      const request = (part: number) => {
+        if (part < parts.length && !pending.has(part)) {
+          const p = fetchPart(part);
+          void p.catch(() => {});
+          pending.set(part, p);
+        }
+      };
+      request(0);
+      request(1);
       for (let part = 0; part < parts.length; part++) {
-        const blob = await next;
+        const blob = await pending.get(part)!;
         if (controller.signal.aborted) return;
         if (!blob.type.startsWith("audio/wav"))
           throw new Error("Suara belum tersedia. Coba dengarkan kembali.");
-        // Prepare the next part while the current part plays; never wait for the full answer audio.
-        if (part + 1 < parts.length) {
-          next = fetchPart(part + 1);
-          void next.catch(() => {});
-        }
+        request(part + 1);
+        request(part + 2);
         if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
         audioUrl.current = URL.createObjectURL(blob);
         const audio = new Audio(audioUrl.current);

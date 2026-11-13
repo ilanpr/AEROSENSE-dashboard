@@ -1,6 +1,6 @@
-// Robot mood: every 15 minutes (06.00–21.00 WIB) each online robot tells how the air near its node feels,
+// Robot mood: every 30 minutes (06.00–21.00 WIB) each online robot tells how the air near its node feels,
 // with a face matching the condition, what the number means, and what to do. Pure text logic is in moodFor().
-export const MOOD_EVERY_MS = 15 * 60000;
+export const MOOD_EVERY_MS = 30 * 60000;
 
 const HOOKS = {
   danger: [
