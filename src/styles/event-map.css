@@ -428,3 +428,40 @@
 .heat-legend p {
   margin: 0;
 }
+
+/* Heatmap: blend the colour field into the map so streets and names stay readable, like a weather map. */
+.heat-overlay {
+  mix-blend-mode: multiply;
+  image-rendering: auto;
+}
+.live-map.heat-on .live-map-tiles {
+  filter: grayscale(1) contrast(1.08) brightness(1.04);
+}
+.heat-label {
+  background: none;
+  border: 0;
+}
+.heat-label span {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.9);
+  color: #1d2f43;
+  font-size: 11px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgb(15 40 80 / 0.22);
+  pointer-events: none;
+}
+.heat-legend-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.heat-legend-head strong {
+  color: #1d2f43;
+  font-size: 12px;
+}

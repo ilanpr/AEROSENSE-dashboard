@@ -152,7 +152,7 @@ export function LiveMap({
   if (!active && !userLocation)
     return <p className="live-notice">Koordinat node belum tersedia.</p>;
   return (
-    <div className="live-map">
+    <div className={"live-map" + (heat !== "off" ? " heat-on" : "")}>
       {heatmap && (
         <div className="heat-controls" role="group" aria-label="Lapisan heatmap">
           {(["off", ...Object.keys(HEAT_LAYERS)] as (HeatLayerKey | "off")[]).map((k) => (

@@ -8,32 +8,35 @@ export const LAYERS = {
     field: "temperature_2m",
     unit: "°C",
     source: "Open-Meteo (model cuaca)",
+    minStep: 0.1, // ICON/GFS around 0.1°
   },
   pm25: {
     url: "https://air-quality-api.open-meteo.com/v1/air-quality",
     field: "pm2_5",
     unit: "µg/m³",
     source: "Open-Meteo / CAMS (model kualitas udara)",
+    minStep: 0.2, // CAMS is coarser; a finer grid only repeats values
   },
   aqi: {
     url: "https://air-quality-api.open-meteo.com/v1/air-quality",
     field: "us_aqi",
     unit: "AQI US",
     source: "Open-Meteo / CAMS (model kualitas udara)",
+    minStep: 0.2,
   },
 };
 
-const MAX_POINTS = 12; // per axis, so at most 144 locations per request
+const MAX_POINTS = 16; // per axis, so at most 256 locations per request
 const MAX_SPAN = 24; // degrees; wider views are refused instead of fetching a coarse grid
 
 // Snap the view to a grid. Returns the grid origin, step and size, or throws on a bad view.
-export function heatGrid(south, west, north, east) {
+export function heatGrid(south, west, north, east, minStep = 0.1) {
   if (![south, west, north, east].every(Number.isFinite)) throw fail("Area peta tidak valid.");
   if (south >= north || west >= east || Math.abs(south) > 85 || Math.abs(north) > 85)
     throw fail("Area peta tidak valid.");
   const span = Math.max(north - south, east - west);
   if (span > MAX_SPAN) throw fail("Perbesar peta untuk melihat heatmap.");
-  const step = Math.max(0.1, Math.ceil((span / (MAX_POINTS - 2)) * 20) / 20);
+  const step = Math.max(minStep, Math.ceil((span / (MAX_POINTS - 2)) * 20) / 20);
   const s = Math.floor(south / step) * step,
     w = Math.floor(west / step) * step;
   const rows = Math.min(MAX_POINTS, Math.ceil((north - s) / step) + 1);
@@ -49,7 +52,7 @@ export function heatmapRoutes({ send, rate, request, now = Date.now }) {
     const layer = LAYERS[url.searchParams.get("layer")];
     if (!layer) throw fail("Lapisan heatmap tidak dikenal.");
     const q = (k) => Number(url.searchParams.get(k));
-    const g = heatGrid(q("south"), q("west"), q("north"), q("east"));
+    const g = heatGrid(q("south"), q("west"), q("north"), q("east"), layer.minStep);
     const key = [url.searchParams.get("layer"), g.south, g.west, g.step, g.rows, g.cols].join(":");
     const hit = cache.get(key);
     if (hit && hit.until > now()) return send(res, 200, hit.body), true;
