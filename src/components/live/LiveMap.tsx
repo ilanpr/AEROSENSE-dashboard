@@ -8,6 +8,8 @@ import { Link } from "react-router-dom";
 import type { GeoPoint } from "@/lib/nearby-nodes";
 import { ArrowUpRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useLiveData } from "@/hooks/useLiveData";
+import type { Hazards } from "@/types/weather.types";
 import {
   MapContainer,
   TileLayer,
@@ -22,6 +24,50 @@ import {
 import { dateLabel, type EnvironmentEvent, type LiveNode } from "@/types/live.types";
 import "leaflet/dist/leaflet.css";
 import "@/styles/event-map.css";
+// Active tropical cyclones (GDACS) and recent M5+ earthquakes (BMKG) around Indonesia.
+function HazardMarkers() {
+  const { data } = useLiveData<Hazards>("/v1/hazards", 600000, false);
+  return (
+    <>
+      {(data?.cyclones || []).map((c) => (
+        <Circle
+          key={c.id}
+          center={[c.latitude, c.longitude]}
+          radius={250000}
+          pathOptions={{
+            color: c.level === "red" ? "#b42332" : c.level === "orange" ? "#d9731f" : "#2f7d5b",
+            weight: 2,
+            dashArray: "6 6",
+            fillOpacity: 0.08,
+          }}
+        >
+          <Tooltip direction="top">
+            Siklon tropis {c.name} · status {c.level}
+            {c.severity ? ` · ${c.severity}` : ""}
+          </Tooltip>
+        </Circle>
+      ))}
+      {(data?.quakes || []).map((q) => (
+        <CircleMarker
+          key={q.id}
+          center={[q.latitude, q.longitude]}
+          radius={Math.max(5, (q.magnitude - 4) * 6)}
+          pathOptions={{ color: "#fff", weight: 2, fillColor: "#c2410c", fillOpacity: 0.85 }}
+        >
+          <Tooltip direction="top">
+            Gempa M{q.magnitude} · {q.region} ·{" "}
+            {new Date(q.time).toLocaleString("id-ID", {
+              dateStyle: "medium",
+              timeStyle: "short",
+              timeZone: "Asia/Jakarta",
+            })}{" "}
+            WIB
+          </Tooltip>
+        </CircleMarker>
+      ))}
+    </>
+  );
+}
 export type WatersensePoint = GeoPoint & {
   id: string;
   name: string;
@@ -286,6 +332,7 @@ export function LiveMap({
           </>
         )}
         {heat !== "off" && <HeatField layer={heat} onInfo={setHeatInfo} />}
+        {heatmap && <HazardMarkers />}
         {showNodes &&
           valid.map((n) => (
             <Marker

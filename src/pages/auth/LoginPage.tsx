@@ -82,7 +82,7 @@ export function LoginPage() {
                         setError("");
                       }}
                     >
-                      Akun {a.label.toLowerCase()} <ArrowRight size={14} />
+                      {a.label} <ArrowRight size={14} />
                     </button>
                   ))}
                 </div>

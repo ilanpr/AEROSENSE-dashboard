@@ -8,6 +8,7 @@ import { browserVoiceRoutes, defaultStyle, speechText } from "./browser-voice.mj
 import { accountRoutes } from "./accounts.mjs";
 import { heatmapRoutes } from "./heatmap.mjs";
 import { guestChatRoutes, publicNode } from "./guest-chat.mjs";
+import { weatherService, weatherRoutes, weatherFacts } from "./weather.mjs";
 import { startRobotMood } from "./robot-mood.mjs";
 import { useWibowo, wibowoSpeech } from "./wibowo.mjs";
 import { disasterNews } from "./disaster-news.mjs";
@@ -672,6 +673,25 @@ async function nativeRefresh(j, p) {
     quality: r.quality ?? {},
   }));
   await stage(j, { context: rows, snapshot_at: new Date().toISOString() });
+  // Forecast, warnings, cyclones and nearby earthquakes for every question; a failure leaves them out.
+  let outlook_facts = [];
+  const spot = rows.find((r) => Number.isFinite(r.latitude) && Number.isFinite(r.longitude));
+  if (spot)
+    try {
+      // The answer check only accepts facts tagged with the node's hub area.
+      const hub = await one(
+        "ae_environment_areas",
+        "source_node_id=eq." + filter(spot.node_id) + "&enabled=eq.true&select=id",
+      );
+      const area = { id: hub?.id, name: spot.name, latitude: spot.latitude, longitude: spot.longitude };
+      const [wx, hz] = !hub?.id ? [null, null] : await Promise.all([
+        weather.outlook(spot.latitude, spot.longitude).catch(() => null),
+        weather.hazards().catch(() => null),
+      ]);
+      if (hub?.id) outlook_facts = weatherFacts(wx, hz, area);
+    } catch {
+      /* Weather is supplementary. */
+    }
   let disaster_news = [];
   if (/berita|kabar|bencana|karhutla|indonesia/i.test(j.stage.text || "")) {
     try {
@@ -705,7 +725,8 @@ async function nativeRefresh(j, p) {
     text: j.stage.text,
     node_ids: j.body.node_ids || [],
     context: rows,
-    disaster_news,
+    // Outlook first: the Hub node keeps a fixed number of extra facts after the area facts.
+    disaster_news: [...outlook_facts, ...disaster_news],
   };
 }
 async function nativeGate(j, p) {
@@ -939,6 +960,8 @@ const voiceRoutes = browserVoiceRoutes({
 });
 const accounts = accountRoutes({ db, one, rpc, user, send, filter, rawBody, rate, request });
 const heatmap = heatmapRoutes({ send, rate, request });
+const weather = weatherService({ request });
+const weatherApi = weatherRoutes({ service: weather, send, rate });
 const guestChat = guestChatRoutes({ one, filter, enqueue, rawBody, send, rate });
 const browserRoutes = webRoutes({
   db,
@@ -983,6 +1006,7 @@ const server = http.createServer(async (req, res) => {
     if (await voiceRoutes(req, res, url)) return;
     if (await heatmap(req, res, url)) return;
     if (await guestChat(req, res, url)) return;
+    if (await weatherApi(req, res, url)) return;
     if (await accounts(req, res, url)) return;
     if (await browserRoutes(req, res, url)) return;
     if (await sprinklerRoutes(req, res, url)) return;

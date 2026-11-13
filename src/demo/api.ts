@@ -71,6 +71,8 @@ export async function demoRequest(
   const body = options.body ? JSON.parse(String(options.body)) : {};
   if (p === "/v1/disasters") return publicData("/demo-public/disasters", options.signal);
   if (p === "/v1/heatmap") return demoHeatmap(url.searchParams);
+  if (p === "/v1/weather") return demoWeather();
+  if (p === "/v1/hazards") return demoHazards();
   const publicReads = new Set([
     "/v1/dashboard",
     "/v1/nodes",
@@ -330,7 +332,13 @@ function demoHeatmap(q: URLSearchParams) {
             ? 30 + 18 * wave
             : layer === "wind"
               ? 14 + 8 * wave
-              : 80 + 40 * wave;
+              : layer === "rain"
+                ? Math.max(0, 9 * wave - 2)
+                : layer === "cloud"
+                  ? Math.max(0, Math.min(100, 55 + 45 * wave))
+                  : layer === "thunder"
+                    ? Math.max(0, 1400 + 1600 * wave)
+                    : 80 + 40 * wave;
       return Math.round(v * 10) / 10;
     }),
   );
@@ -353,5 +361,74 @@ function demoHeatmap(q: URLSearchParams) {
     ...(direction ? { direction } : {}),
     source: "Simulasi demo",
     valid_at: new Date().toISOString(),
+  };
+}
+
+// Simulated outlook in the shape of /v1/weather (not real forecast data).
+function demoWeather() {
+  const now = new Date(Date.now() + 7 * 3600000);
+  const base = now.toISOString().slice(0, 13);
+  const startHour = now.getUTCHours();
+  const label = (code: number) =>
+    code >= 95
+      ? { label: "Hujan petir", icon: "thunder" }
+      : code >= 61
+        ? { label: "Hujan ringan", icon: "rain" }
+        : code === 3
+          ? { label: "Berawan", icon: "cloudy" }
+          : code === 2
+            ? { label: "Berawan sebagian", icon: "partly" }
+            : { label: "Cerah", icon: "clear" };
+  const hourly = Array.from({ length: 24 }, (_, i) => {
+    const h = (startHour + i) % 24;
+    const code = h >= 14 && h <= 16 ? 95 : h === 17 ? 61 : h >= 10 && h < 14 ? 2 : h < 6 || h > 19 ? 0 : 1;
+    const t = new Date(Date.parse(base + ":00:00Z") + i * 3600000).toISOString().slice(0, 16);
+    return {
+      time: t,
+      temperature: Math.round((27 + 5 * Math.sin(((h - 8) / 24) * 2 * Math.PI)) * 10) / 10,
+      rain_chance: h >= 13 && h <= 17 ? 75 : 10,
+      rain: code >= 95 ? 8 : code >= 61 ? 2 : 0,
+      code,
+      cape: code >= 95 ? 1900 : 500,
+      gust: code >= 95 ? 42 : 22,
+      ...label(code),
+    };
+  });
+  const codes = [95, 61, 2, 3, 95, 1, 2];
+  const daily = codes.map((code, i) => ({
+    date: new Date(Date.now() + 7 * 3600000 + i * 86400000).toISOString().slice(0, 10),
+    code,
+    ...label(code),
+    max: 31 + (i % 3),
+    min: 24 + (i % 2),
+    rain: code >= 95 ? 14 : code >= 61 ? 6 : 0,
+    rain_chance: code >= 95 ? 80 : code >= 61 ? 60 : 15,
+    gust: 30 + i * 2,
+    uv: 9 - (i % 3),
+  }));
+  return {
+    latitude: -7.28,
+    longitude: 112.79,
+    source: "Simulasi demo",
+    valid_at: new Date().toISOString(),
+    current: { temperature: 31.2, feels_like: 35.4, humidity: 68, rain: 0, cloud: 40, wind: 11.5, wind_direction: 110, gust: 24, is_day: true, code: 2, ...label(2) },
+    hourly,
+    daily,
+    alerts: [
+      { type: "thunder", level: "warning", title: "Potensi hujan petir", text: "Sekitar 14.00–16.00 WIB. Hindari berteduh di bawah pohon atau di lapangan terbuka, cabut perangkat listrik yang tidak perlu." },
+      { type: "uv", level: "warning", title: "UV sangat tinggi", text: "Indeks UV hingga 9. Pakai topi, tabir surya, dan berteduh saat siang." },
+    ],
+  };
+}
+function demoHazards() {
+  return {
+    cyclones: [
+      { id: "tc-demo", name: "DEMO", latitude: -13.2, longitude: 117.5, level: "green", severity: "Kecepatan angin maks 83 km/jam", updated_at: new Date().toISOString(), url: null },
+    ],
+    quakes: [
+      { id: "eq-demo", latitude: -8.9, longitude: 113.1, magnitude: 5.1, depth: "10 km", region: "Simulasi · 90 km BaratDaya Jember", potential: "Tidak berpotensi tsunami", time: new Date(Date.now() - 5 * 3600000).toISOString() },
+    ],
+    sources: ["Simulasi demo"],
+    updated_at: new Date().toISOString(),
   };
 }

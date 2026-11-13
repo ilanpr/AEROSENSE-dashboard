@@ -24,6 +24,28 @@ export const LAYERS = {
     source: "Open-Meteo / CAMS (model kualitas udara)",
     minStep: 0.2,
   },
+  // Rain now (mm in the last hour), cloud cover, and thunderstorm energy (CAPE) as the lightning potential.
+  rain: {
+    url: "https://api.open-meteo.com/v1/forecast",
+    field: "precipitation",
+    unit: "mm/jam",
+    source: "Open-Meteo (model cuaca, curah hujan)",
+    minStep: 0.1,
+  },
+  cloud: {
+    url: "https://api.open-meteo.com/v1/forecast",
+    field: "cloud_cover",
+    unit: "%",
+    source: "Open-Meteo (model cuaca, tutupan awan)",
+    minStep: 0.1,
+  },
+  thunder: {
+    url: "https://api.open-meteo.com/v1/forecast",
+    field: "cape",
+    unit: "J/kg",
+    source: "Open-Meteo (model cuaca, energi badai CAPE)",
+    minStep: 0.1,
+  },
   // Wind speed colours the field; direction (where the wind comes from, degrees) drives the particles.
   wind: {
     url: "https://api.open-meteo.com/v1/forecast",

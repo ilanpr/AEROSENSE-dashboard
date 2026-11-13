@@ -51,6 +51,48 @@ export const HEAT_LAYERS = {
       [300, "#6e2240"],
     ] as Stop[],
   },
+  rain: {
+    label: "Hujan",
+    unit: "mm/jam",
+    format: (v: number) => (v < 0.1 ? "0" : String(Math.round(v * 10) / 10).replace(".", ",")),
+    // White multiplies to nothing on the base map, so dry areas stay clear.
+    quiet: 0.1,
+    stops: [
+      [0, "#ffffff"],
+      [0.5, "#c9e6ff"],
+      [2, "#7cc0f5"],
+      [5, "#3a8be0"],
+      [10, "#2f56c9"],
+      [20, "#7a3fc4"],
+      [40, "#c2338f"],
+    ] as Stop[],
+  },
+  cloud: {
+    label: "Awan",
+    unit: "% tutupan",
+    format: (v: number) => `${Math.round(v)}%`,
+    stops: [
+      [0, "#ffffff"],
+      [30, "#e7ecf3"],
+      [60, "#c4ccd9"],
+      [85, "#9aa5b7"],
+      [100, "#7b8698"],
+    ] as Stop[],
+  },
+  thunder: {
+    label: "Potensi petir",
+    unit: "CAPE J/kg",
+    format: (v: number) => String(Math.round(v / 100) * 100),
+    quiet: 300,
+    stops: [
+      [0, "#ffffff"],
+      [500, "#fff2bf"],
+      [1000, "#f7d454"],
+      [2000, "#f39a3a"],
+      [3000, "#e2533a"],
+      [4500, "#a8326e"],
+    ] as Stop[],
+  },
   wind: {
     label: "Angin",
     unit: "km/jam",
@@ -394,6 +436,9 @@ export function HeatField({
         if (placed.some((q) => Math.abs(q.x - p.x) < 64 && Math.abs(q.y - p.y) < 34)) continue;
         const value = sample(f.g, f.v, lat, lng);
         if (value == null) continue;
+        // Rain and lightning labels only where there is something to report.
+        const quiet = (HEAT_LAYERS[layer] as { quiet?: number }).quiet;
+        if (quiet !== undefined && value < quiet) continue;
         let text = HEAT_LAYERS[layer].format(value);
         if (f.uv) {
           const u = sample(f.g, f.uv.u, lat, lng) ?? 0,

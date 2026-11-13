@@ -17,6 +17,7 @@ import {
   Clock3,
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
+import { WeatherOutlook } from "@/components/weather/WeatherOutlook";
 import { useAuth } from "@/hooks/useAuth";
 import { DataState } from "@/components/shared/DataState";
 import { DisasterNews } from "@/components/environment/DisasterNews";
@@ -520,6 +521,11 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           </details>
         </>
       )}
+      <WeatherOutlook
+        compact={compact}
+        place={locationMode === "device" && userPoint ? "lokasi Anda" : node?.name}
+        point={locationMode === "device" && userPoint ? userPoint : node && validPoint(node) ? node : undefined}
+      />
       <DisasterNews compact={compact} />
     </section>
   );

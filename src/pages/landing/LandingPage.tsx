@@ -33,9 +33,9 @@ const features = [
   {
     title: "Pahami konteks wilayah",
     icon: CloudSun,
-    heading: "Kondisi lingkungan wilayah",
+    heading: "Cuaca, prakiraan, dan peringatan",
     description:
-      "Lihat cuaca, kualitas udara, kondisi tanah, dan kejadian di sekitar lokasi pilihan.",
+      "Cuaca sekarang, prakiraan per jam dan 7 hari, potensi hujan petir, siklon tropis, gempa, kualitas udara, dan kondisi tanah di sekitar Anda.",
     path: "/environment",
     action: "Buka Hub Lingkungan",
     scene: "air" as const,
@@ -43,8 +43,9 @@ const features = [
   {
     title: "Tanyakan pada AERO-BOT",
     icon: MessageCircle,
-    heading: "Tanya AERO-BOT lewat teks atau suara",
-    description: "Tanyakan arti pembacaan sensor atau kondisi lingkungan di sekitar Anda.",
+    heading: "Tanya AERO-BOT, tanpa perlu akun",
+    description:
+      "Tanyakan udara, cuaca, atau peluang hujan. AERO-BOT menjelaskan arti angkanya dan apa yang sebaiknya dilakukan.",
     path: "/aerobot",
     action: "Temui AERO-BOT",
     scene: null,
@@ -106,21 +107,21 @@ export function LandingPage() {
         <section className="landing-hero landing-container">
           <div className="landing-hero-copy">
             <h1>
-              Udara lebih dipahami.
+              Udara &amp; cuaca dipahami.
               <br />
               <span>Tindakan lebih terarah.</span>
             </h1>
             <p>
-              Pantau kualitas udara di titik sensor, cek kondisi wilayah, atau tanyakan hasilnya ke
-              AERO-BOT.
+              Kualitas udara dari sensor, cuaca dan prakiraan hujan, hingga peringatan bencana di
+              sekitar Anda, dalam satu tempat. Tanya AERO-BOT kapan saja, tanpa login.
             </p>
             <div className="landing-actions">
               <Link className="landing-button" to="/dashboard">
                 Lihat pemantauan
                 <ArrowRight size={19} />
               </Link>
-              <Link className="landing-text-link" to="/login">
-                Masuk ke akun
+              <Link className="landing-text-link" to="/aerobot">
+                Tanya AERO-BOT
                 <ArrowUpRight size={17} />
               </Link>
             </div>

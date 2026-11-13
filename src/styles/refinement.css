@@ -2126,3 +2126,16 @@ input {
 .login-story-footer {
   font-size: 12px;
 }
+
+/* Phone: the AERO-BOT card is a compact call to action, not a tall decoration. */
+@media (max-width: 640px) {
+  .app-shell .aero-assist {
+    min-height: 0;
+    gap: 14px;
+    padding: 20px;
+  }
+  .app-shell .aero-assist .assist-visual,
+  .app-shell .aero-assist .assist-orbit {
+    display: none;
+  }
+}
