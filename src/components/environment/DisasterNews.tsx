@@ -29,6 +29,13 @@ interface DisasterResponse {
   status?: string;
   items: DisasterItem[];
 }
+const filters = [
+  { value: "Semua", label: "Semua" },
+  { value: "Karhutla", label: "Kebakaran hutan & lahan" },
+  { value: "Banjir", label: "Banjir" },
+  { value: "Gempa", label: "Gempa" },
+];
+
 export function DisasterNews({ compact = false }: { compact?: boolean }) {
   const { data, error, loading, refresh } = useLiveData<DisasterResponse>(
     "/v1/disasters",
@@ -44,7 +51,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
       <header className="disaster-heading">
         <div>
           <h2 id="disaster-heading">Kabar bencana Indonesia</h2>
-          <p>Pembaruan 7 hari terakhir · sumber publik</p>
+          <p>7 hari terakhir · Sumber publik</p>
         </div>
         <button
           className="live-icon-button"
@@ -55,22 +62,26 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
           <RefreshCw size={17} className={loading ? "refreshing" : ""} />
         </button>
       </header>
-      {!compact && (
-        <div className="disaster-filters" role="group" aria-label="Filter kabar bencana">
-          {["Semua", "Karhutla", "Banjir", "Gempa"].map((f) => (
+      <div className="disaster-toolbar">
+        <div className="disaster-filters" role="group" aria-label="Jenis bencana">
+          {filters.map(({ value, label }) => (
             <button
-              key={f}
-              aria-pressed={filter === f}
+              type="button"
+              key={value}
+              aria-pressed={filter === value}
               onClick={() => {
-                setFilter(f);
+                setFilter(value);
                 setExpanded(false);
               }}
             >
-              {f}
+              {label}
             </button>
           ))}
         </div>
-      )}
+        {data && data.status !== "unavailable" && (
+          <span className="disaster-result-count" role="status">{items.length} kabar</span>
+        )}
+      </div>
       {loading && !data ? (
         <p className="disaster-empty" role="status">
           Memuat kabar terbaru…
@@ -101,7 +112,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
                     <div className="disaster-card-top">
                       <span>
                         <Icon size={16} aria-hidden="true" />
-                        {item.type}
+                        {filters.find(({ value }) => value === item.type)?.label ?? item.type}
                       </span>
                       <small>{item.location}</small>
                     </div>
@@ -159,7 +170,9 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
             <p className="disaster-empty">
               {data.status === "unavailable"
                 ? "Sumber berita belum berhasil diperbarui. Coba lagi nanti."
-                : `Belum ada pembaruan ${filter === "Semua" ? "bencana Indonesia" : filter.toLowerCase()} dalam feed yang dipantau.`}
+                : filter === "Semua"
+                  ? "Belum ada kabar dari sumber yang dipantau."
+                  : `Belum ada kabar ${filters.find(({ value }) => value === filter)?.label.toLowerCase()} dari sumber yang dipantau.`}
             </p>
           )}
           {items.length > shown.length && (

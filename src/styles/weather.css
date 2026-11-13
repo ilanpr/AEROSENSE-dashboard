@@ -21,7 +21,6 @@
 .wx-art {
   display: block;
   object-fit: contain;
-  filter: drop-shadow(0 10px 14px rgba(24, 82, 160, 0.16));
 }
 
 /* Today: illustration, headline, and the few numbers that decide the day. */
@@ -239,9 +238,6 @@
   cursor: pointer;
   text-align: center;
   transition: translate 160ms ease, border-color 160ms ease;
-}
-.wx-card .wx-art {
-  filter: none;
 }
 .wx-card-arrow {
   position: absolute;

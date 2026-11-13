@@ -44,7 +44,7 @@ const features = [
   {
     title: "Tanyakan pada AERO-BOT",
     icon: MessageCircle,
-    heading: "Tanya AERO-BOT, tanpa perlu akun",
+    heading: "Tanya AERO-BOT",
     description:
       "Tanyakan udara, cuaca, atau peluang hujan. AERO-BOT menjelaskan arti angkanya dan apa yang sebaiknya dilakukan.",
     path: "/aerobot",

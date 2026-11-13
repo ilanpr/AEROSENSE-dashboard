@@ -216,15 +216,11 @@
 }
 
 .app-shell .environment-hub .condition-scene img {
-  filter: drop-shadow(0 10px 12px rgb(9 24 54 / 16%));
+  filter: none;
 }
 
 .app-shell .environment-hub .condition-scene.scene-muted img {
   filter: grayscale(0.6);
-}
-
-.app-shell .environment-hub .condition-scene.scene-haze:not(.scene-muted) img {
-  filter: none;
 }
 
 .landing-cheer {

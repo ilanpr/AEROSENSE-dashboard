@@ -23,26 +23,51 @@
   color: #4c6782;
   margin-top: 6px;
 }
+.disaster-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+}
 .disaster-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #dce8f5;
+  border-radius: 14px;
+  background: #fff;
 }
 .disaster-filters button {
   min-height: 44px;
-  padding: 9px 16px;
-  border: 1px solid #dce8f5;
-  border-radius: 24px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 9px;
   font-size: 13px;
+  font-weight: 650;
   color: #426380;
-  background: #fff;
   cursor: pointer;
+}
+.disaster-filters button[aria-pressed="false"]:hover {
+  background: #eef5ff;
 }
 .disaster-filters button[aria-pressed="true"] {
   color: #fff;
   background: #175fb4;
-  border-color: #175fb4;
+}
+.disaster-result-count {
+  color: #426380;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 450px) {
+  .disaster-filters {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .disaster-grid {
   display: grid;
