@@ -22,37 +22,37 @@ import "@/styles/landing.css";
 
 const features = [
   {
-    title: "Pantau titik di sekitar",
+    title: "Sensor udara",
     icon: Radio,
     heading: "Pembacaan sensor per lokasi",
     description:
       "Pilih titik sensor di peta untuk melihat kondisi udara dan waktu pembacaan terakhir.",
     path: "/dashboard",
-    action: "Jelajahi pemantauan",
+    action: "Lihat pemantauan",
     scene: "sensor" as const,
   },
   {
-    title: "Pahami konteks wilayah",
+    title: "Cuaca dan lingkungan",
     icon: CloudSun,
     heading: "Cuaca, prakiraan, dan peringatan",
     description:
-      "Cuaca sekarang, prakiraan per jam dan 7 hari, potensi hujan petir, siklon tropis, gempa, kualitas udara, dan kondisi tanah di sekitar Anda.",
+      "Lihat perkiraan hujan per jam, kualitas udara wilayah, dan kejadian di sekitar titik sensor.",
     path: "/environment",
     action: "Buka Hub Lingkungan",
     scene: "air" as const,
   },
   {
-    title: "Tanyakan pada AERO-BOT",
+    title: "Tanya AERO-BOT",
     icon: MessageCircle,
     heading: "Tanya AERO-BOT",
     description:
-      "Tanyakan udara, cuaca, atau peluang hujan. AERO-BOT menjelaskan arti angkanya dan apa yang sebaiknya dilakukan.",
+      "Tanya kapan hujan diperkirakan turun atau apa arti angka kualitas udara di sekitar Anda.",
     path: "/aerobot",
-    action: "Temui AERO-BOT",
+    action: "Tanya AERO-BOT",
     scene: null,
   },
   {
-    title: "Telusuri dan unduh data",
+    title: "Riwayat dan laporan",
     icon: ChartNoAxesCombined,
     heading: "Grafik, laporan, dan ekspor data",
     description:
@@ -108,9 +108,7 @@ export function LandingPage() {
         <section className="landing-hero landing-container">
           <div className="landing-hero-copy">
             <h1>
-              Kenali udara dan cuaca
-              <br />
-              <span>di sekitar Anda.</span>
+              Kenali udara dan cuaca <span>di sekitar Anda.</span>
             </h1>
             <p>
               Lihat pembacaan sensor, cek prakiraan hujan, dan temukan peringatan di sekitar Anda.
@@ -143,7 +141,7 @@ export function LandingPage() {
 
         <section id="fitur" className="landing-features landing-container">
           <div className="landing-section-heading">
-            <h2>Fitur pemantauan</h2>
+            <h2>Yang bisa Anda pantau</h2>
           </div>
           <div className="landing-feature-layout">
             <div className="landing-feature-options" aria-label="Pilih fitur AEROSENSE">
@@ -184,7 +182,7 @@ export function LandingPage() {
         <section id="cara-kerja" className="landing-workflow landing-container">
           <div className="landing-workflow-intro">
             <h2>Cara kerja</h2>
-            <p>Dari sensor di lokasi sampai tindakan pengelola, dalam tiga langkah.</p>
+            <p>Dari pembacaan sensor hingga tindak lanjut di lokasi.</p>
           </div>
           <ol className="landing-workflow-steps">
             <li>

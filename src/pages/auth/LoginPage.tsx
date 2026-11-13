@@ -1,3 +1,4 @@
+import { AuthStory } from "./AuthStory";
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ROUTES } from "@/lib/constants";
@@ -30,43 +31,10 @@ export function LoginPage() {
 
   return (
     <div className="login-page">
-      <section className="login-story">
-        <Link to={ROUTES.DASHBOARD} className="login-brand" aria-label="AEROSENSE — Beranda">
-          <img
-            src="/assets/brand/aerosense-mark.png"
-            className="login-brand-icon"
-            width="40"
-            height="40"
-            alt=""
-          />
-          <span>
-            AERO<strong>SENSE</strong>
-          </span>
-        </Link>
-        <div className="login-story-copy">
-          <span className="login-location">
-            <span /> Surabaya · Indonesia
-          </span>
-          <h1>
-            Kenali udara
-            <br />
-            di sekitar Anda.
-          </h1>
-          <Link to={ROUTES.DASHBOARD} className="guest-entry">
-            Lihat kondisi sekarang <ArrowRight size={19} />
-          </Link>
-        </div>
-        <img className="login-scene" src="/assets/aerobot/falcon/calm.webp" alt="Maskot AERO-BOT" />
-        <span className="login-story-footer">
-          {DEMO_MODE ? "Surabaya · Data simulasi" : "AEROSENSE · Pemantauan lingkungan"}
-        </span>
-      </section>
+      <AuthStory />
       <section className="login-form-panel" aria-labelledby="login-heading">
         <div className="login-form-inner">
-          <Link to={ROUTES.DASHBOARD} className="login-back">
-            ← Kembali ke pemantauan
-          </Link>
-          <h2 id="login-heading">Masuk ke akun</h2>
+          <h1 id="login-heading">Masuk</h1>
           <form onSubmit={handleSubmit}>
             {DEMO_MODE && (
               <div className="demo-login">
@@ -120,7 +88,7 @@ export function LoginPage() {
               />
             </div>
             <button type="submit" className="login-submit" disabled={busy}>
-              {busy ? "Memeriksa akun…" : "Masuk"}
+              {busy ? "Sedang masuk…" : "Masuk"}
               <ArrowRight size={18} />
             </button>
           </form>
@@ -128,7 +96,7 @@ export function LoginPage() {
             Belum punya akun? <Link to={ROUTES.REGISTER}>Daftar</Link>
           </p>
           <Link to={ROUTES.DASHBOARD} className="login-guest">
-            Lanjut sebagai tamu <ArrowRight size={16} />
+            Lihat pemantauan <ArrowRight size={16} />
           </Link>
         </div>
       </section>

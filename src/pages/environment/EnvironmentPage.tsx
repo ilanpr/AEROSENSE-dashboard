@@ -116,7 +116,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
     Object.entries(changes).forEach(([key, value]) => next.set(key, value));
     setParams(next, { replace: true });
   }
-  function useDeviceLocation() {
+  function requestDeviceLocation() {
     setLocationError("");
     if (!navigator.geolocation) {
       setLocationError("Peramban ini belum mendukung lokasi perangkat.");
@@ -172,7 +172,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             ]}
             onValueChange={(value) => {
               if (value === "__device__") {
-                useDeviceLocation();
+                requestDeviceLocation();
                 return;
               }
               setLocationMode("node");
@@ -191,7 +191,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
       <button
         className="live-icon-button"
         onClick={() => {
-          if (locationMode === "device") useDeviceLocation();
+          if (locationMode === "device") requestDeviceLocation();
           refresh();
         }}
         disabled={loading || locating}

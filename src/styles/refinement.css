@@ -493,38 +493,6 @@ input {
   height: calc(100dvh - 42px);
 }
 
-.login-page {
-  min-height: 100dvh;
-  display: grid;
-  grid-template-columns: 1.05fr 1fr;
-  background: #fff;
-}
-.login-story {
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse at 90% 50%, #305ca1, transparent 68%),
-    linear-gradient(140deg, #111e3e, #1c3a6b);
-  color: #fff;
-  padding: 44px clamp(30px, 5vw, 76px);
-  min-height: 700px;
-  display: flex;
-  flex-direction: column;
-}
-.login-story:after {
-  content: "";
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  border: 1px solid #9fcbff15;
-  border-radius: 50%;
-  right: -330px;
-  top: 80px;
-  box-shadow:
-    0 0 0 65px #9fcbff05,
-    0 0 0 130px #9fcbff04;
-  pointer-events: none;
-}
 .login-brand {
   position: relative;
   z-index: 1;
@@ -551,37 +519,6 @@ input {
   background: #fff;
   object-fit: contain;
 }
-.login-story-copy {
-  position: relative;
-  z-index: 2;
-  margin-top: 105px;
-}
-.login-location {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 12px;
-  color: #b9d6f8;
-  margin-bottom: 26px;
-}
-.login-location > span {
-  width: 5px;
-  height: 5px;
-  background: #82caff;
-  border-radius: 50%;
-}
-.login-story h1 {
-  font-size: clamp(38px, 4.3vw, 64px);
-  font-weight: 550;
-  letter-spacing: -0.055em;
-  line-height: 1.08;
-}
-.login-story-copy p {
-  font-size: 14px;
-  line-height: 1.8;
-  color: #b7cee9;
-  margin: 24px 0 28px;
-}
 .guest-entry {
   display: inline-flex;
   align-items: center;
@@ -600,20 +537,6 @@ input {
 .guest-entry:hover {
   background: #e5f1ff;
 }
-.login-scene {
-  width: clamp(240px, 30vw, 440px);
-  align-self: flex-end;
-  margin-top: 16px;
-  margin-right: -20px;
-  filter: drop-shadow(0 24px 28px #08162d35);
-  animation: login-float 7s ease-in-out infinite;
-}
-.login-story-footer {
-  margin-top: auto;
-  font-size: 10px;
-  color: #a7c5e9;
-  padding-top: 30px;
-}
 .login-form-panel {
   display: flex;
   align-items: center;
@@ -631,12 +554,6 @@ input {
   text-decoration: none;
   padding: 14px 0;
   margin-bottom: 24px;
-}
-.login-form-inner h2 {
-  font-size: 31px;
-  color: #173a57;
-  font-weight: 600;
-  letter-spacing: -0.045em;
 }
 .login-form-inner form > label {
   display: block;
@@ -734,15 +651,6 @@ input {
   font-size: 11px;
   color: #315d85;
 }
-@keyframes login-float {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-2deg);
-  }
-  50% {
-    transform: translateY(-12px) rotate(1deg);
-  }
-}
 @media (min-width: 1500px) {
   .app-shell main {
     max-width: 1400px;
@@ -762,9 +670,6 @@ input {
   .nav-entry {
     font-size: 12px;
     gap: 9px;
-  }
-  .login-story {
-    padding: 36px;
   }
 }
 @media (max-width: 767px) {
@@ -815,46 +720,7 @@ input {
     width: 100%;
     justify-content: flex-start;
   }
-  .login-page {
-    grid-template-columns: 1fr;
-  }
-  .login-story {
-    min-height: 440px;
-    padding: 28px 26px;
-  }
-  .login-story-copy {
-    margin-top: 45px;
-  }
-  .login-story h1 {
-    font-size: 41px;
-  }
-  .login-story-copy p {
-    font-size: 12px;
-    margin: 16px 0 22px;
-  }
-  .login-location {
-    margin-bottom: 18px;
-    font-size: 11px;
-  }
-  .login-scene {
-    position: relative;
-    width: min(260px, 80%);
-    align-self: center;
-    margin: 20px 0 0;
-    pointer-events: none;
-  }
-  .login-story-footer {
-    font-size: 9px;
-  }
-  .login-form-panel {
-    padding: 32px 26px 40px;
-  }
-  .login-back {
-    margin-bottom: 18px;
-  }
-  .login-form-inner h2 {
-    font-size: 28px;
-  }
+
 }
 @media (max-width: 600px) {
   .app-shell.demo-shell {
@@ -865,12 +731,6 @@ input {
     height: calc(100dvh - 58px);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .login-scene {
-    animation: none;
-  }
-}
-
 /* Bright AEROSENSE blue: white copy stays on cobalt; readings use translucent blue glass. */
 .app-shell :is(.sensor-hero, .insight-lead) {
   --panel-night: #0455d4;
@@ -1246,16 +1106,6 @@ input {
 }
 .status-method {
   margin-top: 4px;
-}
-.login-story {
-  background:
-    radial-gradient(ellipse at 95% 30%, #59b9ff55, transparent 65%),
-    linear-gradient(125deg, #075bce, #1386ed);
-}
-.login-story-copy p,
-.login-location,
-.login-story-footer {
-  color: #f0f7ff;
 }
 @media (min-width: 1300px) {
   .sensor-focus-grid {
@@ -2031,25 +1881,6 @@ input {
     align-items: flex-start;
     gap: 12px;
   }
-}
-
-/* Login: space between the headline and its button, the form title and the first block,
-   and keep the mascot from pushing the footer below the fold. */
-.login-story h1 + .guest-entry {
-  margin-top: 32px;
-}
-.login-form-inner h2 {
-  margin-bottom: 20px;
-}
-.login-scene {
-  max-height: 42vh;
-  object-fit: contain;
-}
-.login-location {
-  font-size: 13px;
-}
-.login-story-footer {
-  font-size: 12px;
 }
 
 /* Phone: the AERO-BOT card is a compact call to action, not a tall decoration. */

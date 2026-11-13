@@ -8,7 +8,7 @@
   --landing-muted: #36536b;
   --landing-blue: #075fc4;
   color: var(--landing-ink);
-  background: #fff;
+  background: radial-gradient(ellipse at 88% 18rem, #d1ebff, transparent 56rem), #f2f8ff;
   min-height: 100dvh;
 }
 .landing-container {

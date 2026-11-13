@@ -151,24 +151,10 @@ export function RobotScreenPage() {
         style={{ border: 0, width: "100%", height: "100%" }}
       />
       {!active && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: "8%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "grid",
-            gap: 12,
-            justifyItems: "center",
-          }}
-        >
-          <label style={{ color: "#234763", font: "600 16px Inter,sans-serif" }}>
-            Layar robot{" "}
-            <select
-              value={robot}
-              onChange={(e) => setRobot(e.target.value)}
-              style={{ padding: 8, borderRadius: 12 }}
-            >
+        <div className="robot-screen-controls">
+          <label>
+            Pilih robot
+            <select value={robot} onChange={(e) => setRobot(e.target.value)}>
               {ROBOT_SLOTS.map((id, i) => (
                 <option key={id} value={id}>
                   Robot {i + 1}
@@ -187,14 +173,7 @@ export function RobotScreenPage() {
                 .then(() => setActive(true))
                 .catch(() => setNotice("Ketuk kembali untuk mengaktifkan wajah."));
             }}
-            style={{
-              padding: "14px 24px",
-              border: 0,
-              borderRadius: 24,
-              color: "white",
-              background: "#0758d3",
-              font: "600 16px Inter, sans-serif",
-            }}
+            className="login-submit"
           >
             Aktifkan wajah
           </button>

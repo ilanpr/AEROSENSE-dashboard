@@ -1,12 +1,23 @@
 body {
-  --aero-canvas: #c8e5ff;
-  --aero-canvas-soft: #ebf5ff;
+  --aero-canvas-soft: #eaf5ff;
+  --aero-ink: #132f49;
+  --aero-muted: #3f5f79;
+  --aero-blue: #0957bd;
+  --aero-blue-hover: #074796;
+  --aero-control-radius: 16px;
+  --aero-inset: clamp(16px, 2.5vw, 28px);
+  --aero-display: clamp(2rem, 2.7vw, 2.625rem);
+  --aero-ease: cubic-bezier(.2,.7,.25,1);
+  --aero-glass: #eef8ffe8;
+  --aero-glass-depth: inset 0 1px 0 #fff, 0 5px 16px #194b7a16;
   --aero-surface: #f5faff;
+  --aero-illustration: radial-gradient(ellipse at 20% 5%, #f0fcff, transparent 65%),
+    linear-gradient(145deg, #a8e6fb, #b8c9ff 78%, #ffd9c2);
   --aero-panel-radius: 32px 32px 28px 28px;
   --aero-hero-radius: 36px 36px 30px 30px;
   --aero-card-radius: 22px;
   --aero-rim: #b8d6f0;
-  --aero-sheen: radial-gradient(ellipse at 24% 0%, #ffffffec, transparent 67%);
+  --aero-sheen: radial-gradient(ellipse at 24% 0%, #ffffffc9, transparent 72%);
   --aero-volume: inset 0 2px 0 #ffffffde, inset 0 -3px 7px #1d62a70d,
     0 7px 18px #17457b12;
 }
@@ -14,7 +25,6 @@ body {
 .landing-page {
   --landing-ink: #102a42;
   --landing-blue: #0755c9;
-  background: var(--aero-sheen), linear-gradient(150deg, var(--aero-canvas), #deefff 56%, #b8ddff);
 }
 
 .landing-page .landing-header {
@@ -36,8 +46,7 @@ body {
 }
 
 .landing-page .landing-hero-art {
-  background: radial-gradient(ellipse at 25% 15%, #defaff 0, transparent 62%),
-    linear-gradient(138deg, #a5e9fb, #b5c8ff 78%);
+  background: var(--aero-illustration);
 }
 
 .landing-page .landing-feature-detail {
@@ -60,16 +69,8 @@ body {
 
 .app-shell {
   --ui-surface-gradient: #deeeff;
-  background: radial-gradient(ellipse at 20% 4%, #edf8ff 0, transparent 38%),
-    linear-gradient(145deg, var(--aero-canvas-soft), var(--aero-canvas) 65%, #d7edff);
-}
-
-.login-page {
-  background-color: var(--aero-canvas-soft);
-}
-
-.login-page .login-form-panel {
-  background-color: #edf6ff;
+  background: radial-gradient(ellipse at 95% 2rem, #c2e3ff, transparent 46rem),
+    linear-gradient(160deg, var(--aero-canvas-soft), #d9edff);
 }
 
 .app-shell .app-sidebar {
@@ -101,12 +102,8 @@ body {
 }
 
 .app-shell .nav-entry {
-  border-radius: 12px;
+  border-radius: var(--aero-control-radius);
   min-height: 44px;
-}
-
-.app-shell .app-topbar {
-  background: #edf7ff;
 }
 
 .app-shell .nav-entry.active {
@@ -195,7 +192,7 @@ body {
 }
 
 .app-shell .chat-source-panel {
-  background: #edf2ff;
+  background: #eef3ff;
   border: 1px solid #d7e1f4;
   padding: 22px;
   border-radius: 18px;
@@ -205,7 +202,7 @@ body {
 .app-shell .chat-source-panel .chat-mascot { max-width: 148px; }
 
 .app-shell .live-chat > header {
-  background: #163e94;
+  background: linear-gradient(135deg, #154595, #0957bd);
 }
 
 .app-shell :is(.map-controls, .sensor-toolbar, .nearby-location) {
@@ -303,16 +300,21 @@ body {
 .app-shell :is(.live-panel, .live-state, .live-table-wrap, .live-chat, .wx-panel, .disaster-card,
   .map-controls, .sensor-toolbar, .nearby-location, .nearby-map-panel, .chat-source-panel,
   .recommend-card, .handsfree-card, .insight-disclosure, .sprinkler-section,
-  .management-location, .management-access, .management-rules, .management-side > section) {
+  .management-location, .management-access, .management-rules, .management-side > section,
+  .aero-assist, .wa-alert-entry) {
   background-image: var(--aero-sheen);
   border-radius: var(--aero-panel-radius);
   box-shadow: var(--aero-volume);
 }
 
 .app-shell :is(.live-panel, .live-table-wrap, .wx-panel, .map-controls, .sensor-toolbar,
-  .management-rules, .insight-disclosure) {
+  .management-rules, .insight-disclosure, .sprinkler-section, .management-access) {
   background-color: var(--aero-surface);
   border-color: var(--aero-rim);
+}
+
+.app-shell .aero-assist {
+  background: var(--aero-sheen), linear-gradient(155deg, #ebf7ff 20%, #d5e7ff 78%, #fff0e4);
 }
 
 .app-shell .insight-disclosure {
@@ -334,17 +336,17 @@ body {
   border-radius: var(--aero-card-radius);
 }
 
-body :is(.app-shell, .landing-page, .login-page, .monitoring-options) svg.lucide {
+svg.lucide {
   stroke-width: 1.8;
 }
 
-.app-shell .live-button:not(.secondary):not(.danger),
-.landing-page .landing-button {
+.app-shell .live-button:not(.secondary):not(.danger):not(.sprinkler-stop),
+.landing-page .landing-button,
+.login-submit {
   box-shadow: inset 0 1px 0 #ffffff4a, inset 0 -2px 4px #073f831c;
 }
 
 .monitoring-options[data-slot="select-content"] {
-  background: var(--aero-sheen), var(--aero-surface);
   border-color: var(--aero-rim);
   border-radius: var(--aero-card-radius);
 }
@@ -360,8 +362,6 @@ body :is(.app-shell, .landing-page, .login-page, .monitoring-options) svg.lucide
   margin-bottom: var(--section-gap, 20px);
   border: 1px solid var(--aero-rim);
   border-radius: var(--aero-card-radius);
-  background: var(--aero-sheen), #e3f2ff;
-  box-shadow: var(--aero-volume);
 }
 
 .environment-hub:not(.insights-compact) {
@@ -455,5 +455,322 @@ body :is(.app-shell, .landing-page, .login-page, .monitoring-options) svg.lucide
     --aero-panel-radius: 24px 24px 21px 21px;
     --aero-hero-radius: 28px 28px 24px 24px;
     --aero-card-radius: 18px;
+  }
+}
+
+:is(.landing-page, .app-shell, .login-page, .confirm-page) {
+  color: var(--aero-ink);
+}
+
+:is(.landing-page, .app-shell, .login-page) ::selection {
+  color: #fff;
+  background: var(--aero-blue);
+}
+
+.landing-page .landing-hero h1 {
+  text-wrap: balance;
+}
+
+.app-shell :is(.live-heading, .insights-heading, .page-heading) h1,
+.login-page .login-form-inner h1 {
+  font-size: var(--aero-display);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -.035em;
+}
+
+.app-shell :is(.live-panel, .management-rules, .sprinkler-section, .wx-panel) {
+  padding: var(--aero-inset);
+}
+
+.app-shell .live-panel > .live-table-wrap {
+  box-shadow: none;
+  background-image: none;
+  border-radius: var(--aero-control-radius);
+}
+
+.app-shell .live-panel > .live-state {
+  box-shadow: none;
+  background: #eaf4ff;
+  border-radius: var(--aero-control-radius);
+}
+
+.app-shell .nav-entry.active {
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+.app-shell :is(.assist-link, .live-button:not(.secondary, .danger, .sprinkler-stop)),
+.landing-page .landing-button,
+.login-submit {
+  background-color: var(--aero-blue);
+  color: #fff;
+}
+
+.app-shell :is(.assist-link, .live-button:not(.secondary, .danger, .sprinkler-stop)):hover,
+.landing-page .landing-button:hover,
+.login-submit:hover {
+  background-color: var(--aero-blue-hover);
+}
+
+:is(.app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
+  .monitoring-options[data-slot="select-content"], .wa-start-dialog, .robot-screen-controls) {
+  background: #eef8ff;
+  box-shadow: var(--aero-glass-depth);
+}
+
+.app-shell .app-topbar {
+  border-bottom: 1px solid #b8d6f070;
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  :is(.app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
+    .monitoring-options[data-slot="select-content"], .wa-start-dialog, .robot-screen-controls) {
+    background: var(--aero-glass);
+    backdrop-filter: blur(16px) saturate(135%);
+  }
+}
+
+.wa-start-dialog {
+  border-radius: var(--aero-panel-radius);
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :is(.app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
+    .monitoring-options[data-slot="select-content"], .wa-start-dialog, .robot-screen-controls) {
+    background: #fff;
+    backdrop-filter: none;
+    border-color: #6784a0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :is(.live-button, .assist-link, .landing-button, .login-submit, .guest-entry,
+    .landing-feature-options button, .environment-nav .insight-topics button):not(:disabled) {
+    transition: scale 180ms var(--aero-ease), background-color 180ms ease;
+  }
+
+  :is(.live-button, .assist-link, .landing-button, .login-submit, .guest-entry,
+    .landing-feature-options button, .environment-nav .insight-topics button):not(:disabled):active {
+    scale: .975;
+    transition-duration: 85ms;
+  }
+}
+
+.login-page {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-columns: minmax(0, .92fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(24px, 5vw, 72px);
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: clamp(16px, 3vw, 36px);
+  background: transparent;
+}
+
+body:has(.login-page),
+.confirm-page {
+  background: radial-gradient(ellipse at 10% 0%, #d0ecff, transparent 50rem), #eff7ff;
+}
+
+.login-page .login-story {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  min-height: 0;
+  padding: clamp(22px, 4vw, 44px);
+  border-radius: var(--aero-hero-radius);
+  background: var(--aero-illustration);
+  box-shadow: var(--aero-volume);
+  color: var(--aero-ink);
+  overflow: hidden;
+}
+
+.login-page:has(.register-inner) {
+  align-items: start;
+}
+
+.login-page:has(.register-inner) .login-story {
+  position: sticky;
+  top: 24px;
+}
+
+.login-page .login-brand {
+  color: var(--aero-blue);
+  width: fit-content;
+  letter-spacing: -.035em;
+}
+
+.login-page .login-brand strong {
+  color: inherit;
+  font-weight: 800;
+}
+
+.login-page .login-story-copy {
+  margin: 0;
+  grid-row: 3;
+}
+
+.login-page .login-story-copy p {
+  margin: 0 0 12px;
+  color: var(--aero-ink);
+  font-size: clamp(1.25rem, 2.3vw, 1.8rem);
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.login-page .login-scene {
+  grid-row: 2;
+  justify-self: center;
+  width: min(100%, 320px);
+  height: auto;
+  max-height: none;
+  margin: 0;
+  animation: none;
+  filter: drop-shadow(0 10px 14px #184d7c26);
+}
+
+.login-page .login-form-panel {
+  padding: clamp(20px, 4vw, 40px);
+  background-color: var(--aero-surface);
+}
+
+.login-page .login-form-inner {
+  max-width: 420px;
+}
+
+.login-page :is(.login-form-inner form > label, .register-form fieldset > label) {
+  color: var(--aero-muted);
+  font-size: .875rem;
+  font-weight: 650;
+}
+
+.login-page .login-form-inner h1 {
+  margin: 0 0 14px;
+}
+
+.login-page :is(.login-input, .register-select, .register-note) {
+  border-color: #a9c6df;
+  border-radius: var(--aero-control-radius);
+}
+
+.login-page .login-input input::placeholder {
+  color: #58738b;
+}
+
+.login-page .login-input:focus-within {
+  border-color: var(--aero-blue);
+  box-shadow: 0 0 0 2px #286fc440;
+}
+
+.login-page :is(.login-back, .login-register, .login-guest) {
+  color: var(--aero-muted);
+  font-size: .875rem;
+}
+
+.login-page .login-guest {
+  min-height: 44px;
+  padding-block: 12px 0;
+}
+
+.missing-page .aero-mascot {
+  width: 132px;
+  height: auto;
+  margin-inline: auto;
+}
+
+.robot-screen-controls {
+  position: absolute;
+  inset: auto 16px 7%;
+  margin-inline: auto;
+  width: min(calc(100% - 32px), 280px);
+  border: 1px solid var(--aero-rim);
+  border-radius: var(--aero-panel-radius);
+  padding: 16px;
+  color: var(--aero-ink);
+}
+
+.robot-screen-controls label {
+  display: grid;
+  gap: 8px;
+  font-size: .875rem;
+  font-weight: 650;
+}
+
+.robot-screen-controls select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--aero-rim);
+  border-radius: var(--aero-control-radius);
+  padding-inline: 12px;
+  background-color: white;
+}
+
+.robot-screen-controls .login-submit {
+  margin-top: 12px;
+  justify-content: center;
+}
+
+@media (max-width: 767px) {
+  .login-page {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 12px;
+    max-width: 540px;
+  }
+
+  .login-page:has(.register-inner) .login-story {
+    position: static;
+  }
+
+  .login-page .login-story {
+    grid-template-columns: minmax(0, 1fr) clamp(80px, 28vw, 122px);
+    grid-template-rows: auto auto;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 6px;
+  }
+
+  .login-page .login-story-copy {
+    grid-row: 2;
+  }
+
+  .login-page .login-story-copy p {
+    display: none;
+  }
+
+  .login-page .login-brand {
+    font-size: clamp(1rem, 5vw, 1.35rem);
+    gap: 6px;
+  }
+
+  .login-page .login-brand img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .login-page .login-scene {
+    grid-column: 2;
+    grid-row: 1 / 3;
+  }
+
+  .login-page .guest-entry {
+    min-height: 44px;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+
+  .login-page .demo-login > div {
+    flex-wrap: wrap;
+  }
+
+  .login-page .demo-login button {
+    flex: 1 1 76px;
+  }
+
+  .landing-page .landing-header nav {
+    border-radius: var(--aero-card-radius);
+    background: #eef8ff;
+    box-shadow: var(--aero-glass-depth);
   }
 }

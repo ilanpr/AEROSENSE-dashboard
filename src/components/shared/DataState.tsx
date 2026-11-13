@@ -28,7 +28,7 @@ export function DataState({
             </button>
           )}
           <Link className="live-button" to="/login">
-            Masuk akun
+            Masuk
           </Link>
         </div>
       )}

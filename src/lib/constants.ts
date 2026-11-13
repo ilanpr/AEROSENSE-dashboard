@@ -38,7 +38,7 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
     path: ROUTES.DASHBOARD,
     icon: "LayoutGrid",
   },
-  { label: "Hub lingkungan", path: ROUTES.ENVIRONMENT, icon: "Leaf" },
+  { label: "Hub Lingkungan", path: ROUTES.ENVIRONMENT, icon: "Leaf" },
   { label: "Kelola kawasan", path: ROUTES.MANAGEMENT, icon: "Settings2" },
   {
     label: "Peta sensor",
@@ -66,7 +66,7 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
     icon: "MessageCircle",
   },
   {
-    label: "Monitoring node",
+    label: "Perangkat sensor",
     path: ROUTES.NODE_MONITORING,
     icon: "Radio",
   },

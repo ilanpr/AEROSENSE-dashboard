@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
 import { useLocation, useNavigate } from "react-router-dom";
 import { NAV_ITEMS, ROUTES } from "@/lib/constants";
 import { Menu, ChevronRight, Bell } from "lucide-react";
@@ -13,19 +14,22 @@ interface TopbarProps {
 
 export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
   const { user } = useAuth();
+  const { canViewModel } = useAccess();
   const location = useLocation();
   const navigate = useNavigate();
   const currentItem = NAV_ITEMS.find((item) => item.path === location.pathname);
-  const currentLabel = currentItem
-    ? currentItem.label
-    : location.pathname.startsWith("/nodes/")
-      ? "Detail node"
-      : location.pathname === ROUTES.SYSTEM
-        ? "Pengaturan"
-        : "Workspace";
+  const currentLabel =
+    location.pathname === ROUTES.ANALYTICS && !canViewModel
+      ? "Riwayat udara"
+      : currentItem?.label ??
+        (location.pathname.startsWith("/nodes/")
+          ? "Detail sensor"
+          : location.pathname === ROUTES.SYSTEM
+            ? "Pengaturan"
+            : "Pemantauan");
 
   return (
-    <header className="app-topbar h-[72px] bg-white/90 border-b border-[#e9f0f8] flex items-center justify-between px-6 sm:px-9 sticky top-0 z-20 backdrop-blur-md">
+    <header className="app-topbar h-[72px] flex items-center justify-between px-6 sm:px-9 sticky top-0 z-20">
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
@@ -40,11 +44,11 @@ export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
         </button>
 
         <nav
-          aria-label="Breadcrumb"
-          className="flex items-center gap-2 text-[#97a7bb] text-xs font-semibold"
+          aria-label="Lokasi halaman"
+          className="flex items-center gap-2 text-[#526d88] text-xs font-semibold"
         >
           <span className="hidden sm:inline">AEROSENSE</span>
-          <ChevronRight className="hidden sm:block w-3.5 h-3.5 text-[#97a7bb]" />
+          <ChevronRight className="hidden sm:block w-3.5 h-3.5 text-[#526d88]" />
           <strong className="text-[#25405f] font-bold">{currentLabel}</strong>
         </nav>
       </div>

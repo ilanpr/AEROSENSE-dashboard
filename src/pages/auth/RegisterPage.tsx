@@ -1,3 +1,4 @@
+import { AuthStory } from "./AuthStory";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Building2, Lock, Mail, MapPin, Phone, Search, User } from "lucide-react";
@@ -93,39 +94,17 @@ export function RegisterPage() {
 
   return (
     <div className="login-page">
-      <section className="login-story">
-        <Link to={ROUTES.DASHBOARD} className="login-brand" aria-label="AEROSENSE — Beranda">
-          <img src="/assets/brand/aerosense-mark.png" className="login-brand-icon" width="40" height="40" alt="" />
-          <span>
-            AERO<strong>SENSE</strong>
-          </span>
-        </Link>
-        <div className="login-story-copy">
-          <span className="login-location">
-            <span /> Terbuka untuk semua warga
-          </span>
-          <h1>
-            Pantau udara
-            <br />
-            bersama.
-          </h1>
-          <Link to={ROUTES.DASHBOARD} className="guest-entry">
-            Lihat kondisi tanpa akun <ArrowRight size={19} />
-          </Link>
-        </div>
-        <img className="login-scene" src="/assets/aerobot/falcon/calm.webp" alt="Maskot AERO-BOT" />
-        <span className="login-story-footer">AEROSENSE · Pemantauan lingkungan</span>
-      </section>
+      <AuthStory />
 
       <section className="login-form-panel" aria-labelledby="register-heading">
         <div className="login-form-inner register-inner">
           <Link to={ROUTES.LOGIN} className="login-back">
-            ← Sudah punya akun? Masuk
+            Sudah punya akun? Masuk
           </Link>
           {sentTo ? (
             <div className="register-sent" role="status">
               <Mail size={28} aria-hidden="true" />
-              <h2 id="register-heading">Periksa email Anda</h2>
+              <h1 id="register-heading">Periksa email Anda</h1>
               <p>
                 Kami mengirim tautan konfirmasi ke <strong>{sentTo}</strong>. Buka tautan itu untuk mengaktifkan
                 akun. Tidak ada di kotak masuk? Periksa folder spam.
@@ -142,7 +121,7 @@ export function RegisterPage() {
             </div>
           ) : (
             <>
-              <h2 id="register-heading">Buat akun</h2>
+              <h1 id="register-heading">Buat akun</h1>
               <form onSubmit={submit} className="register-form">
                 {notice && (
                   <p className="live-notice" role="alert">

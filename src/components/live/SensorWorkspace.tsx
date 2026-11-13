@@ -116,7 +116,7 @@ export function SensorWorkspace({
   const title = {
     overview: "Kondisi sensor",
     map: "Peta sensor",
-    nodes: "Monitoring node",
+    nodes: "Perangkat sensor",
     detail: node?.name || "Detail node",
     analytics: "Riwayat udara",
     alerts: "Peringatan sensor",
