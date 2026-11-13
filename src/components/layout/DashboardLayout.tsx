@@ -56,6 +56,7 @@ function DashboardShell() {
   return (
     <div
       className={`app-shell flex min-h-screen bg-[#f3f8ff] text-[#11223D] ${DEMO_MODE ? "demo-shell" : ""}`}
+      data-page={location.pathname}
     >
       {DEMO_MODE && <DemoBanner />}
       {!DEMO_MODE && <RoleRequestDialog />}

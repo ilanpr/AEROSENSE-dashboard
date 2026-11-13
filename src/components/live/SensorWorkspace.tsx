@@ -313,10 +313,10 @@ export function SensorWorkspace({
                             options={nodes.map((n) => ({ value: n.id, label: n.name }))}
                           />
                         </div>
-                        <div className="map-layer-picker" role="group" aria-label="Lapisan peta">
+                        <div className="map-layer-picker" role="group" aria-label="Isi peta">
                           {[
                             { id: "sensors", label: "Sensor", name: "Sensor saja" },
-                            { id: "mixed", label: "Gabungan", name: "Sensor & kejadian" },
+                            { id: "mixed", label: "Keduanya", name: "Sensor & kejadian" },
                             { id: "events", label: "Kejadian", name: "Kejadian publik" },
                           ].map((layer) => (
                             <button

@@ -1,7 +1,7 @@
 .landing-page {
   --landing-ink: #102a42;
   --landing-blue: #0755c9;
-  background: #f8fbff;
+  background: linear-gradient(180deg, #f0f8ff 0, #f8fbff 480px, #f8fbff 72%, #edf8f4);
 }
 
 .landing-page .landing-header {
@@ -48,7 +48,47 @@
 
 .app-shell {
   --ui-surface-gradient: #edf3fc;
-  background: #f4f8fe;
+  --page-tint: #e4f1ff;
+  background: linear-gradient(155deg, var(--page-tint) 0, #f5f8fe 600px);
+}
+
+.app-shell[data-page="/environment"] { --page-tint: #e4f5ee; }
+.app-shell[data-page="/sensor-map"] { --page-tint: #e0f3f8; }
+.app-shell[data-page="/analytics"], .app-shell[data-page="/esg-reports"] { --page-tint: #ece7fb; }
+.app-shell[data-page="/alerts"] { --page-tint: #fff0df; }
+.app-shell[data-page="/aerobot"] { --page-tint: #ece6ff; }
+.app-shell[data-page="/management"] { --page-tint: #e5f3e8; }
+
+.login-page .login-form-panel {
+  background: linear-gradient(160deg, #eef4ff, #fff 62%);
+}
+
+.app-shell .app-navigation {
+  margin-top: 20px;
+  gap: 14px;
+}
+
+.nav-group {
+  display: grid;
+  gap: 3px;
+}
+
+.nav-group + .nav-group {
+  border-top: 1px solid #e4ebf5;
+  padding-top: 12px;
+}
+
+.nav-group > p {
+  padding-inline: 14px;
+  margin: 0 0 3px;
+  color: #4e667e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.app-shell .nav-entry {
+  border-radius: 12px;
+  min-height: 44px;
 }
 
 .app-shell .app-topbar {
@@ -129,21 +169,118 @@
   border-color: currentColor;
 }
 
-.app-shell .chat-source-panel {
-  background: linear-gradient(150deg, #162b70, #2d52a4 70%, #305cb4);
+.app-shell .insight-topics {
+  background: rgb(255 255 255 / 83%);
+  border: 1px solid #dce8f2;
+  border-radius: 16px;
+  padding: 7px;
 }
+
+.app-shell .insight-topics button {
+  border-radius: 10px;
+}
+
+.app-shell .chat-source-panel {
+  background: #edf2ff;
+  border: 1px solid #d7e1f4;
+  padding: 22px;
+  border-radius: 18px;
+}
+
+.app-shell .chat-source-panel :is(h2, ul) { color: #25405f; }
+.app-shell .chat-source-panel .chat-mascot { max-width: 148px; }
 
 .app-shell .live-chat > header {
   background: #163e94;
 }
 
 .app-shell :is(.map-controls, .sensor-toolbar, .nearby-location) {
-  background: #e9f3ff;
+  background: #fff;
+  border: 1px solid #dce8f5;
+  border-radius: 16px;
+}
+
+.app-shell :is(.page-heading, .live-heading, .insights-heading) > div:first-child > p {
+  color: #405b76;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 62ch;
+}
+
+.app-shell .nearby-location-icon {
+  background: #eaf2ff;
+}
+
+.app-shell .environment-hub .condition-scene :is(.scene-ring, .scene-spark, .scene-halo) {
+  display: none;
+}
+
+.app-shell .environment-hub .condition-scene img {
+  filter: drop-shadow(0 10px 12px rgb(9 24 54 / 16%));
+}
+
+.app-shell .environment-hub .condition-scene.scene-muted img {
+  filter: grayscale(0.6);
+}
+
+.app-shell .environment-hub .condition-scene.scene-haze:not(.scene-muted) img {
+  filter: none;
+}
+
+.landing-cheer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.landing-cheer svg {
+  position: absolute;
+  width: clamp(22px, 3vw, 38px);
+  height: auto;
+  color: #ad5800;
+  fill: #ffdb63;
+  opacity: 0;
+}
+
+.landing-cheer svg:nth-child(1) { left: 13%; top: 35%; }
+.landing-cheer svg:nth-child(2) { right: 16%; top: 21%; }
+.landing-cheer svg:nth-child(3) { right: 9%; top: 38%; width: 22px; }
+
+@keyframes falcon-cheer {
+  0%, 47%, 100% { transform: translateY(0) rotate(0); }
+  8% { transform: translateY(4px) scale(1.025, 0.97) rotate(-3deg); }
+  23% { transform: translateY(-18px) scale(0.99, 1.03) rotate(5deg); }
+  35% { transform: translateY(0) scale(1.02, 0.98) rotate(-2deg); }
+}
+
+@keyframes falcon-spark {
+  0%, 10%, 47%, 100% { opacity: 0; transform: translateY(10px) rotate(-12deg) scale(0.35); }
+  23% { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+  38% { opacity: 0; transform: translateY(-16px) rotate(14deg) scale(0.65); }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .landing-page :is(.landing-hero-art:hover, .landing-hero:has(.landing-button:is(:hover, :focus-visible)))
+    .landing-hero-mascot:not(.motion-paused) {
+    animation: falcon-cheer 2.6s cubic-bezier(.25,.75,.35,1) infinite;
+  }
+
+  .landing-page :is(.landing-hero-art:hover, .landing-hero:has(.landing-button:is(:hover, :focus-visible)))
+    .landing-hero-mascot:not(.motion-paused) + .landing-cheer svg {
+    animation: falcon-spark 2.6s ease-out var(--spark-delay, 0ms) infinite;
+  }
+
+  .landing-cheer svg:nth-child(2) { --spark-delay: 80ms; }
+  .landing-cheer svg:nth-child(3) { --spark-delay: 150ms; }
 }
 
 @media (max-width: 600px) {
   .landing-page .landing-hero {
     gap: 26px;
+  }
+  .landing-page .landing-hero h1 {
+    font-size: clamp(33px, 8.5vw, 44px);
+    text-wrap: initial;
   }
   .app-shell .insight-topics button {
     min-height: 44px;

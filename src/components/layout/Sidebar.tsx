@@ -28,9 +28,29 @@ const ICONS: Record<string, React.ElementType> = {
   Settings2,
 };
 
+const groups = [
+  {
+    label: "Pantau",
+    paths: [ROUTES.DASHBOARD, ROUTES.ENVIRONMENT, ROUTES.SENSOR_MAP, ROUTES.ALERTS],
+  },
+  {
+    label: "Jelajahi",
+    paths: [ROUTES.ANALYTICS, ROUTES.AEROBOT],
+  },
+  {
+    label: "Perangkat & laporan",
+    paths: [ROUTES.NODE_MONITORING, ROUTES.MANAGEMENT, ROUTES.ESG_REPORTS],
+  },
+];
+
 export function Sidebar({ onClose }: { onClose?: () => void }) {
   const { canAudit, canViewModel, canManage, role } = useAccess();
   const { user } = useAuth();
+  const visibleItems = NAV_ITEMS.filter(
+    (item) =>
+      (item.path !== ROUTES.ESG_REPORTS || canAudit) &&
+      (item.path !== ROUTES.MANAGEMENT || canManage),
+  );
   return (
     <aside className="app-sidebar">
       <NavLink
@@ -51,30 +71,28 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
           <small>Pantau lingkungan sekitar.</small>
         </span>
       </NavLink>
-      <div className="sidebar-intro">
-        <span className="sidebar-signal" />
-        <span>Pemantauan lingkungan</span>
-      </div>
       <nav className="app-navigation" aria-label="Navigasi utama">
-        {NAV_ITEMS.filter(
-          (item) =>
-            (item.path !== ROUTES.ESG_REPORTS || canAudit) &&
-            (item.path !== ROUTES.MANAGEMENT || canManage),
-        ).map((item) => {
-          const Icon = ICONS[item.icon] || LayoutGrid;
-          // Guests and warga see a simple history; operators, admins and auditors also see the model.
-          const label =
-            item.path === ROUTES.ANALYTICS && !canViewModel ? "Riwayat udara" : item.label;
+        {groups.map(({ label, paths }) => {
+          const items = paths.flatMap((path) => visibleItems.filter((item) => item.path === path));
+          if (!items.length) return null;
           return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={onClose}
-              className={({ isActive }) => (isActive ? "nav-entry active" : "nav-entry")}
-            >
-              <Icon size={19} strokeWidth={1.8} />
-              <span>{label}</span>
-            </NavLink>
+            <div className="nav-group" role="group" aria-label={label} key={label}>
+              <p>{label}</p>
+              {items.map((item) => {
+                const Icon = ICONS[item.icon] || LayoutGrid;
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    onClick={onClose}
+                    className={({ isActive }) => (isActive ? "nav-entry active" : "nav-entry")}
+                  >
+                    <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
+                    <span>{item.path === ROUTES.ANALYTICS && !canViewModel ? "Riwayat udara" : item.label}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
           );
         })}
       </nav>

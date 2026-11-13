@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   Settings2,
+  Sparkle,
   LockKeyhole,
   FileSpreadsheet,
 } from "lucide-react";
@@ -107,13 +108,12 @@ export function LandingPage() {
         <section className="landing-hero landing-container">
           <div className="landing-hero-copy">
             <h1>
-              Udara &amp; cuaca dipahami.
+              Kenali udara dan cuaca
               <br />
-              <span>Tindakan lebih terarah.</span>
+              <span>di sekitar Anda.</span>
             </h1>
             <p>
-              Kualitas udara dari sensor, cuaca dan prakiraan hujan, hingga peringatan bencana di
-              sekitar Anda, dalam satu tempat. Tanya AERO-BOT kapan saja, tanpa login.
+              Lihat pembacaan sensor, cek prakiraan hujan, dan temukan peringatan di sekitar Anda.
             </p>
             <div className="landing-actions">
               <Link className="landing-button" to="/dashboard">
@@ -133,6 +133,11 @@ export function LandingPage() {
               ))}
             </div>
             <AeroMascot pose="welcome" className="landing-hero-mascot" />
+            <div className="landing-cheer" aria-hidden="true">
+              <Sparkle />
+              <Sparkle />
+              <Sparkle />
+            </div>
           </div>
         </section>
 

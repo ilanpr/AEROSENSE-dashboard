@@ -134,7 +134,7 @@ export function NearbyAlerts() {
               ? "Lokasi contoh · Surabaya"
               : source === "device"
                 ? "Lokasi perangkat"
-                : "Gunakan lokasi Anda"}
+                : "Temukan peringatan terdekat"}
           </strong>
           <p>
             {coverage}
