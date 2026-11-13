@@ -95,8 +95,8 @@ test("service caches by ~5 km and survives a failed hazard source", async () => 
       return { Infogempa: { gempa: [] } };
     },
   });
-  await svc.outlook(-7.251, 112.751);
-  await svc.outlook(-7.249, 112.749);
+  await svc.outlook(-7.2501, 112.7501);
+  await svc.outlook(-7.2499, 112.7499);
   assert.equal(calls, 1);
   const hz = await svc.hazards();
   assert.equal(hz.cyclones, null);

@@ -228,8 +228,8 @@ export function weatherFacts(outlook, hazards, area, now = Date.now()) {
       fact(
         "24h",
         "Prakiraan 24 jam ke depan",
-        `Sekarang ${outlook.current.label.toLowerCase()}, ${outlook.current.temperature} °C (terasa ${outlook.current.feels_like} °C). ` +
-          (wet.length
+        // Forecast only: "now" comes from the hub area facts, so the two never disagree.
+        (wet.length
             ? `Hujan berpeluang turun mulai ${hourLabel(wet[0].time)} (${wet[0].label.toLowerCase()}, peluang hingga ${maxChance}%). `
             : `Peluang hujan kecil (maksimal ${maxChance}%). `) +
           (temps.length ? `Suhu ${Math.min(...temps)}–${Math.max(...temps)} °C, ` : "") +
@@ -284,9 +284,9 @@ export function weatherService({ request, now = Date.now }) {
     return value;
   }
   const outlook = (latitude, longitude) => {
-    // Snap to about 5 km so nearby users share one request.
-    const lat = Math.round(latitude * 20) / 20,
-      lng = Math.round(longitude * 20) / 20;
+    // Snap to about 1 km: close to the node itself, still shared by nearby users.
+    const lat = Math.round(latitude * 100) / 100,
+      lng = Math.round(longitude * 100) / 100;
     return cached(`wx:${lat}:${lng}`, 900000, async () =>
       parseForecast(await request(`${FORECAST}&latitude=${lat}&longitude=${lng}`, { timeout: 8000 }), now()),
     );
