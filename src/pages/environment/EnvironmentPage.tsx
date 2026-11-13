@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -52,6 +52,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
   );
   const nodes = dashboard.data?.nodes || [];
   const [params, setParams] = useSearchParams();
+  const topics = useRef<HTMLDivElement>(null);
   const [locationMode, setLocationMode] = useState<"node" | "device">("node");
   const [userPoint, setUserPoint] = useState<GeoPoint | null>(null);
   const [locating, setLocating] = useState(false);
@@ -76,6 +77,15 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
   const category = categories.some((c) => c.id === params.get("topic"))
     ? params.get("topic")!
     : "weather";
+  useEffect(() => {
+    const row = topics.current;
+    const active = row?.querySelector('[aria-pressed="true"]');
+    if (!row || !active) return;
+    const tab = active.getBoundingClientRect();
+    const strip = row.getBoundingClientRect();
+    if (tab.left < strip.left) row.scrollLeft += tab.left - strip.left;
+    if (tab.right > strip.right) row.scrollLeft += tab.right - strip.right;
+  }, [category]);
   const insights = data?.insights || [];
   const important =
     insights.find(
@@ -146,6 +156,51 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
     );
   }
+  const actions = (
+    <div className="live-actions">
+      {!compact && nodes.length > 0 && (
+        <label className="sensor-select sensor-select--light">
+          <MapPin size={15} aria-hidden="true" />
+          <span className="sr-only">Acuan lokasi</span>
+          <MonitoringSelect
+            label="Acuan lokasi"
+            value={locationMode === "device" ? "__device__" : node?.id || ""}
+            disabled={locating}
+            options={[
+              ...nodes.map((n) => ({ value: n.id, label: n.name })),
+              { value: "__device__", label: "Lokasi saya" },
+            ]}
+            onValueChange={(value) => {
+              if (value === "__device__") {
+                useDeviceLocation();
+                return;
+              }
+              setLocationMode("node");
+              setLocationError("");
+              updateParams({ node_id: value });
+            }}
+          />
+        </label>
+      )}
+      {locating && <span className="sr-only" role="status">Mencari lokasi…</span>}
+      {compact && (
+        <Link className="insight-text-link" to="/environment">
+          Buka Hub Lingkungan <ArrowUpRight size={16} />
+        </Link>
+      )}
+      <button
+        className="live-icon-button"
+        onClick={() => {
+          if (locationMode === "device") useDeviceLocation();
+          refresh();
+        }}
+        disabled={loading || locating}
+        aria-label="Perbarui informasi lingkungan"
+      >
+        <RefreshCw size={17} className={loading ? "refreshing" : ""} />
+      </button>
+    </div>
+  );
   return (
     <section className={`environment-hub insights-hub ${compact ? "insights-compact" : ""}`} data-topic={category}>
       <header className="insights-heading">
@@ -179,63 +234,32 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             </p>
           )}
         </div>
-        <div className="live-actions">
-          {!compact && nodes.length > 0 && (
-            <label className="sensor-select sensor-select--light">
-              <MapPin size={15} aria-hidden="true" />
-              <span className="sr-only">Acuan lokasi</span>
-              <MonitoringSelect
-                label="Acuan lokasi"
-                value={locationMode === "device" ? "__device__" : node?.id || ""}
-                disabled={locating}
-                options={[
-                  ...nodes.map((n) => ({ value: n.id, label: n.name })),
-                  { value: "__device__", label: "Lokasi saya" },
-                ]}
-                onValueChange={(value) => {
-                  if (value === "__device__") {
-                    useDeviceLocation();
-                    return;
-                  }
-                  setLocationMode("node");
-                  setLocationError("");
-                  updateParams({ node_id: value });
-                }}
-              />
-            </label>
-          )}
-          {locating && <span className="sr-only" role="status">Mencari lokasi…</span>}
-          {compact && (
-            <Link className="insight-text-link" to="/environment">
-              Buka Hub Lingkungan <ArrowUpRight size={16} />
-            </Link>
-          )}
-          <button
-            className="live-icon-button"
-            onClick={() => {
-              if (locationMode === "device") useDeviceLocation();
-              refresh();
-            }}
-            disabled={loading || locating}
-            aria-label="Perbarui informasi lingkungan"
-          >
-            <RefreshCw size={17} className={loading ? "refreshing" : ""} />
-          </button>
-        </div>
+        {compact && actions}
       </header>
       {!compact && (
-        <div className="insight-topics" role="group" aria-label="Jenis informasi lingkungan">
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              data-topic={c.id}
-              aria-pressed={category === c.id}
-              onClick={() => updateParams({ topic: c.id })}
-            >
-              <c.icon size={17} />
-              {c.label}
-            </button>
-          ))}
+        <div className="environment-nav">
+          {actions}
+          <div ref={topics} className="insight-topics" role="group" aria-label="Jenis informasi lingkungan">
+            {categories.map((c) => (
+              <button
+                key={c.id}
+                data-topic={c.id}
+                aria-pressed={category === c.id}
+                onClick={(event) => {
+                  if (c.id === category) return;
+                  const bar = event.currentTarget.closest(".environment-nav");
+                  const panel = bar?.parentElement?.querySelector(".insight-lead");
+                  if (bar && panel && panel.getBoundingClientRect().top < bar.getBoundingClientRect().bottom) {
+                    panel.scrollIntoView({ block: "start" });
+                  }
+                  updateParams({ topic: c.id });
+                }}
+              >
+                <c.icon size={17} aria-hidden="true" />
+                {c.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       {pageLoading && !data ? (

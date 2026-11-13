@@ -186,9 +186,13 @@ input {
 .account-action:hover {
   background: #edf5fe;
 }
+.app-shell {
+  --topbar-height: 72px;
+  --topbar-offset: 0px;
+}
 .app-shell .app-topbar {
   background: #ffffffed;
-  height: 72px;
+  height: var(--topbar-height);
 }
 .app-topbar button {
   min-width: 44px;
@@ -478,8 +482,11 @@ input {
 .app-shell .demo-banner {
   background: #173e65;
 }
+.app-shell.demo-shell {
+  --topbar-offset: 42px;
+}
 .demo-shell .app-topbar {
-  top: 42px;
+  top: var(--topbar-offset);
 }
 .demo-shell .app-sidebar {
   top: 42px;
@@ -768,9 +775,11 @@ input {
     width: 260px;
     padding: 24px 16px 18px;
   }
+  .app-shell {
+    --topbar-height: 66px;
+  }
   .app-shell .app-topbar {
     padding: 10px 18px;
-    height: 66px;
   }
   .app-shell :is(.sensor-hero, .insight-lead) {
     border-radius: 24px;
@@ -848,8 +857,8 @@ input {
   }
 }
 @media (max-width: 600px) {
-  .demo-shell .app-topbar {
-    top: 58px;
+  .app-shell.demo-shell {
+    --topbar-offset: 58px;
   }
   .demo-shell .app-sidebar {
     top: 58px;
@@ -1861,25 +1870,6 @@ input {
   }
 }
 @media (max-width: 600px) {
-  .app-shell .environment-hub .insight-topics {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-    margin: 0 0 var(--section-gap);
-    padding: 0;
-    overflow: visible;
-  }
-  .app-shell .environment-hub .insight-topics button {
-    min-width: 0;
-    justify-content: center;
-    padding-inline: 4px;
-    gap: 4px;
-    font-size: var(--panel-label-size);
-  }
-  .app-shell .environment-hub .insight-topics button svg {
-    flex: none;
-    width: 14px;
-  }
   .app-shell .environment-hub:not(.insights-compact) .insight-lead,
   .app-shell .insights-compact .insight-lead {
     grid-template-columns: minmax(0, 1fr);
@@ -1907,71 +1897,6 @@ input {
   }
   .app-shell :is(.map-controls, .sensor-toolbar) {
     padding: 14px 12px;
-  }
-}
-
-/* Hub header controls: location switch, node picker and refresh sit on one row in the hero,
-   with the pin inside the picker, and wrap as a group on narrower screens. */
-.app-shell .environment-hub:not(.insights-compact) > .insights-heading > div:first-child {
-  flex: 1 1 320px;
-  min-width: 0;
-}
-.app-shell .environment-hub:not(.insights-compact) > .insights-heading .live-actions {
-  flex: 0 1 auto;
-  flex-wrap: nowrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 10px;
-}
-.app-shell .environment-hub:not(.insights-compact) > .insights-heading .sensor-select {
-  position: relative;
-  flex: 0 1 230px;
-  min-width: 180px;
-  margin: 0;
-  gap: 0;
-}
-.app-shell .environment-hub:not(.insights-compact) > .insights-heading .sensor-select > svg {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 1;
-  color: #2867a8;
-  pointer-events: none;
-}
-.app-shell
-  .environment-hub:not(.insights-compact)
-  > .insights-heading
-  .sensor-select
-  .monitoring-select[data-slot="select-trigger"] {
-  min-width: 0;
-  padding-left: 38px;
-}
-.app-shell .environment-hub:not(.insights-compact) > .insights-heading .live-icon-button {
-  flex: none;
-}
-@media (max-width: 1180px) {
-  .app-shell .environment-hub:not(.insights-compact) > .insights-heading {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .app-shell .environment-hub:not(.insights-compact) > .insights-heading > div:first-child {
-    flex-basis: auto;
-  }
-  .app-shell .environment-hub:not(.insights-compact) > .insights-heading .live-actions {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-  .app-shell .environment-hub:not(.insights-compact) > .insights-heading .sensor-select {
-    flex: 1 1 220px;
-    max-width: 360px;
-  }
-}
-@media (max-width: 480px) {
-  .app-shell .environment-hub:not(.insights-compact) > .insights-heading .sensor-select {
-    flex-basis: 0;
-    min-width: 0;
-    max-width: none;
   }
 }
 
