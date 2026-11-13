@@ -7,6 +7,7 @@ import { canViewModel, nodeAccess, PUBLIC_NODE_FIELDS, simpleReading } from "./a
 import { browserVoiceRoutes, defaultStyle, speechText } from "./browser-voice.mjs";
 import { accountRoutes } from "./accounts.mjs";
 import { heatmapRoutes } from "./heatmap.mjs";
+import { guestChatRoutes, publicNode } from "./guest-chat.mjs";
 import { startRobotMood } from "./robot-mood.mjs";
 import { useWibowo, wibowoSpeech } from "./wibowo.mjs";
 import { disasterNews } from "./disaster-news.mjs";
@@ -872,6 +873,10 @@ async function internal(path, p) {
   try {
     if (j.owner_id)
       for (const node of j.body.node_ids || []) await reader({ id: j.owner_id }, node);
+    else if (j.kind === "web_chat")
+      for (const node of j.body.node_ids || [])
+        if (!publicNode(await one("ae_nodes", "id=eq." + filter(node) + "&select=public_read,enabled")))
+          throw new Error("Guest node is not public");
     if (j.kind === "wa_chat")
       for (const node of j.body.node_ids || []) {
         const s = await one(
@@ -934,6 +939,7 @@ const voiceRoutes = browserVoiceRoutes({
 });
 const accounts = accountRoutes({ db, one, rpc, user, send, filter, rawBody, rate, request });
 const heatmap = heatmapRoutes({ send, rate, request });
+const guestChat = guestChatRoutes({ one, filter, enqueue, rawBody, send, rate });
 const browserRoutes = webRoutes({
   db,
   one,
@@ -976,6 +982,7 @@ const server = http.createServer(async (req, res) => {
     if (await registrationRoutes(req, res, url)) return;
     if (await voiceRoutes(req, res, url)) return;
     if (await heatmap(req, res, url)) return;
+    if (await guestChat(req, res, url)) return;
     if (await accounts(req, res, url)) return;
     if (await browserRoutes(req, res, url)) return;
     if (await sprinklerRoutes(req, res, url)) return;

@@ -2,7 +2,21 @@ import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
-import { ArrowUp, Ear, Loader2, RefreshCw, Mic, MicOff, Square, Volume2 } from "lucide-react";
+import {
+  ArrowUp,
+  CloudRain,
+  CloudSun,
+  Ear,
+  Footprints,
+  Leaf,
+  Loader2,
+  MapPin,
+  Mic,
+  MicOff,
+  RefreshCw,
+  Square,
+  Volume2,
+} from "lucide-react";
 import { chatService } from "@/services/chat.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
@@ -41,9 +55,10 @@ const handsFreeLabels: Record<HandsFreePhase, [string, string]> = {
   speaking: ["Membacakan jawaban", "Tekan Esc atau tombol Hentikan suara untuk berhenti."],
 };
 const suggestions = [
-  "Cuaca di titik robot hari ini?",
-  "Cara mengurangi polusi?",
-  "Kabar karhutla di Indonesia?",
+  { icon: CloudSun, text: "Bagaimana cuaca di sekitarku hari ini?" },
+  { icon: CloudRain, text: "Apakah nanti akan hujan?" },
+  { icon: Footprints, text: "Aman tidak olahraga di luar sekarang?" },
+  { icon: Leaf, text: "Bagaimana cara mengurangi polusi?" },
 ];
 export function ChatPanel() {
   const { user, isLoading, error: authError } = useAuth();
@@ -56,31 +71,42 @@ export function ChatPanel() {
     return () => configureRobotFace(undefined, false);
   }, [userId, canManage, slot]);
   const [params] = useSearchParams();
-  const [robotId, setRobotId] = useState<string | undefined>(params.get("robot_id") || undefined);
+  const [robotParam, setRobotId] = useState<string | undefined>(
+    params.get("robot_id") || undefined,
+  );
   useEffect(() => {
     if (onChat) setRobotId(params.get("robot_id") || undefined);
   }, [onChat, params]);
-  const nodes = useLiveData<{ nodes: LiveNode[] }>(user ? "/v1/dashboard" : null, 60000);
+  // Visitors without an account chat about published nodes only; robots and voice need an account.
+  const robotId = user ? robotParam : undefined;
+  const viewer = userId ?? "guest";
+  const nodes = useLiveData<{ nodes: LiveNode[] }>(
+    isLoading ? null : user ? "/v1/dashboard" : "/v1/dashboard?guest=1",
+    60000,
+  );
   const [nodeId, setNodeId] = useState("");
   const [devicePoint, setDevicePoint] = useState<{ owner: string; point: GeoPoint } | null>(null);
   const [locationStatus, setLocationStatus] = useState<"idle" | "locating" | "unavailable">("idle");
   const locate = useCallback(() => {
-    if (!userId || !navigator.geolocation) return;
+    if (!navigator.geolocation) return;
     setLocationStatus("locating");
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         setLocationStatus(validPoint(coords) ? "idle" : "unavailable");
         if (validPoint(coords)) {
-          setDevicePoint({ owner: userId, point: { latitude: coords.latitude, longitude: coords.longitude } });
+          setDevicePoint({
+            owner: viewer,
+            point: { latitude: coords.latitude, longitude: coords.longitude },
+          });
           setNodeId("");
         }
       },
       () => setLocationStatus("unavailable"),
       { timeout: 10000, maximumAge: 60000 },
     );
-  }, [userId]);
+  }, [viewer]);
   useEffect(() => {
-    if (!userId || !onChat || robotId || !navigator.permissions || !navigator.geolocation) return;
+    if (!onChat || robotId || !navigator.permissions || !navigator.geolocation) return;
     let active = true;
     void navigator.permissions
       .query({ name: "geolocation" })
@@ -88,17 +114,22 @@ export function ChatPanel() {
         if (active && permission.state === "granted") locate();
       })
       .catch(() => {});
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [userId, onChat, robotId, locate]);
   const availableNodes = nodes.data?.nodes || [];
-  const point = devicePoint?.owner === userId ? devicePoint?.point : undefined;
-  const nearest = point && availableNodes
-    .filter(validPoint)
-    .map((node) => ({ node, distance: distanceKm(point, node) }))
-    .filter(({ distance }) => distance <= CHAT_LOCATION_RADIUS_KM)
-    .sort((a, b) => a.distance - b.distance)[0];
+  const point = devicePoint?.owner === viewer ? devicePoint?.point : undefined;
+  const nearest =
+    point &&
+    availableNodes
+      .filter(validPoint)
+      .map((node) => ({ node, distance: distanceKm(point, node) }))
+      .filter(({ distance }) => distance <= CHAT_LOCATION_RADIUS_KM)
+      .sort((a, b) => a.distance - b.distance)[0];
   const manual = availableNodes.find((node) => node.id === nodeId);
-  const contextNode = manual || (point ? nearest?.node : availableNodes.length === 1 ? availableNodes[0] : undefined);
+  const contextNode =
+    manual || (point ? nearest?.node : availableNodes.length === 1 ? availableNodes[0] : undefined);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -180,7 +211,7 @@ export function ChatPanel() {
     if (onChat) end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [messages, busy, onChat]);
   useEffect(() => {
-    if (!pending || !userId) return;
+    if (!pending) return;
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     const started = Date.now();
@@ -267,25 +298,34 @@ export function ChatPanel() {
     return () => window.removeEventListener("keydown", onKey);
   }, [handsFreeControls]);
   async function send(text = input, fromVoice = false): Promise<string | null> {
-    const targetNode = robotId ? undefined : contextNode?.id;
-    if (!text.trim() || sending.current || pending || !user) return null;
+    // A guest question needs a published node; without a location, use the first one.
+    const targetNode = robotId
+      ? undefined
+      : (contextNode?.id ?? (user ? undefined : availableNodes[0]?.id));
+    if (!text.trim() || sending.current || pending || isLoading) return null;
+    if (!user && !targetNode) {
+      setError("Belum ada titik pemantauan publik untuk dijadikan acuan.");
+      return null;
+    }
     if (!fromVoice && (voice.recording || voice.transcribing)) return null;
     voice.stopSpeaker();
     sending.current = true;
     setBusy(true);
     setError("");
-    const sender = user.id;
+    const sender = user?.id;
     const scope = JSON.stringify([sender, text.trim(), targetNode, robotId]);
     if (submission.current?.scope !== scope)
       submission.current = { scope, key: crypto.randomUUID() };
     try {
-      const job = await chatService.send(
-        text.trim(),
-        submission.current!.key,
-        targetNode,
-        robotId,
-        fromVoice,
-      );
+      const job = user
+        ? await chatService.send(
+            text.trim(),
+            submission.current!.key,
+            targetNode,
+            robotId,
+            fromVoice,
+          )
+        : await chatService.sendGuest(text.trim(), targetNode!);
       if (!active.current || owner.current !== sender) return null;
       submission.current = null;
       setMessages((prev) => [
@@ -308,25 +348,6 @@ export function ChatPanel() {
   }
   sendRef.current = send;
   const [handsFreeTitle, handsFreeHint] = handsFreeLabels[handsFree.phase];
-  if (!user) {
-    return (
-      <section className="live-chat chat-entry" aria-label="Mulai percakapan AERO-BOT">
-        {isLoading ? (
-          <p role="status">Memeriksa sesi…</p>
-        ) : (
-          <>
-            <h2>Mulai percakapan</h2>
-            <p>Masuk untuk bertanya di sini atau lanjut lewat WhatsApp.</p>
-            {authError && <p role="alert">{authError}</p>}
-            <div className="chat-entry-actions">
-              <Link className="live-button" to="/login">Masuk untuk bertanya</Link>
-              <WhatsAppEntry />
-            </div>
-          </>
-        )}
-      </section>
-    );
-  }
   return (
     <>
       <section className="live-chat" aria-label="Percakapan AERO-BOT">
@@ -341,6 +362,20 @@ export function ChatPanel() {
           </div>
           <span className="live-tag">{busy ? "Memproses" : "Siap"}</span>
         </header>
+        {!user && !isLoading && (
+          <div className="chat-guest">
+            <p>
+              Bertanya tanpa akun, langsung saja. <Link to="/login">Masuk</Link> untuk mode suara
+              dan riwayat titik pantau Anda.
+            </p>
+            <WhatsAppEntry />
+          </div>
+        )}
+        {authError && (
+          <p className="live-notice" role="alert">
+            {authError}
+          </p>
+        )}
         {canManage && (
           <label className="chat-scope">
             Layar robot
@@ -357,9 +392,10 @@ export function ChatPanel() {
             </select>
           </label>
         )}
-        {user && !robotId && availableNodes.length > 0 && (
+        {!robotId && availableNodes.length > 0 && (
           <div className="chat-scope">
             <span aria-live="polite">
+              <MapPin size={14} aria-hidden="true" />
               {locationStatus === "locating"
                 ? "Mencari titik terdekat…"
                 : contextNode
@@ -398,7 +434,30 @@ export function ChatPanel() {
         )}
         {nodes.error && <p className="live-notice">{nodes.error}</p>}
         <div className="live-messages" role="log" aria-live="polite">
-          {messages.map((m) => (
+          {messages.length === 1 && !busy && (
+            <div className="chat-welcome">
+              <img src="/assets/aerobot/falcon/welcome.webp" alt="" />
+              <h2>Hai, aku AERO-BOT!</h2>
+              <p>
+                Tanya apa saja soal udara, cuaca, dan hujan di sekitarmu. Aku jelaskan artinya dan
+                apa yang sebaiknya dilakukan.
+              </p>
+              <div className="chat-suggestions">
+                {suggestions.map(({ icon: Icon, text }) => (
+                  <button
+                    key={text}
+                    type="button"
+                    disabled={busy || !!pending || isLoading}
+                    onClick={() => void send(text)}
+                  >
+                    <Icon size={18} aria-hidden="true" />
+                    {text}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {messages.slice(messages.length === 1 && !busy ? 1 : 0).map((m) => (
             <div className={"live-message " + m.sender} key={m.id}>
               <div className="chat-message-content">
                 {(m.sender === "bot" ? m.text.trim().split(/\n\s*\n/) : [m.text]).map(
@@ -455,19 +514,6 @@ export function ChatPanel() {
             )}
           </div>
         )}
-        <div className="chat-suggestions">
-          {suggestions.map((s) => (
-            <button
-              key={s}
-              onClick={() => {
-                setInput(s);
-                composer.current?.focus();
-              }}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -486,40 +532,47 @@ export function ChatPanel() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             maxLength={2000}
-            disabled={!user || busy || !!pending || voice.recording || voice.transcribing}
+            disabled={isLoading || busy || !!pending || voice.recording || voice.transcribing}
             placeholder="Tanyakan tentang lingkungan…"
             autoComplete="off"
           />
-          <button
-            className={`chat-composer-mic ${voice.recording ? "is-recording" : ""}`}
-            type="button"
-            onClick={() => void voice.toggleRecording()}
-            disabled={
-              !user ||
-              !voice.configured ||
-              !voice.supported ||
-              voice.transcribing ||
-              busy ||
-              !!pending ||
-              handsFree.active
-            }
-            aria-label={voice.recording ? "Selesai rekam dan kirim" : "Rekam pertanyaan"}
-            title={voice.recording ? "Selesai rekam dan kirim" : "Rekam pertanyaan"}
-            aria-pressed={voice.recording}
-          >
-            {voice.recording ? (
-              <Square size={18} />
-            ) : voice.transcribing ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : (
-              <Mic size={18} />
-            )}
-          </button>
+          {voice.configured && (
+            <button
+              className={`chat-composer-mic ${voice.recording ? "is-recording" : ""}`}
+              type="button"
+              onClick={() => void voice.toggleRecording()}
+              disabled={
+                !user ||
+                !voice.configured ||
+                !voice.supported ||
+                voice.transcribing ||
+                busy ||
+                !!pending ||
+                handsFree.active
+              }
+              aria-label={voice.recording ? "Selesai rekam dan kirim" : "Rekam pertanyaan"}
+              title={voice.recording ? "Selesai rekam dan kirim" : "Rekam pertanyaan"}
+              aria-pressed={voice.recording}
+            >
+              {voice.recording ? (
+                <Square size={18} />
+              ) : voice.transcribing ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Mic size={18} />
+              )}
+            </button>
+          )}
           <button
             aria-label="Kirim pesan"
             title="Kirim pesan"
             disabled={
-              !user || !input.trim() || busy || !!pending || voice.recording || voice.transcribing
+              isLoading ||
+              !input.trim() ||
+              busy ||
+              !!pending ||
+              voice.recording ||
+              voice.transcribing
             }
           >
             <ArrowUp size={18} />

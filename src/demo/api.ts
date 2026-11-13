@@ -79,7 +79,8 @@ export async function demoRequest(
     "/v1/alerts",
     "/v1/environment",
   ]);
-  if (!account && (post || !publicReads.has(p)))
+  const guestChat = p === "/v1/guest/chat" || p === "/v1/guest/jobs";
+  if (!account && !guestChat && (post || !publicReads.has(p)))
     throw new Error("Masuk dengan akun warga atau administrator.");
   const role =
     account?.app_metadata.demo_role === "admin"
@@ -268,7 +269,7 @@ export async function demoRequest(
   if (p === "/v1/robots") return { robots: [] };
   if (p === "/v1/subscriptions") return { subscriptions: [] };
   if (p === "/v1/whatsapp/pair") throw new Error("WhatsApp tidak mengirim pesan pada mode demo.");
-  if (p === "/v1/chat" && post) {
+  if ((p === "/v1/chat" || p === "/v1/guest/chat") && post) {
     const text = String(body.text || "").toLowerCase();
     const nodeIndex = Math.max(0, index),
       node = nodes[nodeIndex];
@@ -295,9 +296,9 @@ export async function demoRequest(
       status: "done",
       result: { text: "Jawaban contoh · " + answer, denied: false },
     });
-    return { id, status: "pending" };
+    return { id, status: "pending", token: "demo" };
   }
-  if (p === "/v1/jobs") {
+  if (p === "/v1/jobs" || p === "/v1/guest/jobs") {
     const job = jobs.get(url.searchParams.get("id") || "");
     if (!job) throw new Error("Pertanyaan demo tidak ditemukan; kirim ulang.");
     return job;

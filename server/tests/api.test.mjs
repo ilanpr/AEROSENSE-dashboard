@@ -290,6 +290,7 @@ test("HTTP API enforces user/device boundaries and durably accepts signed Meta m
         lease_until: new Date(Date.now() + 300000).toISOString(),
         status: "running",
         kind,
+        owner_id: kind === "web_chat" ? u : null,
         body: { text, node_ids: ["n1"], phone: "628123456789" },
         stage: {},
       };
