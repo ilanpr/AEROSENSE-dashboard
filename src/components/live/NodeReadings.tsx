@@ -1,15 +1,18 @@
 import { dateLabel, metricLabels, type LiveNode } from "@/types/live.types";
 import "@/styles/node-readings.css";
 
+// PM2.5 estimasi (debu optik if not validated), temperature and humidity, the same as the home cards.
+// An old reading still shows its last values, dimmed and labelled; an invalid one shows none.
 export function NodeReadings({ node }: { node: LiveNode }) {
-  const fresh =
-    !!node.latest?.reading_id && !node.latest.stale && node.latest.quality?.invalid !== true;
-  const keys = [node.pm25_validated ? "pm25_ug_m3" : "dust_ug_m3", "tvoc_ppb", "temperature_c"];
+  const latest = node.latest;
+  const usable = !!latest?.reading_id && latest.quality?.invalid !== true;
+  const fresh = usable && !latest.stale;
+  const keys = [node.pm25_validated ? "pm25_ug_m3" : "dust_ug_m3", "temperature_c", "humidity_pct"];
   return (
     <div className="node-reading-block">
-      <dl className="node-readings">
+      <dl className={"node-readings" + (usable && !fresh ? " is-stale" : "")}>
         {keys.map((key) => {
-          const value = fresh ? node.latest?.metrics[key] : null;
+          const value = usable ? latest?.metrics[key] : null;
           return (
             <div key={key}>
               <dt>{metricLabels[key][0]}</dt>
@@ -26,8 +29,12 @@ export function NodeReadings({ node }: { node: LiveNode }) {
         })}
       </dl>
       <p className="node-reading-time">
-        {fresh ? "Dibaca" : "Data terbaru belum tersedia · terakhir"}{" "}
-        {dateLabel(node.latest?.observed_at)}
+        {fresh
+          ? "Dibaca"
+          : usable
+            ? "Data lama · terakhir dibaca"
+            : "Data terbaru belum tersedia · terakhir"}{" "}
+        {dateLabel(latest?.observed_at)}
       </p>
     </div>
   );

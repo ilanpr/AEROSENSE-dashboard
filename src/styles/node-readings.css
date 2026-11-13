@@ -87,3 +87,7 @@
     font-size: 28px;
   }
 }
+/* Last known values of an old reading: still readable, clearly not current. */
+.node-readings.is-stale dd {
+  color: #8496a9;
+}
