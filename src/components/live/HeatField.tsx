@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ImageOverlay, Marker, useMap } from "react-leaflet";
 import { divIcon } from "leaflet";
 import { apiRequest } from "@/services/api";
+import { ID_CITIES } from "@/lib/id-cities";
 
 // Continuous heatmap of model values (Open-Meteo) for the visible map area, like a weather map.
 // /v1/heatmap returns a small grid; the browser smooths it with bicubic (Catmull-Rom) interpolation,
@@ -136,7 +137,9 @@ function render(g: Grid, v: number[][], stops: readonly Stop[]) {
       img.data[o] = r;
       img.data[o + 1] = gr;
       img.data[o + 2] = b;
-      img.data[o + 3] = 255;
+      // Feather the outer edge so the field fades into the map instead of ending in a hard box.
+      const edge = Math.min(x, y, W - 1 - x, H - 1 - y) / (Math.min(W, H) * 0.12);
+      img.data[o + 3] = Math.round(255 * Math.min(1, edge));
     }
   }
   ctx.putImageData(img, 0, 0);
@@ -299,6 +302,24 @@ function WindParticles({ field }: { field: Field }) {
   return null;
 }
 
+type Label = { key: string; position: [number, number]; text: string; city: boolean };
+// At this zoom and below, labels follow cities instead of a coordinate lattice.
+const CITY_ZOOM = 10;
+// The heatmap covers Indonesia and its seas; views beyond it are clipped to this box.
+const REGION = { south: -13, west: 92, north: 8, east: 143 };
+const clip = (b: {
+  getSouth(): number;
+  getWest(): number;
+  getNorth(): number;
+  getEast(): number;
+}) => {
+  const s = Math.max(REGION.south, b.getSouth()),
+    w = Math.max(REGION.west, b.getWest()),
+    n = Math.min(REGION.north, b.getNorth()),
+    e = Math.min(REGION.east, b.getEast());
+  return s < n && w < e ? { s, w, n, e } : null;
+};
+
 // Label spacing in degrees: a round step giving about three rows of labels in the view.
 const STEPS = [0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 1, 2, 5];
 const labelStep = (latSpan: number) => STEPS.find((s) => s >= latSpan / 3) ?? 5;
@@ -312,9 +333,7 @@ export function HeatField({
 }) {
   const map = useMap();
   const [layers, setLayers] = useState<Layer[]>([]);
-  const [labels, setLabels] = useState<{ key: string; position: [number, number]; text: string }[]>(
-    [],
-  );
+  const [labels, setLabels] = useState<Label[]>([]);
   const field = useRef<Field | null>(null);
   const [wind, setWind] = useState<Field | null>(null);
   const info = useRef(onInfo);
@@ -333,42 +352,69 @@ export function HeatField({
       const f = field.current;
       if (!f) return setLabels([]);
       const view = map.getBounds();
-      const step = labelStep(view.getNorth() - view.getSouth());
       const size = map.getSize();
-      const out: { key: string; position: [number, number]; text: string }[] = [];
-      for (let lat = Math.ceil(view.getSouth() / step) * step; lat <= view.getNorth(); lat += step)
+      const zoom = map.getZoom();
+      // Zoomed out: one label per city, under its name; bigger cities first as the view widens.
+      // Zoomed in: labels on fixed coordinates that move with the map.
+      const points: { lat: number; lng: number; city: boolean }[] = [];
+      if (zoom <= CITY_ZOOM) {
+        // Whole country: provincial capitals; a few islands: large cities too; a province: all towns.
+        const maxRank = zoom <= 5 ? 1 : zoom <= 7 ? 2 : 3;
+        for (const [, lat, lng, rank] of [...ID_CITIES].sort((x, y) => x[3] - y[3]))
+          if (rank <= maxRank && view.contains([lat, lng])) points.push({ lat, lng, city: true });
+      } else {
+        const step = labelStep(view.getNorth() - view.getSouth());
         for (
-          let lng = Math.ceil(view.getWest() / step) * step;
-          lng <= view.getEast();
-          lng += step
-        ) {
-          const p = map.latLngToContainerPoint([lat, lng]);
-          // Keep clear of the edges and of the legend in the bottom-left corner.
-          if (p.x < 24 || p.y < 24 || p.x > size.x - 24 || p.y > size.y - 24) continue;
-          if (p.x < 260 && p.y > size.y - 200) continue;
-          const value = sample(f.g, f.v, lat, lng);
-          if (value == null) continue;
-          let text = HEAT_LAYERS[layer].format(value);
-          if (f.uv) {
-            const u = sample(f.g, f.uv.u, lat, lng) ?? 0,
-              v = sample(f.g, f.uv.v, lat, lng) ?? 0;
-            if (Math.hypot(u, v) >= 1) text += " " + arrow(u, v);
-          }
-          out.push({ key: `${lat.toFixed(3)},${lng.toFixed(3)}`, position: [lat, lng], text });
+          let lat = Math.ceil(view.getSouth() / step) * step;
+          lat <= view.getNorth();
+          lat += step
+        )
+          for (
+            let lng = Math.ceil(view.getWest() / step) * step;
+            lng <= view.getEast();
+            lng += step
+          )
+            points.push({ lat, lng, city: false });
+      }
+      const out: Label[] = [];
+      const placed: { x: number; y: number }[] = [];
+      for (const { lat, lng, city } of points) {
+        const p = map.latLngToContainerPoint([lat, lng]);
+        // Keep clear of the edges, of the legend in the bottom-left corner, and of other labels.
+        if (p.x < 24 || p.y < 24 || p.x > size.x - 24 || p.y > size.y - 24) continue;
+        if (p.x < 260 && p.y > size.y - 200) continue;
+        if (placed.some((q) => Math.abs(q.x - p.x) < 64 && Math.abs(q.y - p.y) < 34)) continue;
+        const value = sample(f.g, f.v, lat, lng);
+        if (value == null) continue;
+        let text = HEAT_LAYERS[layer].format(value);
+        if (f.uv) {
+          const u = sample(f.g, f.uv.u, lat, lng) ?? 0,
+            v = sample(f.g, f.uv.v, lat, lng) ?? 0;
+          if (Math.hypot(u, v) >= 1) text += " " + arrow(u, v);
         }
-      setLabels(out.slice(0, 40));
+        placed.push(p);
+        out.push({
+          key: `${city ? "c" : "g"}${lat.toFixed(3)},${lng.toFixed(3)}`,
+          position: [lat, lng],
+          text,
+          city,
+        });
+        if (out.length >= 40) break;
+      }
+      setLabels(out);
     };
     // Fetch only when the view leaves the area already loaded or the zoom changed a lot.
     const needsData = () => {
       const f = field.current;
       if (!f) return true;
-      const v = map.getBounds();
+      const v = clip(map.getBounds());
+      if (!v) return false;
       const [[s, w], [n, e]] = f.covers;
       return (
-        v.getSouth() < s ||
-        v.getWest() < w ||
-        v.getNorth() > n ||
-        v.getEast() > e ||
+        v.s < s - 1e-6 ||
+        v.w < w - 1e-6 ||
+        v.n > n + 1e-6 ||
+        v.e > e + 1e-6 ||
         Math.abs(map.getZoom() - f.zoom) >= 2
       );
     };
@@ -380,13 +426,14 @@ export function HeatField({
         abort?.abort();
         abort = new AbortController();
         const id = ++seq;
-        const b = map.getBounds().pad(0.6);
+        const b = clip(map.getBounds().pad(0.6));
+        if (!b) return;
         const qs = new URLSearchParams({
           layer,
-          south: b.getSouth().toFixed(3),
-          west: b.getWest().toFixed(3),
-          north: b.getNorth().toFixed(3),
-          east: b.getEast().toFixed(3),
+          south: b.s.toFixed(3),
+          west: b.w.toFixed(3),
+          north: b.n.toFixed(3),
+          east: b.e.toFixed(3),
         });
         try {
           const g = await apiRequest<Grid>("/v1/heatmap?" + qs, { signal: abort.signal }, false);
@@ -435,7 +482,11 @@ export function HeatField({
       new Map(
         labels.map((l) => [
           l.key,
-          divIcon({ className: "heat-label", html: `<span>${l.text}</span>`, iconSize: [0, 0] }),
+          divIcon({
+            className: l.city ? "heat-label heat-label-city" : "heat-label",
+            html: `<span>${l.text}</span>`,
+            iconSize: [0, 0],
+          }),
         ]),
       ),
     [labels],

@@ -177,7 +177,7 @@ export function LiveMap({
             : [active!.latitude, active!.longitude]
         }
         zoom={13}
-        minZoom={7}
+        minZoom={4}
         maxBounds={[
           [-85.05, -180],
           [85.05, 180],

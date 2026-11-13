@@ -35,21 +35,26 @@ export const LAYERS = {
   },
 };
 
-const MAX_POINTS = 16; // per axis, so at most 256 locations per request
-const MAX_SPAN = 24; // degrees; wider views are refused instead of fetching a coarse grid
+const TARGET_POINTS = 256; // about this many locations per request, whatever the area
+const MAX_AXIS = 32; // at most this many points along one side
+const MAX_SPAN = 60; // degrees; enough for the whole of Indonesia (about 47 x 18)
 
 // Snap the view to a grid. Returns the grid origin, step and size, or throws on a bad view.
 export function heatGrid(south, west, north, east, minStep = 0.1) {
   if (![south, west, north, east].every(Number.isFinite)) throw fail("Area peta tidak valid.");
   if (south >= north || west >= east || Math.abs(south) > 85 || Math.abs(north) > 85)
     throw fail("Area peta tidak valid.");
-  const span = Math.max(north - south, east - west);
-  if (span > MAX_SPAN) throw fail("Perbesar peta untuk melihat heatmap.");
-  const step = Math.max(minStep, Math.ceil((span / (MAX_POINTS - 2)) * 20) / 20);
+  const latSpan = north - south,
+    lngSpan = east - west;
+  if (Math.max(latSpan, lngSpan) > MAX_SPAN) throw fail("Perbesar peta untuk melihat heatmap.");
+  // Square cells sized so the area holds about TARGET_POINTS, rounded up to 0.05 degree.
+  const area = Math.sqrt((latSpan * lngSpan) / TARGET_POINTS);
+  const longest = Math.max(latSpan, lngSpan) / (MAX_AXIS - 2);
+  const step = Math.max(minStep, Math.ceil(Math.max(area, longest) * 20) / 20);
   const s = Math.floor(south / step) * step,
     w = Math.floor(west / step) * step;
-  const rows = Math.min(MAX_POINTS, Math.ceil((north - s) / step) + 1);
-  const cols = Math.min(MAX_POINTS, Math.ceil((east - w) / step) + 1);
+  const rows = Math.min(MAX_AXIS, Math.ceil((north - s) / step) + 1);
+  const cols = Math.min(MAX_AXIS, Math.ceil((east - w) / step) + 1);
   const r = (v) => Math.round(v * 1000) / 1000;
   return { south: r(s), west: r(w), step: r(step), rows, cols };
 }

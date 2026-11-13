@@ -487,3 +487,8 @@
   z-index: 401;
   pointer-events: none;
 }
+
+/* City labels sit just under the city name drawn by the map. */
+.heat-label-city span {
+  transform: translate(-50%, 9px);
+}
