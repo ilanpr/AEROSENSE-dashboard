@@ -138,11 +138,12 @@ function sample(g: Grid, v: number[][], lat: number, lng: number) {
   return cr(rowAt(i - 1), rowAt(i), rowAt(i + 1), rowAt(i + 2), gy - i);
 }
 
-type Overlay = {
-  url: string;
-  bounds: [[number, number], [number, number]];
-  labels: { key: string; position: [number, number]; text: string }[];
-};
+type Layer = { id: number; url: string; bounds: [[number, number], [number, number]] };
+type Field = { g: Grid; v: number[][]; zoom: number; covers: [[number, number], [number, number]] };
+
+// Label spacing in degrees: a round step giving about three rows of labels in the view.
+const STEPS = [0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 1, 2, 5];
+const labelStep = (latSpan: number) => STEPS.find((s) => s >= latSpan / 3) ?? 5;
 
 export function HeatField({
   layer,
@@ -152,18 +153,72 @@ export function HeatField({
   onInfo: (i: HeatInfo) => void;
 }) {
   const map = useMap();
-  const [overlay, setOverlay] = useState<Overlay | null>(null);
+  const [layers, setLayers] = useState<Layer[]>([]);
+  const [labels, setLabels] = useState<{ key: string; position: [number, number]; text: string }[]>(
+    [],
+  );
+  const field = useRef<Field | null>(null);
   const info = useRef(onInfo);
   info.current = onInfo;
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     let abort: AbortController | null = null;
+    let seq = 0;
+    field.current = null;
+    setLayers([]);
+    setLabels([]);
+    // Labels sit on fixed coordinates (multiples of a round step), so they move with the map;
+    // their values are read from the current surface.
+    const relabel = () => {
+      const f = field.current;
+      if (!f) return setLabels([]);
+      const view = map.getBounds();
+      const step = labelStep(view.getNorth() - view.getSouth());
+      const size = map.getSize();
+      const out: { key: string; position: [number, number]; text: string }[] = [];
+      for (let lat = Math.ceil(view.getSouth() / step) * step; lat <= view.getNorth(); lat += step)
+        for (
+          let lng = Math.ceil(view.getWest() / step) * step;
+          lng <= view.getEast();
+          lng += step
+        ) {
+          const p = map.latLngToContainerPoint([lat, lng]);
+          // Keep clear of the edges and of the legend in the bottom-left corner.
+          if (p.x < 24 || p.y < 24 || p.x > size.x - 24 || p.y > size.y - 24) continue;
+          if (p.x < 260 && p.y > size.y - 200) continue;
+          const value = sample(f.g, f.v, lat, lng);
+          if (value != null)
+            out.push({
+              key: `${lat.toFixed(3)},${lng.toFixed(3)}`,
+              position: [lat, lng],
+              text: HEAT_LAYERS[layer].format(value),
+            });
+        }
+      setLabels(out.slice(0, 40));
+    };
+    // Fetch only when the view leaves the area already loaded or the zoom changed a lot.
+    const needsData = () => {
+      const f = field.current;
+      if (!f) return true;
+      const v = map.getBounds();
+      const [[s, w], [n, e]] = f.covers;
+      return (
+        v.getSouth() < s ||
+        v.getWest() < w ||
+        v.getNorth() > n ||
+        v.getEast() > e ||
+        Math.abs(map.getZoom() - f.zoom) >= 2
+      );
+    };
     const load = () => {
+      relabel();
+      if (!needsData()) return;
       clearTimeout(timer);
       timer = setTimeout(async () => {
         abort?.abort();
         abort = new AbortController();
-        const b = map.getBounds().pad(0.15);
+        const id = ++seq;
+        const b = map.getBounds().pad(0.6);
         const qs = new URLSearchParams({
           layer,
           south: b.getSouth().toFixed(3),
@@ -173,44 +228,30 @@ export function HeatField({
         });
         try {
           const g = await apiRequest<Grid>("/v1/heatmap?" + qs, { signal: abort.signal }, false);
-          if (g.rows < 2 || g.cols < 2) return;
+          if (g.rows < 2 || g.cols < 2 || id !== seq) return;
           const v = filled(g);
-          // Labels spread evenly over the view (3 rows x 4 columns), read from the same smooth surface.
-          const view = map.getBounds();
-          const labels: Overlay["labels"] = [];
-          for (const fy of [1 / 6, 1 / 2, 5 / 6])
-            for (const fx of [1 / 8, 3 / 8, 5 / 8, 7 / 8]) {
-              const lat = view.getSouth() + (view.getNorth() - view.getSouth()) * fy;
-              const lng = view.getWest() + (view.getEast() - view.getWest()) * fx;
-              // The legend and layer buttons sit in the bottom-left corner.
-              if (fy < 0.5 && fx < 0.3) continue;
-              const value = sample(g, v, lat, lng);
-              if (value != null)
-                labels.push({
-                  key: `${fy}-${fx}`,
-                  position: [lat, lng],
-                  text: HEAT_LAYERS[layer].format(value),
-                });
-            }
-          setOverlay({
-            url: render(g, v, HEAT_LAYERS[layer].stops),
-            bounds: [
-              [g.south, g.west],
-              [g.south + (g.rows - 1) * g.step, g.west + (g.cols - 1) * g.step],
-            ],
-            labels,
-          });
+          const bounds: Layer["bounds"] = [
+            [g.south, g.west],
+            [g.south + (g.rows - 1) * g.step, g.west + (g.cols - 1) * g.step],
+          ];
+          field.current = { g, v, zoom: map.getZoom(), covers: bounds };
+          // New image fades in over the old one; the old one is removed once it is covered.
+          setLayers((old) => [
+            ...old.slice(-1),
+            { id, url: render(g, v, HEAT_LAYERS[layer].stops), bounds },
+          ]);
+          setTimeout(() => setLayers((old) => old.filter((l) => l.id >= id)), 700);
+          relabel();
           info.current({ source: g.source, valid_at: g.valid_at });
         } catch (e) {
           if ((e as Error).name === "AbortError") return;
-          setOverlay(null);
           info.current({
             source: "",
             valid_at: null,
             error: e instanceof Error ? e.message : "Heatmap belum tersedia.",
           });
         }
-      }, 350);
+      }, 300);
     };
     load();
     map.on("moveend", load);
@@ -223,26 +264,26 @@ export function HeatField({
   const icons = useMemo(
     () =>
       new Map(
-        (overlay?.labels || []).map((l) => [
+        labels.map((l) => [
           l.key,
           divIcon({ className: "heat-label", html: `<span>${l.text}</span>`, iconSize: [0, 0] }),
         ]),
       ),
-    [overlay],
+    [labels],
   );
-  if (!overlay) return null;
   return (
     <>
-      <ImageOverlay
-        key={overlay.url.length + overlay.bounds.join()}
-        url={overlay.url}
-        bounds={overlay.bounds}
-        opacity={0.78}
-        interactive={false}
-        zIndex={2}
-        className="heat-overlay"
-      />
-      {overlay.labels.map((l) => (
+      {layers.map((l) => (
+        <ImageOverlay
+          key={l.id}
+          url={l.url}
+          bounds={l.bounds}
+          interactive={false}
+          pane="heatPane"
+          className="heat-overlay"
+        />
+      ))}
+      {labels.map((l) => (
         <Marker
           key={l.key}
           position={l.position}

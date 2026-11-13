@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   MapContainer,
   TileLayer,
+  Pane,
   CircleMarker,
   Circle,
   Marker,
@@ -198,12 +199,33 @@ export function LiveMap({
         {locateUser && (
           <DeviceLocation point={devicePoint} onPoint={setDevicePoint} autoLocate={autoLocate} />
         )}
-        <TileLayer
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          noWrap
-          className="live-map-tiles"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        />
+        {heat === "off" ? (
+          <TileLayer
+            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            noWrap
+            className="live-map-tiles"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          />
+        ) : (
+          <>
+            {/* Clean base with coastlines and borders; colour field above; place names on top. */}
+            <TileLayer
+              key="heat-base"
+              url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+              noWrap
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            />
+            <Pane name="heatPane" style={{ zIndex: 350 }} />
+            <Pane name="heatLabelsPane" style={{ zIndex: 450, pointerEvents: "none" }}>
+              <TileLayer
+                key="heat-labels"
+                url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png"
+                noWrap
+                pane="heatLabelsPane"
+              />
+            </Pane>
+          </>
+        )}
         {locationPoint && (
           <>
             {userLocation && (
