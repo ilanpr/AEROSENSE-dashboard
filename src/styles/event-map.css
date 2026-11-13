@@ -460,8 +460,10 @@
   transform: translate(-50%, -50%);
   padding: 2px 7px;
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.9);
+  /* Background and text colour come from the value (set inline); white ring keeps it off the field. */
+  background: #fff;
   color: #1d2f43;
+  border: 1.5px solid rgb(255 255 255 / 0.95);
   font-size: 11px;
   font-weight: 750;
   font-variant-numeric: tabular-nums;

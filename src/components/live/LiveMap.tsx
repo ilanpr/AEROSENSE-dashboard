@@ -84,6 +84,27 @@ function LocationFocus({ point, radiusKm }: { point: GeoPoint; radiusKm: number 
   }, [map, point.latitude, point.longitude, radiusKm]);
   return null;
 }
+// The map shows Indonesia: it cannot pan far beyond it, and zooming out stops when the whole country fits.
+const INDONESIA: [[number, number], [number, number]] = [
+  [-11.2, 94.8],
+  [6.2, 141.2],
+];
+const INDONESIA_VIEW: [[number, number], [number, number]] = [
+  [-15, 90],
+  [10, 146],
+];
+function IndonesiaZoomLimit() {
+  const map = useMap();
+  useEffect(() => {
+    const limit = () => map.setMinZoom(Math.max(3, map.getBoundsZoom(INDONESIA)));
+    limit();
+    map.on("resize", limit);
+    return () => {
+      map.off("resize", limit);
+    };
+  }, [map]);
+  return null;
+}
 function SelectionFocus({ node }: { node?: LiveNode }) {
   const map = useMap();
   const lastId = useRef(node?.id);
@@ -178,10 +199,7 @@ export function LiveMap({
         }
         zoom={13}
         minZoom={4}
-        maxBounds={[
-          [-85.05, -180],
-          [85.05, 180],
-        ]}
+        maxBounds={INDONESIA_VIEW}
         maxBoundsViscosity={1}
         className="h-full w-full"
       >
@@ -192,6 +210,7 @@ export function LiveMap({
         ) : devicePoint ? null : (
           <Focus node={active} nodes={valid} />
         )}
+        <IndonesiaZoomLimit />
         {!userLocation && showNodes && <SelectionFocus node={highlighted} />}
         {showNodes && (
           <WatersenseFocus point={watersense.find((point) => point.id === focusedWatersense)} />

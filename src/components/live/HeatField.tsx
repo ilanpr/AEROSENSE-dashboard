@@ -302,7 +302,15 @@ function WindParticles({ field }: { field: Field }) {
   return null;
 }
 
-type Label = { key: string; position: [number, number]; text: string; city: boolean };
+type Label = {
+  key: string;
+  position: [number, number];
+  text: string;
+  city: boolean;
+  /** Background from the colour scale at this value, and a readable text colour on it. */
+  bg: string;
+  fg: string;
+};
 // At this zoom and below, labels follow cities instead of a coordinate lattice.
 const CITY_ZOOM = 10;
 // The heatmap covers Indonesia and its seas; views beyond it are clipped to this box.
@@ -392,12 +400,21 @@ export function HeatField({
             v = sample(f.g, f.uv.v, lat, lng) ?? 0;
           if (Math.hypot(u, v) >= 1) text += " " + arrow(u, v);
         }
+        // Like a weather map: the label takes the colour of its value, with text readable on it.
+        const stops = HEAT_LAYERS[layer].stops;
+        const [r, gr, bl] = colorAt(
+          stops,
+          Math.min(stops[stops.length - 1][0], Math.max(stops[0][0], value)),
+        );
+        const light = (0.299 * r + 0.587 * gr + 0.114 * bl) / 255 > 0.62;
         placed.push(p);
         out.push({
           key: `${city ? "c" : "g"}${lat.toFixed(3)},${lng.toFixed(3)}`,
           position: [lat, lng],
           text,
           city,
+          bg: `rgb(${r} ${gr} ${bl})`,
+          fg: light ? "#1d2f43" : "#fff",
         });
         if (out.length >= 40) break;
       }
@@ -484,7 +501,7 @@ export function HeatField({
           l.key,
           divIcon({
             className: l.city ? "heat-label heat-label-city" : "heat-label",
-            html: `<span>${l.text}</span>`,
+            html: `<span style="background:${l.bg};color:${l.fg}">${l.text}</span>`,
             iconSize: [0, 0],
           }),
         ]),
