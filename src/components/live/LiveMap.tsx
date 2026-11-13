@@ -211,15 +211,17 @@ export function LiveMap({
             {/* Clean base with coastlines and borders; colour field above; place names on top. */}
             <TileLayer
               key="heat-base"
-              url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+              maxNativeZoom={16}
               noWrap
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              attribution='Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors'
             />
             <Pane name="heatPane" style={{ zIndex: 350 }} />
             <Pane name="heatLabelsPane" style={{ zIndex: 450, pointerEvents: "none" }}>
               <TileLayer
                 key="heat-labels"
-                url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png"
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
+                maxNativeZoom={16}
                 noWrap
                 pane="heatLabelsPane"
               />
