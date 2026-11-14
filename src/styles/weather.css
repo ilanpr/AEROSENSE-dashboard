@@ -479,19 +479,6 @@
   background: #f8f5ff;
   color: #23364f;
 }
-.wx-quake-icon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  color: #6339a0;
-  background: #ebe3fa;
-  border-radius: 10px;
-}
-.wx-quake-icon svg {
-  margin: 0;
-}
 .wx-quake-content {
   flex: 1;
   min-width: 0;

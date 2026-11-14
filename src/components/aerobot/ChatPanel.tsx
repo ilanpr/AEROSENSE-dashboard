@@ -439,8 +439,7 @@ export function ChatPanel() {
               <img src="/assets/aerobot/falcon/welcome.webp" alt="" />
               <h2>Hai, aku AERO-BOT!</h2>
               <p>
-                Tanya apa saja soal udara, cuaca, dan hujan di sekitarmu. Aku jelaskan artinya dan
-                apa yang sebaiknya dilakukan.
+                Tanya soal udara dan cuaca di sekitarmu.
               </p>
               <div className="chat-suggestions">
                 {suggestions.map(({ icon: Icon, text }) => (

@@ -10,18 +10,18 @@ export function AlertsPage() {
       <NearbyAlerts />
       <section className="wa-alert-entry" aria-label="AEROSENSE di WhatsApp">
         <div>
-          <h2>Lanjutkan lewat WhatsApp</h2>
-          <p>Langganan peringatan atau tanya AERO-BOT.</p>
+          <h2>AEROSENSE di WhatsApp</h2>
+          <p>Terima peringatan atau tanya AERO-BOT.</p>
         </div>
         <WhatsAppEntry />
       </section>
       {user && (
-        <details className="insight-disclosure">
+        <details className="insight-disclosure wa-subscription">
           <summary>
             <span>Atur langganan WhatsApp</span>
             <ChevronDown size={16} aria-hidden="true" />
           </summary>
-          <WhatsAppSettings />
+          <WhatsAppSettings embedded />
         </details>
       )}
     </div>

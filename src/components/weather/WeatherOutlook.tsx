@@ -90,13 +90,10 @@ const uvLabel = (uv: number | null) =>
 
 // One short piece of advice for the day; the warnings below carry the details.
 function todayTip(d: { rain_chance: number | null; uv: number | null; max: number | null }) {
-  const tips = [];
-  if ((d.rain_chance ?? 0) >= 50) tips.push("bawa payung atau jas hujan");
-  if ((d.uv ?? 0) >= 8) tips.push("pakai topi dan tabir surya saat siang");
-  if ((d.max ?? 0) >= 34) tips.push("minum air putih lebih sering");
-  if (!tips.length) return "";
-  const text = tips.length > 1 ? tips.slice(0, -1).join(", ") + ", dan " + tips[tips.length - 1] : tips[0];
-  return "Hari ini sebaiknya " + text + ".";
+  if ((d.rain_chance ?? 0) >= 50) return "Siapkan payung atau jas hujan.";
+  if ((d.uv ?? 0) >= 8) return "Pakai topi dan tabir surya saat siang.";
+  if ((d.max ?? 0) >= 34) return "Minum air putih lebih sering.";
+  return "";
 }
 
 /**
@@ -197,7 +194,7 @@ export function WeatherOutlook({
             <dl className="wx-today-stats">
               <div>
                 <dt>
-                  <Umbrella size={15} aria-hidden="true" /> Peluang hujan tertinggi
+                  <Umbrella size={15} aria-hidden="true" /> Peluang hujan maks.
                 </dt>
                 <dd>{unit(today.rain_chance, "%")}</dd>
               </div>
@@ -295,7 +292,7 @@ export function WeatherOutlook({
             </div>
             <dl className="wx-detail-stats">
               <div><dt>Suhu</dt><dd>{detailHour ? unit(detailHour.temperature, " °C") : `${unit(detailDay!.min, "°")} – ${unit(detailDay!.max, "°")}`}</dd></div>
-              <div><dt>{detailDay ? "Peluang hujan tertinggi" : "Peluang hujan"}</dt><dd>{unit(detail.rain_chance, "%")}</dd></div>
+              <div><dt>{detailDay ? "Peluang hujan maks." : "Peluang hujan"}</dt><dd>{unit(detail.rain_chance, "%")}</dd></div>
               <div><dt>{detailDay ? "Total curah hujan" : "Curah hujan satu jam terakhir"}</dt><dd>{unit(detail.rain, " mm")}</dd></div>
               <div><dt>Hembusan angin</dt><dd>{unit(detail.gust, " km/jam")}</dd></div>
             </dl>
@@ -420,7 +417,7 @@ function HazardList({ hazards }: { hazards: Hazards | null }) {
             .replace(/\b[A-Z]{3,}\b/g, (word) => word[0] + word.slice(1).toLowerCase());
           return (
             <li key={q.id} className="wx-quake">
-              <span className="wx-quake-icon"><Waves size={18} aria-hidden="true" /></span>
+              <Waves className="wx-quake-icon" size={18} aria-hidden="true" />
               <div className="wx-quake-content">
                 <div className="wx-quake-title">
                   <strong>{location || "Lokasi belum tersedia"}</strong>

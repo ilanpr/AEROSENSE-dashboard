@@ -501,15 +501,10 @@ export function SensorWorkspace({
                 <section className="live-panel">
                   <div className="live-heading">
                     <div>
-                      <h2>{modelView ? "Historis pembacaan & model" : "Riwayat 24 jam"}</h2>
-                      <p>
-                        {modelView
-                          ? "Pembacaan sensor, input mentah, dan estimasi GRU ditampilkan terpisah."
-                          : "Riwayat pembacaan sensor pada lokasi terpilih."}
-                      </p>
+                      <h2>{modelView ? "Pembacaan & model" : "Riwayat 24 jam"}</h2>
                     </div>
                     {modelView && (
-                      <div className="flex flex-wrap gap-2">
+                      <div className="history-export">
                         <button
                           className="live-button secondary"
                           onClick={() =>

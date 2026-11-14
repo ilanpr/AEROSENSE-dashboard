@@ -111,7 +111,7 @@ export function LandingPage() {
               Kenali udara dan cuaca <span>di sekitar Anda.</span>
             </h1>
             <p>
-              Lihat pembacaan sensor, cek prakiraan hujan, dan temukan peringatan di sekitar Anda.
+              Cek kualitas udara, prakiraan hujan, dan peringatan di sekitar Anda.
             </p>
             <div className="landing-actions">
               <Link className="landing-button" to="/dashboard">
@@ -141,7 +141,7 @@ export function LandingPage() {
 
         <section id="fitur" className="landing-features landing-container">
           <div className="landing-section-heading">
-            <h2>Yang bisa Anda pantau</h2>
+            <h2>Jelajahi pemantauan</h2>
           </div>
           <div className="landing-feature-layout">
             <div className="landing-feature-options" aria-label="Pilih fitur AEROSENSE">

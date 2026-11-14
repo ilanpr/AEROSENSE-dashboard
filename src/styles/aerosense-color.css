@@ -13,19 +13,11 @@ body {
   --aero-surface: #f5faff;
   --aero-illustration: radial-gradient(ellipse at 20% 5%, #f0fcff, transparent 65%),
     linear-gradient(145deg, #a8e6fb, #b8c9ff 78%, #ffd9c2);
-  --aero-panel-radius: 32px 32px 28px 28px;
-  --aero-hero-radius: 36px 36px 30px 30px;
+  --aero-panel-radius: 28px;
+  --aero-hero-radius: 32px;
   --aero-card-radius: 22px;
+  --aero-segment-radius: calc(var(--aero-card-radius) - 5px);
   --aero-rim: #b8d6f0;
-  --aero-sheen: radial-gradient(ellipse at 12% 0%, #ffffffcf, transparent 76%);
-  --aero-panel-fill: linear-gradient(120deg, #f8fbff 6%, #edf4ff 66%, #e1ebfc);
-  --aero-vignette: inset 0 2px 0 #ffffff59, inset 0 0 12px #36588e14,
-    inset 0 -5px 14px #203b8019;
-  --aero-volume: var(--aero-vignette), 0 8px 20px #17457b17;
-  --aero-tile-volume: inset 0 1px 0 #ffffffb3, inset 0 0 6px #36588e13,
-    inset 0 -3px 8px #203b8010;
-  --aero-hero-volume: inset 0 2px 0 #ffffff42, inset 0 -5px 14px #062b7426,
-    0 8px 20px #124d951c;
 }
 
 .landing-page {
@@ -172,18 +164,18 @@ body {
 }
 
 .app-shell .insight-topics button {
-  color: var(--topic-ink, #104da7);
-  background: var(--topic-tint, #e5f2ff);
+  color: var(--aero-muted);
+  background: transparent;
   border: 1px solid transparent;
 }
 
 .app-shell .insight-topics button[aria-pressed="true"] {
-  background: var(--topic-ink, #104da7);
+  background: var(--aero-blue);
   color: #fff;
 }
 
 .app-shell .insight-topics button[aria-pressed="false"]:hover {
-  border-color: currentColor;
+  background-color: #dceeff;
 }
 
 .app-shell .insight-topics {
@@ -308,21 +300,19 @@ body {
   .recommend-card, .handsfree-card, .insight-disclosure, .sprinkler-section,
   .management-location, .management-access, .management-rules, .management-side > section,
   .aero-assist, .wa-alert-entry, .nearby-node) {
-  background-image: var(--aero-sheen);
   border-radius: var(--aero-panel-radius);
-  box-shadow: var(--aero-volume);
+  box-shadow: none;
 }
 
 .app-shell :is(.live-panel, .live-table-wrap, .wx-panel, .map-controls, .sensor-toolbar,
   .management-rules, .insight-disclosure, .sprinkler-section, .management-access),
 .login-page .login-form-panel {
   background-color: var(--aero-surface);
-  background-image: var(--aero-panel-fill);
   border-color: var(--aero-rim);
 }
 
 .app-shell .aero-assist {
-  background: var(--aero-sheen), linear-gradient(155deg, #ebf7ff 20%, #d5e7ff 78%, #fff0e4);
+  background: #e3f0ff;
 }
 
 .app-shell .insight-disclosure {
@@ -333,21 +323,17 @@ body {
   .wx-alerts li, .esg-report-quality > div, .sensor-values article,
   .sprinkler-command-status, .wx-detail-head) {
   border-radius: var(--aero-card-radius);
-  box-shadow: var(--aero-tile-volume);
+  box-shadow: none;
 }
 
 .app-shell :is(.sensor-hero, .insight-lead, .wx-today) {
   border-radius: var(--aero-hero-radius);
-  box-shadow: var(--aero-hero-volume);
-}
-
-.app-shell .wx-today {
-  box-shadow: var(--aero-volume);
+  box-shadow: none;
 }
 
 .app-shell :is(.sensor-key-metrics, .panel-metrics) > div {
   border-radius: var(--aero-card-radius);
-  box-shadow: inset 0 1px 0 #ffffff28, inset 0 -4px 9px #072b651f;
+  box-shadow: none;
 }
 
 svg.lucide {
@@ -357,7 +343,7 @@ svg.lucide {
 .app-shell .live-button:not(.secondary):not(.danger):not(.sprinkler-stop),
 .landing-page .landing-button,
 .login-submit {
-  box-shadow: inset 0 1px 0 #ffffff4a, inset 0 -2px 4px #073f831c;
+  box-shadow: none;
 }
 
 .monitoring-options[data-slot="select-content"] {
@@ -438,7 +424,7 @@ svg.lucide {
 
 .app-shell .environment-nav .insight-topics button {
   flex: none;
-  border-radius: 999px;
+  border-radius: var(--aero-segment-radius);
   padding-inline: 12px;
   white-space: nowrap;
 }
@@ -466,8 +452,8 @@ svg.lucide {
 
 @media (max-width: 600px) {
   body {
-    --aero-panel-radius: 24px 24px 21px 21px;
-    --aero-hero-radius: 28px 28px 24px 24px;
+    --aero-panel-radius: 24px;
+    --aero-hero-radius: 28px;
     --aero-card-radius: 18px;
   }
 }
@@ -507,10 +493,6 @@ svg.lucide {
   box-shadow: none;
   background: #eaf4ff;
   border-radius: var(--aero-control-radius);
-}
-
-.app-shell .nav-entry.active {
-  box-shadow: inset 0 1px 0 #fff;
 }
 
 .app-shell :is(.assist-link, .live-button:not(.secondary, .danger, .sprinkler-stop)),
@@ -558,12 +540,12 @@ svg.lucide {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  :is(.live-button, .assist-link, .landing-button, .login-submit, .guest-entry,
+  :is(.live-button, .assist-link, .landing-button, .login-submit,
     .landing-feature-options button, .environment-nav .insight-topics button):not(:disabled) {
     transition: scale 180ms var(--aero-ease), background-color 180ms ease;
   }
 
-  :is(.live-button, .assist-link, .landing-button, .login-submit, .guest-entry,
+  :is(.live-button, .assist-link, .landing-button, .login-submit,
     .landing-feature-options button, .environment-nav .insight-topics button):not(:disabled):active {
     scale: .975;
     transition-duration: 85ms;
@@ -595,7 +577,7 @@ body:has(.login-page),
   padding: clamp(22px, 4vw, 44px);
   border-radius: var(--aero-hero-radius);
   background: var(--aero-illustration);
-  box-shadow: var(--aero-volume);
+  box-shadow: none;
   color: var(--aero-ink);
   overflow: hidden;
 }
@@ -625,7 +607,7 @@ body:has(.login-page),
   grid-row: 3;
 }
 
-.login-page .login-story-copy p {
+.login-page p.login-story-copy {
   margin: 0 0 12px;
   color: var(--aero-ink);
   font-size: clamp(1.25rem, 2.3vw, 1.8rem);
@@ -749,7 +731,7 @@ body:has(.login-page),
     grid-row: 2;
   }
 
-  .login-page .login-story-copy p {
+  .login-page p.login-story-copy {
     display: none;
   }
 
@@ -768,11 +750,6 @@ body:has(.login-page),
     grid-row: 1 / 3;
   }
 
-  .login-page .guest-entry {
-    min-height: 44px;
-    padding: 8px 12px;
-    gap: 6px;
-  }
 
   .login-page .demo-login > div {
     flex-wrap: wrap;
@@ -786,5 +763,146 @@ body:has(.login-page),
     border-radius: var(--aero-card-radius);
     background: #eef8ff;
     box-shadow: var(--aero-glass-depth);
+  }
+}
+
+.app-shell :is(.disaster-filters, .map-layer-picker, .nearby-radius > div) {
+  padding: 5px;
+  gap: 4px;
+  border: 1px solid var(--aero-rim);
+  border-radius: var(--aero-card-radius);
+  background: #f1f8ff;
+}
+
+.app-shell :is(.disaster-filters, .map-layer-picker, .nearby-radius, .management-parameters) button {
+  border-radius: var(--aero-segment-radius);
+  min-height: 44px;
+}
+
+.app-shell :is(.disaster-filters, .map-layer-picker, .nearby-radius, .management-parameters)
+  button[aria-pressed="true"] {
+  color: #fff;
+  background: var(--aero-blue);
+  box-shadow: none;
+}
+
+.app-shell :is(.disaster-filters, .map-layer-picker, .nearby-radius) button:focus-visible {
+  outline-offset: -2px;
+}
+
+.app-shell .disaster-card {
+  background: var(--aero-surface);
+}
+
+.app-shell .disaster-card::before {
+  content: none;
+}
+
+.app-shell .disaster-card h3 a:hover,
+.app-shell .insight-text-link:hover {
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
+.app-shell :is(.nearby-location-icon, .sprinkler-device-icon, .wx-alert-icon) {
+  background: transparent;
+  box-shadow: none;
+  width: 24px;
+  height: 24px;
+}
+
+.app-shell .wx-alerts li.is-danger .wx-alert-icon {
+  background: transparent;
+}
+
+.app-shell .wx-hazards .wx-quake-icon {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: inherit;
+}
+
+.app-shell .wa-subscription {
+  margin-top: 0;
+}
+
+.app-shell .wa-subscription > summary {
+  color: var(--aero-blue);
+}
+
+.wa-subscription .wa-settings {
+  padding: 4px 4px 22px;
+}
+
+.wa-settings-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 440px) max-content;
+  align-items: end;
+  gap: 8px 12px;
+}
+
+.history-export {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wa-settings-label {
+  grid-column: 1 / -1;
+  color: var(--aero-muted);
+  font-size: .875rem;
+  font-weight: 650;
+}
+
+.wa-settings-controls .monitoring-select[data-slot="select-trigger"] {
+  min-width: 0;
+}
+
+.wa-settings-controls .live-button {
+  min-height: 48px;
+}
+
+.wa-subscription-list {
+  margin-top: 18px;
+  color: var(--aero-muted);
+  font-size: .875rem;
+}
+
+.wa-subscription-list h3 {
+  color: var(--aero-ink);
+  font-weight: 700;
+}
+
+.wa-subscription-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--aero-rim);
+  overflow-wrap: anywhere;
+}
+
+.wa-subscription-list p {
+  margin-top: 10px;
+}
+
+.confirm-page .login-brand-icon {
+  padding: 0;
+  background: transparent;
+}
+
+@media (max-width: 520px) {
+  .app-shell .live-heading:has(.history-export) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .wa-settings-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wa-settings-controls .live-button {
+    justify-self: start;
   }
 }

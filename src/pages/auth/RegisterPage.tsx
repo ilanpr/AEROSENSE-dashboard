@@ -99,7 +99,7 @@ export function RegisterPage() {
       <section className="login-form-panel" aria-labelledby="register-heading">
         <div className="login-form-inner register-inner">
           <Link to={ROUTES.LOGIN} className="login-back">
-            Sudah punya akun? Masuk
+            Kembali ke halaman masuk
           </Link>
           {sentTo ? (
             <div className="register-sent" role="status">

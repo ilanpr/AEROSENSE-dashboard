@@ -5,7 +5,7 @@ import { useLiveData } from "@/hooks/useLiveData";
 import { api } from "@/services/api";
 import type { LiveNode } from "@/types/live.types";
 import { WhatsAppEntry } from "./WhatsAppEntry";
-export function WhatsAppSettings() {
+export function WhatsAppSettings({ embedded = false }: { embedded?: boolean }) {
   const { user } = useAuth();
   const nodes = useLiveData<{ nodes: LiveNode[] }>(user ? "/v1/dashboard" : null, 60000);
   const subscriptions = useLiveData<{
@@ -16,23 +16,22 @@ export function WhatsAppSettings() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   if (!user || !nodes.data?.nodes.length) return null;
-  const id = selected || nodes.data.nodes[0].id;
+  const sensorNodes = nodes.data.nodes;
+  const id = sensorNodes.find((node) => node.id === selected)?.id ?? sensorNodes[0].id;
+  const activeSubscriptions = subscriptions.data?.subscriptions ?? [];
   return (
-    <section className="live-panel">
-      <h2>Notifikasi WhatsApp</h2>
-      <p>
-        Hubungkan nomor WhatsApp ke node yang ingin dipantau. Ketik BERHENTI di WhatsApp untuk
-        menghentikan langganan.
-      </p>
-      <div className="live-actions">
+    <section className={embedded ? "wa-settings" : "live-panel wa-settings"}>
+      {!embedded && <h2>Notifikasi WhatsApp</h2>}
+      <div className="wa-settings-controls">
+        <span className="wa-settings-label">Lokasi sensor</span>
         <MonitoringSelect
-          label="Node untuk langganan WhatsApp"
+          label="Lokasi sensor"
           value={id}
           onValueChange={(value) => {
             setSelected(value);
             setCommand("");
           }}
-          options={nodes.data.nodes.map((n) => ({ value: n.id, label: n.name }))}
+          options={sensorNodes.map((n) => ({ value: n.id, label: n.name }))}
         />
         <button
           className="live-button"
@@ -50,7 +49,7 @@ export function WhatsAppSettings() {
             }
           }}
         >
-          Buat kode penghubung
+          {busy ? "Menyiapkan kode…" : "Buat kode penghubung"}
         </button>
       </div>
       {command && (
@@ -64,13 +63,20 @@ export function WhatsAppSettings() {
       )}
       {error && <p role="alert">{error}</p>}
       {subscriptions.error && <p role="alert">{subscriptions.error}</p>}
-      <ul>
-        {subscriptions.data?.subscriptions.map((s) => (
-          <li key={s.node_id + s.phone}>
-            {s.node_id} · +{s.phone}
-          </li>
-        ))}
-      </ul>
+      {activeSubscriptions.length > 0 && (
+        <div className="wa-subscription-list">
+          <h3>Langganan aktif</h3>
+          <ul>
+            {activeSubscriptions.map(({ node_id, phone }) => (
+              <li key={node_id + ":" + phone}>
+                <strong>{sensorNodes.find((node) => node.id === node_id)?.name || node_id}</strong>
+                <span>+{phone}</span>
+              </li>
+            ))}
+          </ul>
+          <p>Kirim <strong>BERHENTI</strong> di WhatsApp untuk berhenti berlangganan.</p>
+        </div>
+      )}
     </section>
   );
 }

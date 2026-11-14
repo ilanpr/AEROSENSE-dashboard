@@ -519,24 +519,6 @@ input {
   background: #fff;
   object-fit: contain;
 }
-.guest-entry {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  min-height: 50px;
-  padding: 14px 22px;
-  background: #fff;
-  border-radius: 999px;
-  color: #19467a;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  box-shadow: 0 6px 20px #07132918;
-}
-.guest-entry:hover {
-  background: #e5f1ff;
-}
 .login-form-panel {
   display: flex;
   align-items: center;
@@ -858,25 +840,6 @@ input {
   border-radius: 26px;
   color: #1a446d;
   box-shadow: 0 22px 44px -38px #0c70d980;
-}
-.assist-orbit {
-  position: absolute;
-  z-index: -1;
-  border: 1px solid #68bffd45;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.assist-orbit-one {
-  width: 230px;
-  height: 230px;
-  right: -62px;
-  top: -82px;
-}
-.assist-orbit-two {
-  width: 170px;
-  height: 170px;
-  right: 8px;
-  bottom: -105px;
 }
 .assist-visual {
   position: relative;
@@ -1890,8 +1853,7 @@ input {
     gap: 14px;
     padding: 20px;
   }
-  .app-shell .aero-assist .assist-visual,
-  .app-shell .aero-assist .assist-orbit {
+  .app-shell .aero-assist .assist-visual {
     display: none;
   }
 }

@@ -79,7 +79,7 @@ export function SensorOverview() {
       <header className="insights-heading">
         <div>
           <h1>
-            Kondisi udara <span className="heading-accent">di titik AEROSENSE.</span>
+            <span className="heading-accent">Kondisi udara</span> di titik sensor
           </h1>
         </div>
         <button
@@ -196,15 +196,13 @@ export function SensorOverview() {
               <ConditionScene scene="sensor" />
             </article>
             <aside className={`aero-assist assist-${summary.tone}`}>
-              <span className="assist-orbit assist-orbit-one" aria-hidden="true" />
-              <span className="assist-orbit assist-orbit-two" aria-hidden="true" />
               <div className="assist-copy">
                 <h2>
                   {summary.tone === "danger"
                     ? "Periksa titik ini sekarang."
                     : summary.tone === "warning"
                       ? "Ada yang perlu dicek."
-                      : "Tanya soal kondisi sekitar"}
+                      : "Ada yang ingin ditanyakan?"}
                 </h2>
                 {summary.tone === "danger" && <p>Cek lokasi dan perangkat.</p>}
                 {summary.tone === "warning" && <p>Bandingkan dengan titik terdekat.</p>}
