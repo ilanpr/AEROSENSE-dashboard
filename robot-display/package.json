@@ -1,0 +1,12 @@
+{
+  "name": "aerobot-physical-face",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node start.mjs",
+    "check": "node --test test.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

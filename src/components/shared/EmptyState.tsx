@@ -1,34 +1,28 @@
-import { cn } from '@/lib/utils'
-import type { ReactNode } from 'react'
+import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 interface EmptyStateProps {
   /** Title text */
-  title: string
+  title: string;
   /** Description text */
-  description?: string
+  description?: string;
   /** Icon or illustration to display */
-  icon?: ReactNode
+  icon?: ReactNode;
   /** Action button or link */
-  action?: ReactNode
+  action?: ReactNode;
   /** Additional CSS classes */
-  className?: string
+  className?: string;
 }
 
 /**
  * Empty state placeholder component.
  * Use when a page, table, or list has no data to display.
  */
-export function EmptyState({
-  title,
-  description,
-  icon,
-  action,
-  className,
-}: EmptyStateProps) {
+export function EmptyState({ title, description, icon, action, className }: EmptyStateProps) {
   return (
     <div
       className={cn(
-        'flex min-h-[400px] flex-col items-center justify-center gap-4 p-8 text-center',
+        "flex min-h-[400px] flex-col items-center justify-center gap-4 p-8 text-center",
         className,
       )}
     >
@@ -40,12 +34,10 @@ export function EmptyState({
 
       <div className="space-y-2">
         <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-        {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        )}
+        {description && <p className="text-sm text-muted-foreground">{description}</p>}
       </div>
 
       {action && <div className="mt-2">{action}</div>}
     </div>
-  )
+  );
 }

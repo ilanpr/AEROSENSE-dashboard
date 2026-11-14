@@ -1,0 +1,908 @@
+body {
+  --aero-canvas-soft: #eaf5ff;
+  --aero-ink: #132f49;
+  --aero-muted: #3f5f79;
+  --aero-blue: #0957bd;
+  --aero-blue-hover: #074796;
+  --aero-control-radius: 16px;
+  --aero-inset: clamp(16px, 2.5vw, 28px);
+  --aero-display: clamp(2rem, 2.7vw, 2.625rem);
+  --aero-ease: cubic-bezier(.2,.7,.25,1);
+  --aero-glass: #eef8ffe8;
+  --aero-glass-depth: inset 0 1px 0 #fff, 0 5px 16px #194b7a16;
+  --aero-surface: #f5faff;
+  --aero-illustration: radial-gradient(ellipse at 20% 5%, #f0fcff, transparent 65%),
+    linear-gradient(145deg, #a8e6fb, #b8c9ff 78%, #ffd9c2);
+  --aero-panel-radius: 28px;
+  --aero-hero-radius: 32px;
+  --aero-card-radius: 22px;
+  --aero-segment-radius: calc(var(--aero-card-radius) - 5px);
+  --aero-rim: #b8d6f0;
+}
+
+.landing-page {
+  --landing-ink: #102a42;
+  --landing-blue: #0755c9;
+}
+
+.landing-page .landing-header {
+  min-height: clamp(68px, 7vw, 94px);
+}
+
+.landing-page .landing-hero {
+  gap: clamp(24px, 5vw, 72px);
+  padding-block: clamp(30px, 5vw, 66px) clamp(44px, 7vw, 92px);
+}
+
+.landing-page .landing-hero h1 {
+  font-size: clamp(37px, 4.65vw, 68px);
+  line-height: 1.05;
+}
+
+.landing-page .landing-hero h1 span {
+  color: var(--landing-blue);
+}
+
+.landing-page .landing-hero-art {
+  background: var(--aero-illustration);
+}
+
+.landing-page .landing-feature-detail {
+  --feature-surface: #eaf4ff;
+  background-color: var(--feature-surface);
+}
+
+.landing-page .landing-feature-detail[data-feature="/environment"] { --feature-surface: #e5f7ef; }
+.landing-page .landing-feature-detail[data-feature="/aerobot"] { --feature-surface: #efeaff; }
+.landing-page .landing-feature-detail[data-feature="/analytics"] { --feature-surface: #fff2da; }
+
+.landing-page .landing-feature-options button[aria-pressed="true"] {
+  background: #e4eeff;
+  color: #104da7;
+}
+
+.landing-page .landing-management {
+  background: #e5efff;
+}
+
+.app-shell {
+  --ui-surface-gradient: #deeeff;
+  background: radial-gradient(ellipse at 95% 2rem, #c2e3ff, transparent 46rem),
+    linear-gradient(160deg, var(--aero-canvas-soft), #d9edff);
+}
+
+.app-shell .app-sidebar {
+  background: linear-gradient(165deg, #fcfeff 32%, #e5f2ff);
+  border-color: #c5def2;
+}
+
+.app-shell .app-navigation {
+  margin-top: 20px;
+  gap: 14px;
+}
+
+.nav-group {
+  display: grid;
+  gap: 3px;
+}
+
+.nav-group + .nav-group {
+  border-top: 1px solid #e4ebf5;
+  padding-top: 12px;
+}
+
+.nav-group > p {
+  padding-inline: 14px;
+  margin: 0 0 3px;
+  color: #4e667e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.app-shell .nav-entry {
+  border-radius: var(--aero-control-radius);
+  min-height: 44px;
+}
+
+.app-shell .nav-entry.active {
+  background: linear-gradient(180deg, #e7f6ff, #cde7ff);
+  color: #104da7;
+}
+
+.app-shell .nav-entry.active svg {
+  color: #185bd4;
+}
+
+.app-shell :is(.live-heading h1, .insights-heading h1, .page-heading h1) {
+  text-wrap: balance;
+}
+
+.environment-hub[data-topic="weather"], .insight-topics [data-topic="weather"] {
+  --topic-tint: #e5f2ff;
+  --topic-ink: #144a9a;
+  --topic-dark: #083785;
+  --topic-light: #1769c0;
+}
+.environment-hub[data-topic="air_quality"], .insight-topics [data-topic="air_quality"] {
+  --topic-tint: #ddf5ef;
+  --topic-ink: #096252;
+  --topic-dark: #07504b;
+  --topic-light: #087d72;
+}
+.environment-hub[data-topic="soil"], .insight-topics [data-topic="soil"] {
+  --topic-tint: #edf4df;
+  --topic-ink: #42601b;
+  --topic-dark: #314e21;
+  --topic-light: #587e34;
+}
+.environment-hub[data-topic="fire"], .insight-topics [data-topic="fire"] {
+  --topic-tint: #fff0df;
+  --topic-ink: #963b18;
+  --topic-dark: #773217;
+  --topic-light: #ae5126;
+}
+.environment-hub[data-topic="flood"], .insight-topics [data-topic="flood"] {
+  --topic-tint: #e0f5fb;
+  --topic-ink: #12647a;
+  --topic-dark: #124b68;
+  --topic-light: #137c96;
+}
+.environment-hub[data-topic="earthquake"], .insight-topics [data-topic="earthquake"] {
+  --topic-tint: #efe9ff;
+  --topic-ink: #5d3a91;
+  --topic-dark: #483075;
+  --topic-light: #7650a9;
+}
+
+.app-shell .environment-hub[data-topic] .insight-lead {
+  background: radial-gradient(ellipse at 86% 17%, #ffffff25, transparent 47%),
+    linear-gradient(125deg, var(--topic-dark, #083785) 24%, var(--topic-light, #1769c0));
+}
+
+.app-shell .environment-hub[data-topic] .panel-metrics {
+  background: rgb(9 24 54 / 38%);
+}
+
+.app-shell .insight-topics button {
+  color: var(--aero-muted);
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.app-shell .insight-topics button[aria-pressed="true"] {
+  background: var(--aero-blue);
+  color: #fff;
+}
+
+.app-shell .insight-topics button[aria-pressed="false"]:hover {
+  background-color: #dceeff;
+}
+
+.app-shell .insight-topics {
+  background: rgb(255 255 255 / 83%);
+  border: 1px solid #dce8f2;
+  border-radius: 16px;
+  padding: 7px;
+}
+
+.app-shell .insight-topics button {
+  border-radius: 10px;
+}
+
+.app-shell .chat-source-panel {
+  background: #eef3ff;
+  border: 1px solid #d7e1f4;
+  padding: 22px;
+  border-radius: 18px;
+}
+
+.app-shell .chat-source-panel :is(h2, ul) { color: #25405f; }
+.app-shell .chat-source-panel .chat-mascot { max-width: 148px; }
+
+.app-shell .live-chat > header {
+  background: linear-gradient(135deg, #154595, #0957bd);
+}
+
+.app-shell :is(.map-controls, .sensor-toolbar, .nearby-location) {
+  background: #fff;
+  border: 1px solid #dce8f5;
+  border-radius: 16px;
+}
+
+.app-shell :is(.page-heading, .live-heading, .insights-heading) > div:first-child > p {
+  color: #405b76;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 62ch;
+}
+
+.app-shell .nearby-location-icon {
+  background: #eaf2ff;
+}
+
+.app-shell .environment-hub .condition-scene :is(.scene-ring, .scene-spark, .scene-halo) {
+  display: none;
+}
+
+.app-shell .environment-hub .condition-scene img {
+  filter: none;
+}
+
+.app-shell .environment-hub .condition-scene.scene-muted img {
+  filter: grayscale(0.6);
+}
+
+.landing-cheer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.landing-cheer svg {
+  position: absolute;
+  width: clamp(22px, 3vw, 38px);
+  height: auto;
+  color: #ad5800;
+  fill: #ffdb63;
+  opacity: 0;
+}
+
+.landing-cheer svg:nth-child(1) { left: 13%; top: 35%; }
+.landing-cheer svg:nth-child(2) { right: 16%; top: 21%; }
+.landing-cheer svg:nth-child(3) { right: 9%; top: 38%; width: 22px; }
+
+@keyframes falcon-cheer {
+  0%, 47%, 100% { transform: translateY(0) rotate(0); }
+  8% { transform: translateY(4px) scale(1.025, 0.97) rotate(-3deg); }
+  23% { transform: translateY(-18px) scale(0.99, 1.03) rotate(5deg); }
+  35% { transform: translateY(0) scale(1.02, 0.98) rotate(-2deg); }
+}
+
+@keyframes falcon-spark {
+  0%, 10%, 47%, 100% { opacity: 0; transform: translateY(10px) rotate(-12deg) scale(0.35); }
+  23% { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+  38% { opacity: 0; transform: translateY(-16px) rotate(14deg) scale(0.65); }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .landing-page :is(.landing-hero-art:hover, .landing-hero:has(.landing-button:is(:hover, :focus-visible)))
+    .landing-hero-mascot:not(.motion-paused) {
+    animation: falcon-cheer 2.6s cubic-bezier(.25,.75,.35,1) infinite;
+  }
+
+  .landing-page :is(.landing-hero-art:hover, .landing-hero:has(.landing-button:is(:hover, :focus-visible)))
+    .landing-hero-mascot:not(.motion-paused) + .landing-cheer svg {
+    animation: falcon-spark 2.6s ease-out var(--spark-delay, 0ms) infinite;
+  }
+
+  .landing-cheer svg:nth-child(2) { --spark-delay: 80ms; }
+  .landing-cheer svg:nth-child(3) { --spark-delay: 150ms; }
+}
+
+@media (max-width: 600px) {
+  .landing-page .landing-hero {
+    gap: 26px;
+  }
+  .landing-page .landing-hero h1 {
+    font-size: clamp(33px, 8.5vw, 44px);
+    text-wrap: initial;
+  }
+  .app-shell .insight-topics button {
+    min-height: 44px;
+  }
+}
+
+.landing-page :is(.landing-feature-detail, .landing-management),
+.login-page .login-form-panel,
+.confirm-card,
+.app-shell :is(.live-panel, .live-state, .live-table-wrap, .live-chat, .wx-panel, .disaster-card,
+  .map-controls, .sensor-toolbar, .nearby-location, .nearby-map-panel, .chat-source-panel,
+  .recommend-card, .handsfree-card, .insight-disclosure, .sprinkler-section,
+  .management-location, .management-access, .management-rules, .management-side > section,
+  .aero-assist, .wa-alert-entry, .nearby-node) {
+  border-radius: var(--aero-panel-radius);
+  box-shadow: none;
+}
+
+.app-shell :is(.live-panel, .live-table-wrap, .wx-panel, .map-controls, .sensor-toolbar,
+  .management-rules, .insight-disclosure, .sprinkler-section, .management-access),
+.login-page .login-form-panel {
+  background-color: var(--aero-surface);
+  border-color: var(--aero-rim);
+}
+
+.app-shell .aero-assist {
+  background: #e3f0ff;
+}
+
+.app-shell .insight-disclosure {
+  padding-inline: clamp(14px, 1.6vw, 22px);
+}
+
+.app-shell :is(.wx-card, .wx-today-stats > div, .esg-report-tiles > div, .insight-glance,
+  .wx-alerts li, .esg-report-quality > div, .sensor-values article,
+  .sprinkler-command-status, .wx-detail-head) {
+  border-radius: var(--aero-card-radius);
+  box-shadow: none;
+}
+
+.app-shell :is(.sensor-hero, .insight-lead, .wx-today) {
+  border-radius: var(--aero-hero-radius);
+  box-shadow: none;
+}
+
+.app-shell :is(.sensor-key-metrics, .panel-metrics) > div {
+  border-radius: var(--aero-card-radius);
+  box-shadow: none;
+}
+
+svg.lucide {
+  stroke-width: 1.8;
+}
+
+.app-shell .live-button:not(.secondary):not(.danger):not(.sprinkler-stop),
+.landing-page .landing-button,
+.login-submit {
+  box-shadow: none;
+}
+
+.monitoring-options[data-slot="select-content"] {
+  border-color: var(--aero-rim);
+  border-radius: var(--aero-card-radius);
+}
+
+.app-shell .environment-hub > .environment-nav {
+  position: sticky;
+  z-index: 12;
+  top: calc(var(--topbar-offset) + var(--topbar-height) + 8px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px;
+  margin-bottom: var(--section-gap, 20px);
+  border: 1px solid var(--aero-rim);
+  border-radius: var(--aero-card-radius);
+}
+
+.environment-hub:not(.insights-compact) {
+  --environment-scroll-margin: calc(var(--topbar-offset) + var(--topbar-height) + 82px);
+}
+
+.environment-hub:not(.insights-compact) :is(.insight-lead, #cuaca, #kabar-bencana, #rincian-lingkungan) {
+  scroll-margin-top: var(--environment-scroll-margin);
+}
+
+.app-shell .environment-nav .live-actions {
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.app-shell .environment-nav .sensor-select {
+  position: relative;
+  width: clamp(148px, 16vw, 230px);
+  min-width: 0;
+  margin: 0;
+}
+
+.environment-nav .sensor-select > svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  z-index: 1;
+  transform: translateY(-50%);
+  color: #2867a8;
+  pointer-events: none;
+}
+
+.app-shell .environment-nav .monitoring-select[data-slot="select-trigger"] {
+  min-width: 0;
+  min-height: 44px;
+  padding-inline: 34px 10px;
+}
+
+.app-shell .environment-nav .live-icon-button {
+  width: 44px;
+  height: 44px;
+}
+
+.app-shell .environment-hub .environment-nav .insight-topics {
+  display: flex;
+  flex: 1;
+  flex-wrap: nowrap;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  scrollbar-width: thin;
+  scrollbar-color: #8bb9df transparent;
+}
+
+.app-shell .environment-nav .insight-topics button {
+  flex: none;
+  border-radius: var(--aero-segment-radius);
+  padding-inline: 12px;
+  white-space: nowrap;
+}
+
+.app-shell .environment-nav .insight-topics button:focus-visible {
+  outline-offset: -3px;
+}
+
+@media (max-width: 1100px) {
+  .app-shell .environment-hub > .environment-nav {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .app-shell .environment-nav .sensor-select {
+    flex: 1;
+    max-width: 280px;
+  }
+
+  .environment-hub:not(.insights-compact) {
+    --environment-scroll-margin: calc(var(--topbar-offset) + var(--topbar-height) + 130px);
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    --aero-panel-radius: 24px;
+    --aero-hero-radius: 28px;
+    --aero-card-radius: 18px;
+  }
+}
+
+:is(.landing-page, .app-shell, .login-page, .confirm-page) {
+  color: var(--aero-ink);
+}
+
+:is(.landing-page, .app-shell, .login-page) ::selection {
+  color: #fff;
+  background: var(--aero-blue);
+}
+
+.landing-page .landing-hero h1 {
+  text-wrap: balance;
+}
+
+.app-shell :is(.live-heading, .insights-heading, .page-heading) h1,
+.login-page .login-form-inner h1 {
+  font-size: var(--aero-display);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -.035em;
+}
+
+.app-shell :is(.live-panel, .management-rules, .sprinkler-section, .wx-panel) {
+  padding: var(--aero-inset);
+}
+
+.app-shell .live-panel > .live-table-wrap {
+  box-shadow: none;
+  background-image: none;
+  border-radius: var(--aero-control-radius);
+}
+
+.app-shell .live-panel > .live-state {
+  box-shadow: none;
+  background: #eaf4ff;
+  border-radius: var(--aero-control-radius);
+}
+
+.app-shell :is(.assist-link, .live-button:not(.secondary, .danger, .sprinkler-stop)),
+.landing-page .landing-button,
+.login-submit {
+  background-color: var(--aero-blue);
+  color: #fff;
+}
+
+.app-shell :is(.assist-link, .live-button:not(.secondary, .danger, .sprinkler-stop)):hover,
+.landing-page .landing-button:hover,
+.login-submit:hover {
+  background-color: var(--aero-blue-hover);
+}
+
+:is(.app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
+  .monitoring-options[data-slot="select-content"], .wa-start-dialog, .robot-screen-controls) {
+  background: #eef8ff;
+  box-shadow: var(--aero-glass-depth);
+}
+
+.app-shell .app-topbar {
+  border-bottom: 1px solid #b8d6f070;
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  :is(.app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
+    .monitoring-options[data-slot="select-content"], .wa-start-dialog, .robot-screen-controls) {
+    background: var(--aero-glass);
+    backdrop-filter: blur(16px) saturate(135%);
+  }
+}
+
+.wa-start-dialog {
+  border-radius: var(--aero-panel-radius);
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :is(.app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
+    .monitoring-options[data-slot="select-content"], .wa-start-dialog, .robot-screen-controls) {
+    background: #fff;
+    backdrop-filter: none;
+    border-color: #6784a0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :is(.live-button, .assist-link, .landing-button, .login-submit,
+    .landing-feature-options button, .environment-nav .insight-topics button):not(:disabled) {
+    transition: scale 180ms var(--aero-ease), background-color 180ms ease;
+  }
+
+  :is(.live-button, .assist-link, .landing-button, .login-submit,
+    .landing-feature-options button, .environment-nav .insight-topics button):not(:disabled):active {
+    scale: .975;
+    transition-duration: 85ms;
+  }
+}
+
+.login-page {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-columns: minmax(0, .92fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(24px, 5vw, 72px);
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: clamp(16px, 3vw, 36px);
+  background: transparent;
+}
+
+body:has(.login-page),
+.confirm-page {
+  background: radial-gradient(ellipse at 10% 0%, #d0ecff, transparent 50rem), #eff7ff;
+}
+
+.login-page .login-story {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  min-height: 0;
+  padding: clamp(22px, 4vw, 44px);
+  border-radius: var(--aero-hero-radius);
+  background: var(--aero-illustration);
+  box-shadow: none;
+  color: var(--aero-ink);
+  overflow: hidden;
+}
+
+.login-page:has(.register-inner) {
+  align-items: start;
+}
+
+.login-page:has(.register-inner) .login-story {
+  position: sticky;
+  top: 24px;
+}
+
+.login-page .login-brand {
+  color: var(--aero-blue);
+  width: fit-content;
+  letter-spacing: -.035em;
+}
+
+.login-page .login-brand strong {
+  color: inherit;
+  font-weight: 800;
+}
+
+.login-page .login-story-copy {
+  margin: 0;
+  grid-row: 3;
+}
+
+.login-page p.login-story-copy {
+  margin: 0 0 12px;
+  color: var(--aero-ink);
+  font-size: clamp(1.25rem, 2.3vw, 1.8rem);
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.login-page .login-scene {
+  grid-row: 2;
+  justify-self: center;
+  width: min(100%, 320px);
+  height: auto;
+  max-height: none;
+  margin: 0;
+  animation: none;
+  filter: drop-shadow(0 10px 14px #184d7c26);
+}
+
+.login-page .login-form-panel {
+  padding: clamp(20px, 4vw, 40px);
+  background-color: var(--aero-surface);
+}
+
+.login-page .login-form-inner {
+  max-width: 420px;
+}
+
+.login-page :is(.login-form-inner form > label, .register-form fieldset > label) {
+  color: var(--aero-muted);
+  font-size: .875rem;
+  font-weight: 650;
+}
+
+.login-page .login-form-inner h1 {
+  margin: 0 0 14px;
+}
+
+.login-page :is(.login-input, .register-select, .register-note) {
+  border-color: #a9c6df;
+  border-radius: var(--aero-control-radius);
+}
+
+.login-page .login-input input::placeholder {
+  color: #58738b;
+}
+
+.login-page .login-input:focus-within {
+  border-color: var(--aero-blue);
+  box-shadow: 0 0 0 2px #286fc440;
+}
+
+.login-page :is(.login-back, .login-register, .login-guest) {
+  color: var(--aero-muted);
+  font-size: .875rem;
+}
+
+.login-page .login-guest {
+  min-height: 44px;
+  padding-block: 12px 0;
+}
+
+.missing-page .aero-mascot {
+  width: 132px;
+  height: auto;
+  margin-inline: auto;
+}
+
+.robot-screen-controls {
+  position: absolute;
+  inset: auto 16px 7%;
+  margin-inline: auto;
+  width: min(calc(100% - 32px), 280px);
+  border: 1px solid var(--aero-rim);
+  border-radius: var(--aero-panel-radius);
+  padding: 16px;
+  color: var(--aero-ink);
+}
+
+.robot-screen-controls label {
+  display: grid;
+  gap: 8px;
+  font-size: .875rem;
+  font-weight: 650;
+}
+
+.robot-screen-controls select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--aero-rim);
+  border-radius: var(--aero-control-radius);
+  padding-inline: 12px;
+  background-color: white;
+}
+
+.robot-screen-controls .login-submit {
+  margin-top: 12px;
+  justify-content: center;
+}
+
+@media (max-width: 767px) {
+  .login-page {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 12px;
+    max-width: 540px;
+  }
+
+  .login-page:has(.register-inner) .login-story {
+    position: static;
+  }
+
+  .login-page .login-story {
+    grid-template-columns: minmax(0, 1fr) clamp(80px, 28vw, 122px);
+    grid-template-rows: auto auto;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 6px;
+  }
+
+  .login-page .login-story-copy {
+    grid-row: 2;
+  }
+
+  .login-page p.login-story-copy {
+    display: none;
+  }
+
+  .login-page .login-brand {
+    font-size: clamp(1rem, 5vw, 1.35rem);
+    gap: 6px;
+  }
+
+  .login-page .login-brand img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .login-page .login-scene {
+    grid-column: 2;
+    grid-row: 1 / 3;
+  }
+
+
+  .login-page .demo-login > div {
+    flex-wrap: wrap;
+  }
+
+  .login-page .demo-login button {
+    flex: 1 1 76px;
+  }
+
+  .landing-page .landing-header nav {
+    border-radius: var(--aero-card-radius);
+    background: #eef8ff;
+    box-shadow: var(--aero-glass-depth);
+  }
+}
+
+.app-shell :is(.disaster-filters, .map-layer-picker, .nearby-radius > div) {
+  padding: 5px;
+  gap: 4px;
+  border: 1px solid var(--aero-rim);
+  border-radius: var(--aero-card-radius);
+  background: #f1f8ff;
+}
+
+.app-shell :is(.disaster-filters, .map-layer-picker, .nearby-radius, .management-parameters) button {
+  border-radius: var(--aero-segment-radius);
+  min-height: 44px;
+}
+
+.app-shell :is(.disaster-filters, .map-layer-picker, .nearby-radius, .management-parameters)
+  button[aria-pressed="true"] {
+  color: #fff;
+  background: var(--aero-blue);
+  box-shadow: none;
+}
+
+.app-shell :is(.disaster-filters, .map-layer-picker, .nearby-radius) button:focus-visible {
+  outline-offset: -2px;
+}
+
+.app-shell .disaster-card {
+  background: var(--aero-surface);
+}
+
+.app-shell .disaster-card::before {
+  content: none;
+}
+
+.app-shell .disaster-card h3 a:hover,
+.app-shell .insight-text-link:hover {
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
+.app-shell :is(.nearby-location-icon, .sprinkler-device-icon, .wx-alert-icon) {
+  background: transparent;
+  box-shadow: none;
+  width: 24px;
+  height: 24px;
+}
+
+.app-shell .wx-alerts li.is-danger .wx-alert-icon {
+  background: transparent;
+}
+
+.app-shell .wx-hazards .wx-quake-icon {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: inherit;
+}
+
+.app-shell .wa-subscription {
+  margin-top: 0;
+}
+
+.app-shell .wa-subscription > summary {
+  color: var(--aero-blue);
+}
+
+.wa-subscription .wa-settings {
+  padding: 4px 4px 22px;
+}
+
+.wa-settings-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 440px) max-content;
+  align-items: end;
+  gap: 8px 12px;
+}
+
+.history-export {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wa-settings-label {
+  grid-column: 1 / -1;
+  color: var(--aero-muted);
+  font-size: .875rem;
+  font-weight: 650;
+}
+
+.wa-settings-controls .monitoring-select[data-slot="select-trigger"] {
+  min-width: 0;
+}
+
+.wa-settings-controls .live-button {
+  min-height: 48px;
+}
+
+.wa-subscription-list {
+  margin-top: 18px;
+  color: var(--aero-muted);
+  font-size: .875rem;
+}
+
+.wa-subscription-list h3 {
+  color: var(--aero-ink);
+  font-weight: 700;
+}
+
+.wa-subscription-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--aero-rim);
+  overflow-wrap: anywhere;
+}
+
+.wa-subscription-list p {
+  margin-top: 10px;
+}
+
+.confirm-page .login-brand-icon {
+  padding: 0;
+  background: transparent;
+}
+
+@media (max-width: 520px) {
+  .app-shell .live-heading:has(.history-export) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .wa-settings-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wa-settings-controls .live-button {
+    justify-self: start;
+  }
+}

@@ -1,0 +1,268 @@
+{
+  "name": "AEROSENSE | Mist sprinkler MQTT",
+  "active": false,
+  "nodes": [
+    {
+      "id": "cceab3c0-22f0-4044-9869-dfa29a4c8846",
+      "name": "Uji manual tanpa air",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "2f5d4abd-0e86-4800-898b-7bb1b2d54b6b",
+      "name": "Periksa setiap menit",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        400
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cd51ddc4-dac6-4bb8-a65e-3c01e2bf1233",
+      "name": "Pasangan node dan sprinkler",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Hanya masukkan node yang memang memiliki sprinkler. Durasi ini batas uji, bukan setelan lapangan.\nreturn [{json:{node_id:\"node-01\",actuator_id:\"mist-01\",metric:\"dust_ug_m3\",enabled:false,dry_run:true,confirm_readings:3,max_age_seconds:120,warning_seconds:3,danger_seconds:5,cooldown_seconds:600}}];"
+      }
+    },
+    {
+      "id": "781fb508-f205-4b2d-95b3-2a05ba22c89f",
+      "name": "Baca sensor dan ambang",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        520,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n (SELECT jsonb_build_object('id',n.id,'enabled',n.enabled,'pm25_validated',n.pm25_validated) FROM public.ae_nodes n WHERE n.id=$1) AS node,\n (SELECT to_jsonb(r) FROM public.ae_rules r WHERE r.node_id=$1 AND r.metric=$2) AS rule,\n COALESCE((SELECT jsonb_agg(to_jsonb(t) ORDER BY t.observed_at DESC) FROM\n   (SELECT id,node_id,observed_at,metrics,quality FROM public.ae_readings WHERE node_id=$1 ORDER BY observed_at DESC LIMIT 10) t),'[]'::jsonb) AS readings;\n",
+        "options": {
+          "queryBatching": "independently",
+          "queryReplacement": "={{ [$json.node_id,$json.metric] }}"
+        }
+      }
+    },
+    {
+      "id": "2141618c-41d4-4915-b22b-9eda25c995bb",
+      "name": "Validasi dan siapkan pulse",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Imported as a Code node. The ESP32 must independently enforce TTL, dedup and cooldown.\nfunction decideMist(config, snapshot, previous = {}, now = Date.now()) {\n const stop = reason => ({publish:false,reason,node_id:config.node_id,actuator_id:config.actuator_id,dry_run:config.dry_run});\n const id = /^[a-zA-Z0-9_-]{1,40}$/;\n if(!id.test(config.node_id)||!id.test(config.actuator_id))return stop(\"invalid_mapping\");\n if(![\"dust_ug_m3\",\"pm25_ug_m3\"].includes(config.metric))return stop(\"unsupported_metric\");\n if(!snapshot.node?.enabled||snapshot.node.id!==config.node_id)return stop(\"node_unavailable\");\n if(config.metric===\"pm25_ug_m3\"&&snapshot.node.pm25_validated!==true)return stop(\"pm25_not_validated\");\n const rule=snapshot.rule;\n if(!rule?.enabled||rule.node_id!==config.node_id||rule.metric!==config.metric||!Number.isFinite(rule.high)||!Number.isFinite(rule.danger_high)||!Number.isFinite(rule.clear_below)||rule.clear_below>=rule.high||rule.danger_high<=rule.high)return stop(\"rule_not_ready\");\n if(!Number.isInteger(config.confirm_readings)||config.confirm_readings<3||config.confirm_readings>10||!Number.isFinite(config.max_age_seconds)||config.max_age_seconds<10||config.max_age_seconds>300)return stop(\"invalid_confirmation_config\");\n if(!Number.isInteger(config.cooldown_seconds)||config.cooldown_seconds<60||config.cooldown_seconds>86400)return stop(\"invalid_cooldown\");\n if(![config.warning_seconds,config.danger_seconds].every(v=>Number.isInteger(v)&&v>=1&&v<=10)||config.danger_seconds<config.warning_seconds)return stop(\"invalid_duration\");\n const readings=(snapshot.readings||[]).slice(0,config.confirm_readings);\n if(readings.length!==config.confirm_readings)return stop(\"insufficient_readings\");\n const times=readings.map(r=>Date.parse(r.observed_at));\n if(readings.some((r,i)=>r.node_id!==config.node_id||typeof r.id!==\"string\"||r.quality?.invalid===true||!Number.isFinite(r.metrics?.[config.metric])||r.metrics[config.metric]<0||!Number.isFinite(times[i])||times[i]>now+5000||now-times[i]>config.max_age_seconds*1000))return stop(\"stale_or_invalid_reading\");\n if(new Set(readings.map(r=>r.id)).size!==readings.length||times.some((t,i)=>i>0&&t>=times[i-1]))return stop(\"duplicate_or_unordered_readings\");\n const values=readings.map(r=>r.metrics[config.metric]);\n if(!values.every(v=>v>=rule.high))return stop(values[0]<=rule.clear_below?\"clear\":\"awaiting_confirmation\");\n const status=values.every(v=>v>=rule.danger_high)?\"danger\":\"warning\";\n const reading=readings[0];\n if(previous.reading_id===reading.id)return stop(\"already_sent\");\n if(Number.isFinite(previous.sent_at)&&now-previous.sent_at<config.cooldown_seconds*1000)return stop(\"cooldown\");\n const command={version:1,command_id:`mist:${config.actuator_id}:${reading.id}`,actuator_id:config.actuator_id,node_id:config.node_id,reading_id:reading.id,metric:config.metric,status,action:\"pulse\",duration_ms:(status===\"danger\"?config.danger_seconds:config.warning_seconds)*1000,cooldown_ms:config.cooldown_seconds*1000,issued_at:new Date(now).toISOString(),expires_at:new Date(now+30000).toISOString()};\n return {publish:config.enabled===true&&config.dry_run===false,dry_run:config.dry_run!==false,reason:config.enabled!==true?\"disabled\":config.dry_run!==false?\"dry_run\":\"ready\",node_id:config.node_id,actuator_id:config.actuator_id,topic:`aerosense/actuators/${config.actuator_id}/command`,command};\n}\nconst config=$(\"Pasangan node dan sprinkler\").item.json;\nconst state=$getWorkflowStaticData(\"global\");\nreturn {json:decideMist(config,$json,state[config.actuator_id])};\n"
+      }
+    },
+    {
+      "id": "d7b913ff-7cf1-43fe-9eba-1326b6055306",
+      "name": "Boleh kirim ke perangkat",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f98a3269-755f-447d-a813-3a3d5a5b31b1",
+              "leftValue": "={{ $json.publish }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d9460bcd-0d72-4bda-a940-bb732e061498",
+      "name": "MQTT perintah sprinkler",
+      "type": "n8n-nodes-base.mqtt",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        200
+      ],
+      "parameters": {
+        "topic": "={{ $json.topic }}",
+        "sendInputData": false,
+        "message": "={{ JSON.stringify($json.command) }}",
+        "options": {
+          "qos": 1,
+          "retain": false
+        }
+      }
+    },
+    {
+      "id": "86842108-99e9-4cd3-b33c-e8fd359fbd57",
+      "name": "Catat perintah dipublikasikan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const state=$getWorkflowStaticData(\"global\");\nconst decision=$(\"Validasi dan siapkan pulse\").item.json;\nstate[decision.actuator_id]={reading_id:decision.command.reading_id,sent_at:Date.now()};\nreturn {json:{...decision,published:true,device_confirmed:false,note:\"MQTT publish berhasil; belum membuktikan relay menyala. Periksa ACK ESP32.\"}};"
+      }
+    },
+    {
+      "id": "ac408fd9-0b75-41e3-acf4-fbaa77bd7d10",
+      "name": "Hasil dry-run atau ditahan",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        420
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "79b2794f-bdd8-4ed1-ad1e-4570057f3131",
+      "name": "BACA SEBELUM AKTIF",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -240
+      ],
+      "parameters": {
+        "content": "## AEROSENSE · Mist sprinkler · DRAFT\nWi-Fi + MQTT untuk actuator; jaringan LoRa sensor tetap seperti semula.\n\n1. Pilih credential Postgres AEROSENSE pada node baca sensor dan credential MQTT pada node kirim.\n2. Pasangkan hanya node yang memiliki sprinkler. Default enabled=false dan dry_run=true.\n3. Ambang high/danger_high/clear_below dibaca dari ae_rules. Hanya debu optik atau PM2.5 tervalidasi. Tidak memakai Gemini, API wilayah, eCO2 atau prediksi GRU untuk menyalakan air.\n4. ESP32 wajib OFF saat boot, TTL, command_id dedup, cooldown lokal, timer OFF maksimum 10 detik, sakelar manual dan proteksi air kosong.\n5. Uji dahulu dengan LED/relay tanpa pompa. Jangan publish sebelum firmware mematuhi kontrak.\n\nStatic data n8n menyimpan cooldown hanya pada eksekusi production yang berhasil. ESP32 adalah pengaman wajib terhadap overlap, reboot dan pesan duplikat. Workflow ini belum menerima atau menyimpan ACK actuator.",
+        "height": 480,
+        "width": 700
+      }
+    }
+  ],
+  "connections": {
+    "Uji manual tanpa air": {
+      "main": [
+        [
+          {
+            "node": "Pasangan node dan sprinkler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Periksa setiap menit": {
+      "main": [
+        [
+          {
+            "node": "Pasangan node dan sprinkler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pasangan node dan sprinkler": {
+      "main": [
+        [
+          {
+            "node": "Baca sensor dan ambang",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baca sensor dan ambang": {
+      "main": [
+        [
+          {
+            "node": "Validasi dan siapkan pulse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validasi dan siapkan pulse": {
+      "main": [
+        [
+          {
+            "node": "Boleh kirim ke perangkat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Boleh kirim ke perangkat": {
+      "main": [
+        [
+          {
+            "node": "MQTT perintah sprinkler",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Hasil dry-run atau ditahan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MQTT perintah sprinkler": {
+      "main": [
+        [
+          {
+            "node": "Catat perintah dipublikasikan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "executionTimeout": 45
+  },
+  "pinData": {},
+  "tags": []
+}

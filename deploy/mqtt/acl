@@ -1,0 +1,11 @@
+# n8n sends commands and reads device acknowledgements and status.
+user n8n-aerosense
+topic write aerosense/actuators/+/command
+topic read aerosense/actuators/+/ack
+topic read aerosense/actuators/+/status
+
+# Each actuator logs in with its actuator_id as username (for example mist-01)
+# and can only read its own commands and write its own ack/status.
+pattern read aerosense/actuators/%u/command
+pattern write aerosense/actuators/%u/ack
+pattern write aerosense/actuators/%u/status

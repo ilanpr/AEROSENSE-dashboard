@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.ae_environment_areas(
 );
 CREATE TABLE IF NOT EXISTS public.ae_environment_area_cache(
  area_id text NOT NULL REFERENCES public.ae_environment_areas(id) ON DELETE CASCADE,
- provider text NOT NULL CHECK(provider IN ('openmeteo_weather','openmeteo_air','openmeteo_flood','soilgrids','gbif','firms','bmkg_quake','bmkg_weather','iqair')),
+ provider text NOT NULL CHECK(provider IN ('openmeteo_weather','openmeteo_air','openmeteo_flood','soilgrids','firms','bmkg_quake','bmkg_weather','iqair')),
  request_latitude double precision NOT NULL,
  request_longitude double precision NOT NULL,
  payload jsonb NOT NULL DEFAULT '{"facts":[],"status":"unavailable"}'::jsonb,

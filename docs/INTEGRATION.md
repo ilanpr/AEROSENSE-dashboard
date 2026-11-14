@@ -26,7 +26,7 @@ Gunakan workflow pada instance `flow.aerosense.me`.
 | WhatsApp                | Menerima pesan, memproses pertanyaan dan mengirim notifikasi |
 | Hub lingkungan          | Mengambil API publik dan memperbarui cache wilayah           |
 
-Konfigurasi worker: `api_base_url=http://aerosense-api:8080`, `environment_area_id=surabaya`. Endpoint backend internal menggunakan credential berisi header `X-Aerosense-Internal-Key`. URL ini tidak dipanggil langsung oleh browser.
+Konfigurasi worker: `api_base_url=http://aerosense-api:8080`. Hub membaca semua area node aktif; worker chat hanya membaca cache node yang tercantum di `node_ids` job. Endpoint backend internal memakai credential dengan header `X-Aerosense-Internal-Key`. URL ini tidak dipanggil langsung oleh browser.
 
 Nama dan ID workflow yang sudah terpasang perlu dipertahankan. Jangan mengganti credential n8n dengan publishable key Supabase atau memasukkan service-role key ke frontend. Implementasi ini memakai kontrak worker yang tersedia; tidak membuat workflow paralel baru.
 
@@ -48,7 +48,7 @@ Nama dan ID workflow yang sudah terpasang perlu dipertahankan. Jangan mengganti 
 | ae_pair_codes             | API dan pairing           | Kode penghubung sekali pakai dengan batas 10 menit                     |
 | ae_robots                 | Pengelola dan API         | Node robot, mode senyap dan cooldown kehadiran                         |
 | ae_commands               | Worker dan API            | Perintah mendengarkan, berbicara, serta status penyelesaiannya         |
-| ae_environment_areas      | Hub lingkungan/pengelola  | Acuan API publik, saat ini Kota Surabaya                               |
+| ae_environment_areas      | Hub lingkungan/pengelola  | Titik node yang dipilih; koordinat disalin otomatis dari `ae_nodes`    |
 | ae_environment_area_cache | n8n Hub lingkungan        | Fakta publik per area dan penyedia, waktu, serta kegagalan pembaruan   |
 | ae_training_sets          | Snapshot training         | Metadata satu versi dataset                                            |
 | ae_training_examples      | Snapshot training         | Pasangan input dan target aktual untuk dataset tersebut                |
@@ -61,8 +61,8 @@ Semua URL di bawah menggunakan prefix `/api` pada nginx/Vite. Server API sendiri
 
 | Method dan path                  | Masuk                                                               | Keluar                                                     |
 | -------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------- |
-| GET /v1/config                   | Tidak perlu login                                                   | URL Supabase, publishable key, area default, robot default |
-| GET /v1/environment              | area_id opsional                                                    | Area aktif, provider, fakta, timestamp dan stale           |
+| GET /v1/config                   | Tidak perlu login                                                   | URL Supabase, publishable key dan robot default             |
+| GET /v1/environment?node_id=...  | Sesi dan keanggotaan node                                           | Area node, provider, fakta, timestamp dan stale              |
 | GET /v1/dashboard                | Sesi pengguna                                                       | Node yang diizinkan, role dan snapshot terbaru             |
 | GET /v1/nodes                    | Sesi pengguna                                                       | Daftar node yang diizinkan                                 |
 | GET /v1/latest?node_id=...       | Node yang diizinkan                                                 | Snapshot ae_sensor_context                                 |
@@ -82,7 +82,7 @@ Semua URL di bawah menggunakan prefix `/api` pada nginx/Vite. Server API sendiri
 
 ## Sumber publik dan sensor
 
-Area Surabaya hanya menentukan permintaan API publik. Koordinat `ae_nodes` tetap menjadi sumber lokasi perangkat. Data publik tidak dimasukkan ke `ae_readings`, `ae_latest`, atau contoh training sensor.
+Migrasi 006 membuat satu area cache per node aktif dan mengikuti perubahan koordinat `ae_nodes`. Endpoint web hanya mengembalikan titik yang dapat diakses akun. Data publik tidak dimasukkan ke `ae_readings`, `ae_latest`, atau contoh training sensor.
 
 Endpoint lingkungan membaca cache, tidak memanggil penyedia setiap kali halaman dibuka. Cache yang berasal dari koordinat berbeda disisihkan. Setiap fakta memiliki sumber, waktu dan batas kesegaran. Informasi yang kedaluwarsa diberi penanda data lama.
 

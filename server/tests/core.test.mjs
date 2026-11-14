@@ -15,8 +15,7 @@ import {
 } from "../api/core.mjs";
 test("Meta webhook rejects tampering and missing signatures", () => {
   const raw = Buffer.from('{"hello":true}');
-  const signature =
-    "sha256=" + createHmac("sha256", "secret").update(raw).digest("hex");
+  const signature = "sha256=" + createHmac("sha256", "secret").update(raw).digest("hex");
   assert(verifyMeta(raw, signature, "secret"));
   assert(!verifyMeta(Buffer.from("{}"), signature, "secret"));
   assert(!verifyMeta(raw, undefined, "secret"));
@@ -31,18 +30,11 @@ test("Telemetry validates sensor types, clock, node and model contract", () => {
     metrics: { eco2_ppm: 700, dust_ug_m3: 20 },
   };
   assert.equal(validateTelemetry(p, node).gru, null);
-  assert.throws(() =>
-    validateTelemetry({ ...p, metrics: { pm25_ug_m3: 20 } }, node),
-  );
-  assert.throws(() =>
-    validateTelemetry({ ...p, metrics: { eco2_ppm: "700" } }, node),
-  );
+  assert.throws(() => validateTelemetry({ ...p, metrics: { pm25_ug_m3: 20 } }, node));
+  assert.throws(() => validateTelemetry({ ...p, metrics: { eco2_ppm: "700" } }, node));
   assert.throws(() => validateTelemetry({ ...p, observed_at: "bad" }, node));
   assert.throws(() => validateTelemetry({ ...p, gru: { value: 12 } }, node));
-  assert.equal(
-    isFresh({ ...p, observed_at: new Date(Date.now() - 700000).toISOString() }),
-    false,
-  );
+  assert.equal(isFresh({ ...p, observed_at: new Date(Date.now() - 700000).toISOString() }), false);
 });
 test("Policy fails closed for malformed or adversarial model responses", () => {
   assert.equal(parseGate('{"decision":"allow"}'), true);
@@ -67,10 +59,7 @@ test("WhatsApp uses templates outside the service window and honors closed chats
   };
   assert.equal(waPayload(job, c, env).type, "template");
   assert.equal(waPayload({ ...job, alert_id: null }, c, env), null);
-  assert.equal(
-    waPayload(job, { last_inbound_at: new Date().toISOString() }, env).type,
-    "text",
-  );
+  assert.equal(waPayload(job, { last_inbound_at: new Date().toISOString() }, env).type, "text");
   assert.throws(() => waPayload(job, c, {}));
 });
 test("Gemini unary WAV is validated and is not wrapped a second time", () => {

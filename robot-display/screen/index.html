@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AERO-BOT Face</title>
+    <link rel="stylesheet" href="./screen.css" />
+  </head>
+  <body>
+    <main
+      id="screen"
+      aria-label="Layar wajah AERO-BOT"
+      data-design-width="2000"
+      data-design-height="1200"
+    >
+      <div id="character"></div>
+      <div id="notice" role="status"></div>
+      <div id="caption" hidden></div>
+    </main>
+    <div id="help" hidden>
+      <strong>AERO-BOT · Kontrol layar</strong>
+      <p>
+        Spasi: bangun / tidur · 1: tenang · 2: senang · 3: peduli · 4: waspada · 5: bahaya · 6:
+        terkejut
+      </p>
+      <p>
+        D: contoh ucapan · T: berpikir · F: layar penuh · C: proporsional / isi layar · M: suara ·
+        H: tutup bantuan
+      </p>
+      <p>
+        Ekspresi mengikuti konteks jawaban. Mulut mengikuti audio; ini bukan pengenalan emosi
+        manusia.
+      </p>
+    </div>
+    <script type="module" src="./screen.js"></script>
+  </body>
+</html>

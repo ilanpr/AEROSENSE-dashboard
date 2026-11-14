@@ -1,24 +1,20 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ROUTES } from '@/lib/constants'
-import { SAMPLE_RECOMMENDATIONS } from '@/lib/mock-data'
-import { ChevronRight } from 'lucide-react'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/lib/constants";
+import { SAMPLE_RECOMMENDATIONS } from "@/lib/mock-data";
+import { ChevronRight } from "lucide-react";
 
 export function GreetingCard() {
-  const navigate = useNavigate()
-  const [recommendIndex, setRecommendIndex] = useState(0)
+  const navigate = useNavigate();
+  const [recommendIndex, setRecommendIndex] = useState(0);
 
   const handleNextRecommendation = () => {
-    setRecommendIndex((prev) => (prev + 1) % SAMPLE_RECOMMENDATIONS.length)
-  }
+    setRecommendIndex((prev) => (prev + 1) % SAMPLE_RECOMMENDATIONS.length);
+  };
 
   return (
-    <article
-      className="recommend-card p-5 relative select-none"
-      aria-labelledby="recommendTitle"
-    >
+    <article className="recommend-card p-5 relative select-none" aria-labelledby="recommendTitle">
       <div className="relative z-10 max-w-[245px]">
-        {/* Kicker */}
         <p className="flex items-center gap-1.5 text-[9px] font-black tracking-wider text-[#247fc9] uppercase mb-2.5">
           <span className="text-[#1189f4] text-sm leading-none">✦</span>
           SAPAAN HARI INI
@@ -27,7 +23,6 @@ export function GreetingCard() {
           </span>
         </p>
 
-        {/* Title */}
         <h2
           id="recommendTitle"
           className="text-base sm:text-lg font-black tracking-[-0.5px] text-[#17385b] leading-snug mb-2"
@@ -35,7 +30,6 @@ export function GreetingCard() {
           Satu langkah kecil untuk udara yang lebih baik.
         </h2>
 
-        {/* Dynamic recommendation tip */}
         <p
           className="text-xs text-[#456780] font-medium leading-relaxed min-h-[58px] mb-3"
           aria-live="polite"
@@ -43,7 +37,6 @@ export function GreetingCard() {
           {SAMPLE_RECOMMENDATIONS[recommendIndex]}
         </p>
 
-        {/* Action buttons */}
         <div className="flex flex-col items-start gap-1.5">
           <button
             type="button"
@@ -62,14 +55,13 @@ export function GreetingCard() {
         </div>
       </div>
 
-      {/* Mascot SVG image with gentle wave animation */}
       <img
-        src="/assets/aerobot.svg"
+        src="/assets/aerobot/falcon/welcome.webp"
         alt="AERO-BOT melambaikan tangan"
         className="recommend-mascot"
         width={136}
         height={140}
       />
     </article>
-  )
+  );
 }

@@ -23,6 +23,21 @@ services:
       options:
         max-size: "5m"
         max-file: "2"
+  # Wibowo TTS, only with: docker compose --profile wibowo up -d --build
+  aerosense-tts:
+    profiles: [wibowo]
+    build: ./tts
+    restart: unless-stopped
+    environment:
+      AEROBOT_LOCAL_TTS_KEY: ${WIBOWO_TTS_KEY:?Set WIBOWO_TTS_KEY in .env}
+    networks: [n8n]
+    cpus: 1.5
+    mem_limit: 3g
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
 networks:
   n8n:
     external: true

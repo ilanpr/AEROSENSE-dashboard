@@ -19,10 +19,7 @@ export function equal(a, b) {
   return x.length > 0 && x.length === y.length && timingSafeEqual(x, y);
 }
 export function verifyMeta(raw, signature, secret) {
-  return equal(
-    signature,
-    "sha256=" + createHmac("sha256", secret).update(raw).digest("hex"),
-  );
+  return equal(signature, "sha256=" + createHmac("sha256", secret).update(raw).digest("hex"));
 }
 export function cleanText(text) {
   if (typeof text !== "string" || !text.trim() || text.length > 2000)
@@ -39,8 +36,7 @@ export function abusive(text) {
   );
 }
 export function validateTelemetry(p, node, now = Date.now()) {
-  if (p.node_id !== node.id || !node.enabled)
-    throw new Error("Node tidak terdaftar");
+  if (p.node_id !== node.id || !node.enabled) throw new Error("Node tidak terdaftar");
   if (
     !/^[a-zA-Z0-9_-]{1,64}$/.test(p.boot_id) ||
     !Number.isSafeInteger(p.sequence) ||
@@ -66,18 +62,12 @@ export function validateTelemetry(p, node, now = Date.now()) {
   }
   if (!Object.keys(p.metrics).length) throw new Error("Metrics kosong");
   if (p.gru != null) {
-    if (
-      typeof p.gru.model_version !== "string" ||
-      p.gru.model_version.length > 100
-    )
+    if (typeof p.gru.model_version !== "string" || p.gru.model_version.length > 100)
       throw new Error("Invalid model version");
     for (const key of ["artifact_sha256", "manifest_sha256"])
       if (p.gru[key] != null && !/^[a-f0-9]{64}$/.test(p.gru[key]))
         throw new Error("Invalid model hash");
-    if (
-      p.gru.processed_at != null &&
-      !Number.isFinite(Date.parse(p.gru.processed_at))
-    )
+    if (p.gru.processed_at != null && !Number.isFinite(Date.parse(p.gru.processed_at)))
       throw new Error("Invalid processing time");
     if (
       p.gru.input_features != null &&
@@ -114,30 +104,57 @@ export function validateTelemetry(p, node, now = Date.now()) {
         ))
     )
       throw new Error("Invalid model reading references");
+    const validEstimate = (key, value) =>
+      Object.hasOwn(LIMITS, key) &&
+      Number.isFinite(value) &&
+      value >= LIMITS[key][0] &&
+      value <= LIMITS[key][1] &&
+      (key !== "pm25_ug_m3" || node.pm25_validated === true);
+    if (p.gru.task === "fault_detection") {
+      const estimates = p.gru.estimates;
+      if (
+        !estimates ||
+        Array.isArray(estimates) ||
+        !Object.keys(estimates).length ||
+        !Object.entries(estimates).every(([key, value]) => validEstimate(key, value)) ||
+        p.gru.mode !== "shadow" ||
+        !Array.isArray(p.gru.suspect) ||
+        p.gru.suspect.some((key) => !Object.hasOwn(estimates, key))
+      )
+        throw new Error("Hasil pemeriksaan GRU tidak valid");
+      for (const field of ["fault_scores", "thresholds"]) {
+        const scores = p.gru[field];
+        if (
+          !scores ||
+          Array.isArray(scores) ||
+          Object.keys(scores).length !== Object.keys(estimates).length ||
+          !Object.entries(scores).every(
+            ([key, value]) =>
+              Object.hasOwn(estimates, key) && Number.isFinite(value) && value >= 0 && value <= 1,
+          )
+        )
+          throw new Error("Skor pemeriksaan GRU tidak valid");
+      }
+    } else if (!validEstimate(p.gru.target, p.gru.value)) {
+      throw new Error("Hasil GRU tidak valid");
+    }
     if (
       !p.gru.model_version ||
-      !LIMITS[p.gru.target] ||
-      !Number.isFinite(p.gru.value) ||
-      p.gru.value < 0 ||
-      p.gru.value > LIMITS[p.gru.target][1] ||
       !Number.isInteger(p.gru.horizon_seconds) ||
       p.gru.horizon_seconds < 0 ||
       p.gru.horizon_seconds > 86400
     )
       throw new Error("Hasil GRU tidak valid");
   }
-  for (const key of ["raw_metrics", "raw_payload", "processing"])
+  for (const key of ["raw_metrics", "raw_payload", "processing", "quality"])
     if (
       p[key] != null &&
-      (typeof p[key] !== "object" ||
-        Array.isArray(p[key]) ||
-        JSON.stringify(p[key]).length > 12000)
+      (typeof p[key] !== "object" || Array.isArray(p[key]) || JSON.stringify(p[key]).length > 12000)
     )
       throw new Error("Invalid " + key);
   if (p.raw_sha256 != null && !/^[a-f0-9]{64}$/.test(p.raw_sha256))
     throw new Error("Invalid raw hash");
-  if (p.gru && JSON.stringify(p.gru).length > 16000)
-    throw new Error("Model input too large");
+  if (p.gru && JSON.stringify(p.gru).length > 16000) throw new Error("Model input too large");
   return {
     node_id: p.node_id,
     boot_id: p.boot_id,
@@ -150,6 +167,7 @@ export function validateTelemetry(p, node, now = Date.now()) {
     raw_sha256: p.raw_sha256 ?? null,
     processing: p.processing ?? {},
     quality: {
+      ...p.quality,
       clock_source: p.quality?.clock_source === "sensor" ? "sensor" : "gateway",
       invalid: p.quality?.invalid === true,
       calibration_version: node.calibration_version,
@@ -157,8 +175,7 @@ export function validateTelemetry(p, node, now = Date.now()) {
   };
 }
 export function modelText(response) {
-  if (response.status !== "completed")
-    throw new Error("Gemini did not complete");
+  if (response.status !== "completed") throw new Error("Gemini did not complete");
   const text = (response.steps || [])
     .filter((s) => s.type === "model_output")
     .flatMap((s) => s.content || [])
@@ -170,11 +187,8 @@ export function modelText(response) {
   return text;
 }
 export function parseGate(text) {
-  const value = JSON.parse(
-    text.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, ""),
-  );
-  if (!["allow", "deny"].includes(value.decision))
-    throw new Error("Invalid policy decision");
+  const value = JSON.parse(text.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, ""));
+  if (!["allow", "deny"].includes(value.decision)) throw new Error("Invalid policy decision");
   return value.decision === "allow";
 }
 export function waPayload(job, contact, env, now = Date.now()) {
@@ -186,8 +200,7 @@ export function waPayload(job, contact, env, now = Date.now()) {
   if (now - Date.parse(contact.last_inbound_at) < 23.9 * 3600000)
     return { ...base, type: "text", text: { body: job.text.slice(0, 3500) } };
   if (!job.alert_id) return null; // Never reopen an expired conversation with a free-form reply.
-  if (!env.WHATSAPP_ALERT_TEMPLATE)
-    throw new Error("Approved alert template not configured");
+  if (!env.WHATSAPP_ALERT_TEMPLATE) throw new Error("Approved alert template not configured");
   return {
     ...base,
     type: "template",
@@ -207,8 +220,7 @@ export function waPayload(job, contact, env, now = Date.now()) {
   };
 }
 export function wavAudio(response) {
-  if (response.status !== "completed")
-    throw new Error("Speech generation failed");
+  if (response.status !== "completed") throw new Error("Speech generation failed");
   const audio = response.steps
     ?.filter((s) => s.type === "model_output")
     .flatMap((s) => s.content || [])
@@ -239,7 +251,7 @@ export function validateInputWav(b) {
     throw new Error("Invalid WAV container");
   let format = null,
     data = null;
-  for (let at = 12; at + 8 <= b.length;) {
+  for (let at = 12; at + 8 <= b.length; ) {
     const size = b.readUInt32LE(at + 4),
       end = at + 8 + size;
     if (end > b.length) throw new Error("Truncated WAV");

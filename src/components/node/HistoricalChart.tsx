@@ -1,32 +1,36 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 const data = [
-  { time: '00:00', value: 45 },
-  { time: '04:00', value: 52 },
-  { time: '08:00', value: 85 },
-  { time: '12:00', value: 65 },
-  { time: '16:00', value: 58 },
-  { time: '20:00', value: 48 },
-  { time: '24:00', value: 42 },
-]
+  { time: "00:00", value: 45 },
+  { time: "04:00", value: 52 },
+  { time: "08:00", value: 85 },
+  { time: "12:00", value: 65 },
+  { time: "16:00", value: 58 },
+  { time: "20:00", value: 48 },
+  { time: "24:00", value: 42 },
+];
 
 const chartConfig = {
   value: {
     label: "Nilai",
     color: "hsl(var(--primary))",
   },
-}
+};
 
 export function HistoricalChart() {
   return (
     <Card className="h-full flex flex-col border-border/50">
       <CardHeader className="pb-4 flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-sm font-bold text-foreground">
-          Riwayat Pengukuran
-        </CardTitle>
+        <CardTitle className="text-sm font-bold text-foreground">Riwayat Pengukuran</CardTitle>
         <Select defaultValue="24h">
           <SelectTrigger className="w-[130px] h-8 text-xs">
             <SelectValue placeholder="Pilih Waktu" />
@@ -48,8 +52,18 @@ export function HistoricalChart() {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-            <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} dy={10} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+            <XAxis
+              dataKey="time"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              dy={10}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+            />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Area
               type="monotone"
@@ -63,5 +77,5 @@ export function HistoricalChart() {
         </ChartContainer>
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -4,7 +4,9 @@ export function DataState({
   error,
   empty,
   retry,
+  title,
 }: {
+  title?: string;
   loading?: boolean;
   error?: string;
   empty?: string;
@@ -15,9 +17,7 @@ export function DataState({
       <strong>
         {loading
           ? "Memuat data…"
-          : error
-            ? "Data belum dapat dimuat"
-            : empty || "Belum ada data"}
+          : title || (error ? "Data belum dapat dimuat" : empty || "Belum ada data")}
       </strong>
       {error && <p>{error}</p>}
       {error && (
@@ -28,7 +28,7 @@ export function DataState({
             </button>
           )}
           <Link className="live-button" to="/login">
-            Masuk akun
+            Masuk
           </Link>
         </div>
       )}
