@@ -372,16 +372,16 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--aero-blue, #0868dc);
   font-size: 12px;
-  font-weight: 650;
-  color: #37546e;
+  font-weight: 700;
+  color: #ffffff;
 }
 .wx-chip.is-wet {
-  background: #dcecff;
-  color: #0759ae;
+  background: var(--aero-blue, #0868dc);
+  color: #ffffff;
 }
 .wx-today-link {
   margin-block-start: 16px;

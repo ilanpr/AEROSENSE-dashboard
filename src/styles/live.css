@@ -1168,9 +1168,9 @@ select,
   border-radius: 999px;
   padding: 4px 12px;
   font-size: 12px;
-  font-weight: 650;
-  background: #d8ebff;
-  color: #0752ad;
+  font-weight: 700;
+  background: var(--aero-blue, #0868dc);
+  color: #ffffff;
   border: 0;
 }
 .live-state-art {
@@ -1217,9 +1217,9 @@ select,
   gap: 6px;
   padding: 5px 12px;
   border-radius: 999px;
-  background: #eef5ff;
-  color: #26476b;
-  font-weight: 600;
+  background: var(--aero-blue, #0868dc);
+  color: #ffffff;
+  font-weight: 650;
 }
 .app-shell .live-messages {
   flex: 1;
