@@ -1144,3 +1144,120 @@ body:has(.login-page) {
 .app-shell :is(.panel-metrics dd, .wx-today-stats dd, .glance-number strong, .sensor-values strong) {
   font-variant-numeric: tabular-nums;
 }
+
+/* Mobile declutter & readability (<= 767px) */
+@media (max-width: 767px) {
+  .app-shell .environment-hub > .environment-nav {
+    position: static;
+    top: auto;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+    margin-bottom: 14px;
+  }
+  .app-shell .environment-nav .live-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .app-shell .environment-nav .sensor-select {
+    flex: 1 1 auto;
+    width: auto;
+  }
+  .app-shell .environment-nav .insight-topic-picker {
+    width: 100%;
+  }
+  .app-shell .environment-nav .insight-topic-picker > span {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell .environment-hub .insight-lead,
+  .app-shell .sensor-overview .sensor-hero {
+    padding: 18px 16px;
+    gap: 12px;
+  }
+  .app-shell .environment-hub .insight-lead h2,
+  .app-shell .sensor-overview .sensor-hero h2 {
+    font-size: 1.45rem;
+    line-height: 1.18;
+  }
+  .app-shell .environment-hub .insight-lead .insight-summary,
+  .app-shell .environment-hub .insight-lead .scene-motion-toggle,
+  .app-shell .environment-hub .insight-lead .insight-pause,
+  .app-shell .weather-outlook .wx-today-tip {
+    display: none;
+  }
+  .app-shell .environment-hub .panel-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+    gap: 8px;
+  }
+  .app-shell .environment-hub .panel-metrics > div {
+    padding: 10px 10px;
+  }
+  .app-shell .environment-hub .panel-metrics dt {
+    font-size: 11px;
+    line-height: 1.25;
+  }
+  .app-shell .environment-hub .panel-metrics dd {
+    font-size: 1.25rem;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+  .app-shell .weather-outlook .wx-today {
+    padding: 16px;
+    gap: 12px;
+  }
+  .app-shell .weather-outlook .wx-today .wx-art {
+    width: 56px;
+    height: 56px;
+  }
+  .app-shell .weather-outlook .wx-today h3 {
+    font-size: 1.35rem;
+    margin: 4px 0 2px;
+  }
+  .app-shell .weather-outlook .wx-today-range {
+    font-size: 13px;
+  }
+  .app-shell .weather-outlook .wx-today-range strong {
+    font-size: 1.1rem;
+  }
+  .app-shell .weather-outlook .wx-next-rain {
+    margin-top: 8px;
+    font-size: 13px;
+  }
+  .app-shell .weather-outlook .wx-today-link {
+    margin-block-start: 10px;
+    min-height: 36px;
+    font-size: 13px;
+  }
+  .app-shell .weather-outlook .wx-today-stats {
+    gap: 8px;
+  }
+  .app-shell .weather-outlook .wx-today-stats > div {
+    padding: 10px 12px;
+  }
+  .app-shell .weather-outlook .wx-today-stats dd {
+    font-size: 1.05rem;
+  }
+  .app-shell .weather-outlook .wx-alerts {
+    gap: 8px;
+  }
+  .app-shell .weather-outlook .wx-alerts li {
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+  .app-shell .weather-outlook .wx-hours {
+    grid-auto-columns: 122px;
+    gap: 8px;
+  }
+  .app-shell .weather-outlook .wx-card {
+    min-block-size: 210px;
+    padding: 12px 6px;
+    gap: 6px;
+  }
+  .app-shell .weather-outlook .wx-card .wx-art {
+    width: 72px;
+  }
+}
