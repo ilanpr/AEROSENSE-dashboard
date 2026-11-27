@@ -418,7 +418,7 @@ test("public API WhatsApp alert evaluator emits deduplicated alerts for air, wea
           return now;
         }
       },
-    )[0].json.alerts;
+    ).json.alerts;
 
   const entries = [
     {

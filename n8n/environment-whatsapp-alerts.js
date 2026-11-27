@@ -143,4 +143,4 @@ function buildPublicApiAlerts(entries, now = Date.now()) {
 
 const entries = $("Rapikan fakta dan sumber").item.json.entries || [];
 const alerts = buildPublicApiAlerts(entries);
-return [{ json: { alerts } }];
+return { json: { alerts } };
