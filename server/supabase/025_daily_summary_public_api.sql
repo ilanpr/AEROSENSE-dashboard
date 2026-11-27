@@ -297,6 +297,6 @@ $function$;
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM cron.job WHERE command ILIKE '%ae_daily_summary(''malam'')%') THEN
-    PERFORM cron.schedule('ae_daily_summary_malam', '0 15 * * *', $$select public.ae_daily_summary('malam')$$);
+    PERFORM cron.schedule('ae_daily_summary_malam', '0 15 * * *', $cron$select public.ae_daily_summary('malam')$cron$);
   END IF;
 END $$;
