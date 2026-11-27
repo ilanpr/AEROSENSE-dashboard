@@ -29,6 +29,7 @@ declare
   fire_payload jsonb;
   quake_payload jsonb;
   air_title text;
+  air_status text;
   air_tone text;
   air_action text;
   ispu_val float8;
@@ -180,33 +181,42 @@ begin
       limit 1;
     end if;
 
-    -- Susun blok kondisi wilayah dari API publik
+    -- Susun blok kondisi wilayah
     pub_lines := '';
-    if air_title is not null or ispu_val is not null or aqi_val is not null then
-      pub_lines := pub_lines || '• Udara wilayah: ' ||
-        coalesce('*' || air_title || '*', 'Estimasi wilayah') ||
+    air_status := nullif(trim(regexp_replace(coalesce(air_title, ''), '^(?:Estimasi\s+)?(?:ISPU\s+PM2\.5|Kualitas\s+udara)\s*[:\-]?\s*', '', 'i')), '');
+    if air_status is not null then
+      air_status := upper(left(air_status, 1)) || substring(air_status from 2);
+    end if;
+
+    if air_status is not null or ispu_val is not null or aqi_val is not null then
+      pub_lines := pub_lines || '• Udara: ' ||
+        coalesce('*' || air_status || '*', '*Tersedia*') ||
         case
           when ispu_val is not null and aqi_val is not null
-            then ' (ISPU PM2.5: ' || round(ispu_val::numeric)::int || ' · US AQI: ' || round(aqi_val::numeric)::int || ')'
+            then ' (ISPU ' || round(ispu_val::numeric)::int || ' · AQI ' || round(aqi_val::numeric)::int || ')'
           when ispu_val is not null
-            then ' (ISPU PM2.5: ' || round(ispu_val::numeric)::int || ')'
+            then ' (ISPU ' || round(ispu_val::numeric)::int || ')'
           when aqi_val is not null
-            then ' (US AQI: ' || round(aqi_val::numeric)::int || ')'
+            then ' (AQI ' || round(aqi_val::numeric)::int || ')'
           else ''
         end || chr(10);
     end if;
 
     if wx_temp is not null or wx_warn_title is not null then
       pub_lines := pub_lines || '• Cuaca: ' ||
-        coalesce('*' || ae_num(wx_temp) || ' °C*', 'Data cuaca') ||
-        case when wx_hum is not null then ' · Kelembapan ' || round(wx_hum::numeric)::int || '%' else '' end ||
-        case when wx_rain_prob is not null and wx_rain_prob >= 30 then ' · Peluang hujan ' || round(wx_rain_prob::numeric)::int || '%' else '' end ||
-        case when wx_warn_title is not null then ' · ⚠️ ' || wx_warn_title else '' end ||
+        coalesce('*' || ae_num(wx_temp) || ' °C*', 'Info cuaca') ||
+        case when wx_hum is not null then ' · Lembap ' || round(wx_hum::numeric)::int || '%' else '' end ||
+        case
+          when wx_rain_prob is not null and wx_rain_prob >= 60 then ' · Peluang hujan *' || round(wx_rain_prob::numeric)::int || '%*'
+          when wx_rain_prob is not null and wx_rain_prob >= 30 then ' · Peluang hujan ' || round(wx_rain_prob::numeric)::int || '%'
+          else ''
+        end ||
+        case when wx_warn_title is not null then chr(10) || '• ⚠️ *' || wx_warn_title || '*' else '' end ||
         chr(10);
     end if;
 
     if coalesce(fire_count, 0) > 0 then
-      pub_lines := pub_lines || '• ⚠️ Titik panas satelit: ' || fire_count || ' deteksi (radius 50 km, 24 jam)' || chr(10);
+      pub_lines := pub_lines || '• ⚠️ *' || fire_count || ' titik panas satelit* terdeteksi (radius 50 km, 24 jam)' || chr(10);
     end if;
 
     if quake_line is not null then
@@ -233,8 +243,8 @@ begin
         end;
         msg := ae_bot_hook('daily', hook_tone, '{}', now()) || chr(10) || chr(10) ||
           msg || '🕒 ' || ae_wib(now()) || chr(10) || chr(10) ||
-          'Sensor lokal belum mengirim data terbaru' || coalesce(' sejak ' || ae_wib(l.observed_at), '') || '.' || chr(10) || chr(10) ||
-          '🌐 *Estimasi Wilayah (API Publik)*' || chr(10) || rtrim(pub_lines, chr(10));
+          'Sensor lokal belum aktif' || coalesce(' sejak ' || ae_wib(l.observed_at), '') || '.' || chr(10) || chr(10) ||
+          '🌐 *Kondisi Wilayah*' || chr(10) || rtrim(pub_lines, chr(10));
         if pub_tip is not null then
           msg := msg || chr(10) || chr(10) || pub_tip;
         end if;
@@ -264,7 +274,7 @@ begin
       msg := msg || coalesce(ae_other_readings(l.metrics, v_metric), '');
       if pub_lines <> '' then
         msg := rtrim(msg, chr(10)) || chr(10) || chr(10) ||
-          '🌐 *Estimasi Wilayah (API Publik)*' || chr(10) || rtrim(pub_lines, chr(10));
+          '🌐 *Kondisi Wilayah*' || chr(10) || rtrim(pub_lines, chr(10));
       end if;
       tip := case status
         when 'Bahaya' then 'Tetap di dalam ruangan, tutup jendela, dan pakai masker KN95/N95 bila terpaksa keluar.'
