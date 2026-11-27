@@ -22,6 +22,12 @@ declare
     when hr between 15 and 17 then 'SORE'
     else 'MALAM'
   end;
+  part_emoji text := case
+    when hr between 4 and 10 then '🌅'
+    when hr between 11 and 14 then '☀️'
+    when hr between 15 and 17 then '🌇'
+    else '🌙'
+  end;
   sensor_fresh boolean;
   area_key text;
   air_payload jsonb;
@@ -167,7 +173,7 @@ begin
     -- Ekstrak gempa BMKG M5+ dalam 24 jam terakhir (radius 300 km)
     quake_line := null;
     if quake_payload is not null and jsonb_typeof(quake_payload->'events') = 'array' then
-      select '• ⚠️ Gempa BMKG: M ' || replace(round((ev->>'magnitude')::numeric, 1)::text, '.', ',') ||
+      select '⚠️ Gempa BMKG: *M ' || replace(round((ev->>'magnitude')::numeric, 1)::text, '.', ',') || '*' ||
              coalesce(' · ' || nullif(ev->>'title', ''), '') ||
              case when jsonb_typeof(ev->'distance_km') = 'number'
                then ' (~' || round((ev->>'distance_km')::numeric)::int || ' km)'
@@ -181,15 +187,15 @@ begin
       limit 1;
     end if;
 
-    -- Susun blok kondisi wilayah
+    -- Susun blok kondisi wilayah (format konsisten: emoji, kapitalisasi, dan bold hanya pada nilai utama)
     pub_lines := '';
     air_status := nullif(trim(regexp_replace(coalesce(air_title, ''), '^(?:Estimasi\s+)?(?:ISPU\s+PM2\.5|Kualitas\s+udara)\s*[:\-]?\s*', '', 'i')), '');
     if air_status is not null then
-      air_status := upper(left(air_status, 1)) || substring(air_status from 2);
+      air_status := initcap(air_status);
     end if;
 
     if air_status is not null or ispu_val is not null or aqi_val is not null then
-      pub_lines := pub_lines || '• Udara: ' ||
+      pub_lines := pub_lines || '💨 Udara: ' ||
         coalesce('*' || air_status || '*', '*Tersedia*') ||
         case
           when ispu_val is not null and aqi_val is not null
@@ -203,34 +209,41 @@ begin
     end if;
 
     if wx_temp is not null or wx_warn_title is not null then
-      pub_lines := pub_lines || '• Cuaca: ' ||
-        coalesce('*' || ae_num(wx_temp) || ' °C*', 'Info cuaca') ||
+      pub_lines := pub_lines || '🌡️ Cuaca: ' ||
+        coalesce('*' || ae_num(wx_temp) || ' °C*', '*Tersedia*') ||
         case when wx_hum is not null then ' · Lembap ' || round(wx_hum::numeric)::int || '%' else '' end ||
         case
           when wx_rain_prob is not null and wx_rain_prob >= 60 then ' · Peluang hujan *' || round(wx_rain_prob::numeric)::int || '%*'
           when wx_rain_prob is not null and wx_rain_prob >= 30 then ' · Peluang hujan ' || round(wx_rain_prob::numeric)::int || '%'
           else ''
         end ||
-        case when wx_warn_title is not null then chr(10) || '• ⚠️ *' || wx_warn_title || '*' else '' end ||
+        case when wx_warn_title is not null then chr(10) || '⚠️ Peringatan: *' || wx_warn_title || '*' else '' end ||
         chr(10);
     end if;
 
     if coalesce(fire_count, 0) > 0 then
-      pub_lines := pub_lines || '• ⚠️ *' || fire_count || ' titik panas satelit* terdeteksi (radius 50 km, 24 jam)' || chr(10);
+      pub_lines := pub_lines || '🔥 Titik panas: *' || fire_count || ' deteksi* (radius 50 km, 24 jam)' || chr(10);
     end if;
 
     if quake_line is not null then
       pub_lines := pub_lines || quake_line || chr(10);
     end if;
 
-    pub_tip := coalesce(
-      case when air_tone in ('warning', 'danger') then nullif(air_action, '') end,
-      nullif(wx_warn_action, ''),
-      nullif(air_action, '')
-    );
+    pub_tip := case
+      when air_tone = 'danger' then 'Tetap di dalam ruangan, tutup jendela, dan pakai masker KN95/N95 bila terpaksa keluar.'
+      when air_tone = 'warning' then 'Kurangi aktivitas berat di luar ruangan dan pakai masker KN95/N95 bila perlu keluar.'
+      when wx_warn_title is not null then 'Waspadai hujan petir dan hindari berteduh di bawah pohon atau lapangan terbuka.'
+      when wx_rain_prob is not null and wx_rain_prob >= 60 then 'Siapkan payung atau jas hujan sebelum beraktivitas di luar.'
+      else 'Udara wilayah dalam batas normal. Jaga tetap bersih dengan tidak membakar sampah.'
+    end;
+    if air_tone in ('warning', 'danger') and wx_warn_title is not null then
+      pub_tip := pub_tip || ' Waspadai juga potensi hujan petir.';
+    elsif air_tone in ('warning', 'danger') and wx_rain_prob is not null and wx_rain_prob >= 60 then
+      pub_tip := pub_tip || ' Siapkan payung atau jas hujan sebelum keluar.';
+    end if;
 
     -- Susun pesan utama
-    msg := '🌤️ *KONDISI UDARA · ' || part || '*' || chr(10) || '📍 ' || n.name || chr(10);
+    msg := part_emoji || ' *KONDISI UDARA · ' || part || '*' || chr(10) || '📍 ' || n.name || chr(10);
     status := null;
     tip := null;
 
@@ -244,7 +257,7 @@ begin
         msg := ae_bot_hook('daily', hook_tone, '{}', now()) || chr(10) || chr(10) ||
           msg || '🕒 ' || ae_wib(now()) || chr(10) || chr(10) ||
           'Sensor lokal belum aktif' || coalesce(' sejak ' || ae_wib(l.observed_at), '') || '.' || chr(10) || chr(10) ||
-          '🌐 *Kondisi Wilayah*' || chr(10) || rtrim(pub_lines, chr(10));
+          '🌐 *KONDISI WILAYAH*' || chr(10) || rtrim(pub_lines, chr(10));
         if pub_tip is not null then
           msg := msg || chr(10) || chr(10) || pub_tip;
         end if;
@@ -269,21 +282,20 @@ begin
           when val >= rule.high then 'Waspada'
           else 'Baik'
         end;
-        msg := msg || ae_metric_label(v_metric) || ': *' || ae_num(val) || ' µg/m³*' || coalesce(' · ' || status, '') || chr(10);
+        msg := msg || ae_metric_label(v_metric) || ': *' || ae_num(val) || ' µg/m³*' || coalesce(' · *' || status || '*', '') || chr(10);
       end if;
       msg := msg || coalesce(ae_other_readings(l.metrics, v_metric), '');
       if pub_lines <> '' then
         msg := rtrim(msg, chr(10)) || chr(10) || chr(10) ||
-          '🌐 *Kondisi Wilayah*' || chr(10) || rtrim(pub_lines, chr(10));
+          '🌐 *KONDISI WILAYAH*' || chr(10) || rtrim(pub_lines, chr(10));
       end if;
       tip := case status
         when 'Bahaya' then 'Tetap di dalam ruangan, tutup jendela, dan pakai masker KN95/N95 bila terpaksa keluar.'
         when 'Waspada' then 'Kurangi aktivitas berat di luar ruangan dan pakai masker KN95/N95 bila perlu keluar.'
-        when 'Baik' then coalesce(
-          case when air_tone in ('warning', 'danger') then nullif(air_action, '') end,
-          nullif(wx_warn_action, ''),
-          'Udara dalam batas normal. Jaga tetap bersih dengan tidak membakar sampah.'
-        )
+        when 'Baik' then case
+          when air_tone in ('warning', 'danger') or wx_warn_title is not null or (wx_rain_prob is not null and wx_rain_prob >= 60) then pub_tip
+          else 'Udara dalam batas normal. Jaga tetap bersih dengan tidak membakar sampah.'
+        end
       end;
       if tip is not null then msg := msg || chr(10) || chr(10) || tip; end if;
       hook_tone := case
