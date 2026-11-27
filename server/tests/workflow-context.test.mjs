@@ -400,3 +400,129 @@ test("keyword hints keep other fresh categories available to the model", async (
   assert(result.environment.some((f) => f.id === "quake"));
   assert(result.environment.length <= 24);
 });
+
+test("public API WhatsApp alert evaluator emits deduplicated alerts for air, weather, fire, and recent BMKG quakes", async () => {
+  const code = await readFile(
+    new URL("../../n8n/environment-whatsapp-alerts.js", import.meta.url),
+    "utf8",
+  );
+  const now = Date.parse("2026-11-27T04:00:00.000Z");
+  const run = (entries) =>
+    new Function("$", "Date", `${code}`)(
+      () => ({ item: { json: { entries } } }),
+      class FakeDate extends Date {
+        constructor(...args) {
+          super(...(args.length ? args : [now]));
+        }
+        static now() {
+          return now;
+        }
+      },
+    )[0].json.alerts;
+
+  const entries = [
+    {
+      ok: true,
+      area_id: "node_node-1",
+      provider: "openmeteo_air",
+      payload: {
+        source: "Open-Meteo",
+        fetched_at: "2026-11-27T03:30:00.000Z",
+        reference: { name: "Node 1 ITS" },
+        facts: [{ category: "air_quality", label: "Estimasi ISPU PM2.5", value: 115 }],
+        insights: [
+          {
+            category: "air_quality",
+            tone: "warning",
+            title: "Kualitas udara tidak sehat",
+            body: "Estimasi PM2.5 meningkat di wilayah ini.",
+            action: "Kurangi aktivitas berat di luar ruangan.",
+            valid_at: "2026-11-27T03:00:00.000Z",
+          },
+        ],
+      },
+    },
+    {
+      ok: true,
+      area_id: "node_node-2",
+      provider: "openmeteo_air",
+      payload: {
+        source: "Open-Meteo",
+        reference: { name: "Node 2 ITS" },
+        facts: [{ category: "air_quality", label: "Estimasi ISPU PM2.5", value: 35 }],
+        insights: [{ category: "air_quality", tone: "calm", title: "Baik" }],
+      },
+    },
+    {
+      ok: true,
+      area_id: "node_node-1",
+      provider: "openmeteo_weather",
+      payload: {
+        source: "Open-Meteo",
+        fetched_at: "2026-11-27T03:30:00.000Z",
+        reference: { name: "Node 1 ITS" },
+        facts: [
+          { category: "weather", label: "Peluang presipitasi maksimum", value: 90 },
+          { category: "weather", label: "Total presipitasi harian", value: 24.5 },
+        ],
+        insights: [],
+      },
+    },
+    {
+      ok: true,
+      area_id: "node_node-1",
+      provider: "firms",
+      payload: {
+        source: "NASA FIRMS",
+        fetched_at: "2026-11-27T03:30:00.000Z",
+        reference: { name: "Node 1 ITS" },
+        facts: [{ category: "fire", label: "Jumlah deteksi titik panas", value: 3 }],
+        insights: [
+          {
+            category: "fire",
+            tone: "warning",
+            title: "Titik panas terdeteksi",
+            action: "Pantau asap dan informasi resmi BPBD.",
+          },
+        ],
+      },
+    },
+    {
+      ok: true,
+      area_id: "node_node-1",
+      provider: "bmkg_quake",
+      payload: {
+        source: "BMKG",
+        reference: { name: "Node 1 ITS" },
+        events: [
+          {
+            id: "quake-recent",
+            observed_at: "2026-11-27T02:30:00.000Z",
+            magnitude: 5.4,
+            distance_km: 120,
+            title: "85 km tenggara Malang",
+            potential: "Tidak berpotensi tsunami",
+          },
+          {
+            id: "quake-old",
+            observed_at: "2026-11-26T20:00:00.000Z",
+            magnitude: 5.8,
+            distance_km: 110,
+            title: "Gempa lama",
+          },
+        ],
+      },
+    },
+  ];
+
+  const alerts = run(entries);
+  assert.deepEqual(
+    alerts.map((a) => a.category),
+    ["air_quality", "weather", "fire", "earthquake"],
+  );
+  assert.match(alerts[0].text, /ISPU PM2\.5: 115/);
+  assert.match(alerts[1].text, /Hujan Lebat/);
+  assert.match(alerts[2].text, /3 titik panas/);
+  assert.match(alerts[3].text, /M 5,4/);
+  assert.equal(alerts[3].dedupe_key, "pub_alert:node-1:earthquake:quake-recent");
+});

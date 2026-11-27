@@ -546,6 +546,7 @@ async function waSend(j) {
     const n = await one("ae_nodes", "id=eq." + filter(b.node_id));
     if (!n?.enabled) return finish(j, { skipped: "Node disabled or missing" });
     if (
+      !n.public_read &&
       !(await one(
         "ae_members",
         "user_id=eq." + s.user_id + "&location_id=eq." + filter(n.location_id),
